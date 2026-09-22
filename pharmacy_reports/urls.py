@@ -7,3 +7,4 @@ urlpatterns = [
     path('', views.index, name='index'),
     # Adnan: Add more report URLs here
 ]
+

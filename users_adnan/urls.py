@@ -7,3 +7,4 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     # Adnan: Add more URLs here (e.g. logout, profile, register)
 ]
+
