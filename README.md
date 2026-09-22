@@ -1,24 +1,11 @@
 # IIEH iPortal - Eye Hospital Management Reporting System
 
-Comprehensive MVT reporting portal for Eye Hospital management operations.
 A modular Django MVT reporting portal for eye hospital management operations.
 
-## Team Structure & Branch Assignments
 ---
 
-| Intern | Role | Git Branch | Assigned App(s) | Domain Responsibility |
-| :--- | :--- | :--- | :--- | :--- |
-| **Naimul** | Developer | `naimul` | `surgeries_procedures`, `users_naimul` | Eye Surgeries (Cataract, Retina, Glaucoma, etc.), OT utilization & diagnostics |
-| **Nusrat** | Developer | `nusrat` | `opd_ipd_reports`, `users_nusrat` | Outpatient daily census, doctor appointments, branch footfalls, IPD bed occupancy |
-| **Ruhul** | Developer | `ruhul` | `financial_reports`, `users_ruhul` | Daily collections, billing, concessions/charity patients, pharmacy & optical sales |
-| **Subhendu** | QA Engineer | `subhendu` / `dev` | `tests/` | Unit testing, integration testing, quality assurance & bug reporting on `dev` |
 ## 👥 Intern Assignments & Detailed Task Guides
 
-## Workflow Rules
-1. Developers work **only** on their designated branch (`naimul`, `nusrat`, `ruhul`).
-2. After completing work, commit and push to your branch, then open a PR / merge into `dev`.
-3. Subhendu (QA) runs test suites on `dev` (`python manage.py test tests`) and validates features.
-4. Once all 3 apps are stable, the team collaborates on the 4th integration app (`executive_dashboard`).
 Click on your name below to open your personalized, simplified step-by-step task instructions:
 
 | Intern | Role | Git Branch | Assigned App(s) | Guide Link | Domain Responsibility |
@@ -26,8 +13,9 @@ Click on your name below to open your personalized, simplified step-by-step task
 | **Naimul** | Developer | `naimul` | `surgeries_procedures`, `users_naimul` | [README_NAIMUL.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_NAIMUL.md) | Eye Surgeries (Cataract, Retina, Glaucoma), OT utilization & Ocular Diagnostics |
 | **Nusrat** | Developer | `nusrat` | `opd_ipd_reports`, `users_nusrat` | [README_NUSRAT.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_NUSRAT.md) | Outpatient (OPD) census, specialty eye clinics, branch footfalls, and IPD bed occupancy |
 | **Ruhul** | Developer | `ruhul` | `financial_reports`, `users_ruhul` | [README_RUHUL.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_RUHUL.md) | Daily counter collections, Cash vs Digital payments, and Zakat/Charity patient concessions |
+| **Adnan** | Developer | `adnan` | `pharmacy_reports`, `users_adnan` | [README_ADNAN.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_ADNAN.md) | Hospital eye pharmacy dispensing, surgical IOL consumables, and expiry tracking |
 | **Subhendu** | QA Engineer | `subhendu` / `dev` | `tests/` | [README_SUBHENDU.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_SUBHENDU.md) | Automated unit & integration testing on `dev`, regression testing & bug reporting |
-| *(All 4)* | Full Team | `dev` | `executive_dashboard` | *(Integrated Phase)* | Consolidated executive dashboard integrating components after Apps 1-3 are built |
+| *(All 5)* | Full Team | `dev` | `executive_dashboard` | *(Integrated Phase)* | Consolidated executive dashboard integrating components after Apps 1-4 are built |
 
 ---
 

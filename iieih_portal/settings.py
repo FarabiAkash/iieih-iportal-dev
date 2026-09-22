@@ -42,11 +42,13 @@ INSTALLED_APPS = [
     'users_naimul',
     'users_nusrat',
     'users_ruhul',
+    'users_adnan',
 
     # Domain Reporting Apps
     'surgeries_procedures',
     'opd_ipd_reports',
     'financial_reports',
+    'pharmacy_reports',
 
     # App 4: Consolidated Dashboard
     'executive_dashboard',
