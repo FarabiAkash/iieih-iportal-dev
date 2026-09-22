@@ -16,3 +16,4 @@ Comprehensive MVT reporting portal for Eye Hospital management operations.
 2. After completing work, commit and push to your branch, then open a PR / merge into `dev`.
 3. Subhendu (QA) runs test suites on `dev` (`python manage.py test tests`) and validates features.
 4. Once all 3 apps are stable, the team collaborates on the 4th integration app (`executive_dashboard`).
+
