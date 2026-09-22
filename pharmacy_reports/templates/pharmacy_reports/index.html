@@ -46,27 +46,30 @@
       <!-- Stat Cards -->
       <div class="row g-4 mb-4">
         <div class="col-md-4">
-          <div class="card stat-card p-3 shadow-sm">
+          <div
+            class="card p-3 shadow-sm"
+            style="border-left: 5px solid #0077b6; background: white"
+          >
             <p class="text-muted mb-1">Total Medicines Dispensed Today</p>
-            <h3 class="text-primary">{{ total_dispensed }}</h3>
+            <h3 style="color: #0077b6">{{ total_dispensed }}</h3>
           </div>
         </div>
         <div class="col-md-4">
           <div
-            class="card stat-card p-3 shadow-sm"
-            style="border-left-color: #e63946"
+            class="card p-3 shadow-sm"
+            style="border-left: 5px solid #f4a261; background: white"
           >
             <p class="text-muted mb-1">Low Stock Alerts</p>
-            <h3 class="text-danger">{{ low_stock_count }}</h3>
+            <h3 style="color: #f4a261">{{ low_stock_count }}</h3>
           </div>
         </div>
         <div class="col-md-4">
           <div
-            class="card stat-card p-3 shadow-sm"
-            style="border-left-color: #f4a261"
+            class="card p-3 shadow-sm"
+            style="border-left: 5px solid #c1121f; background: white"
           >
             <p class="text-muted mb-1">Near-Expiry Items</p>
-            <h3 class="text-warning">{{ near_expiry_count }}</h3>
+            <h3 style="color: #c1121f">{{ near_expiry_count }}</h3>
           </div>
         </div>
       </div>
@@ -131,8 +134,18 @@
               <td>{{ item.reorder_threshold }}</td>
               <td>{{ item.expiry_date }}</td>
               <td>
-                {% if item.current_quantity <= item.reorder_threshold %}
-                <span class="badge bg-danger">Low Stock</span>
+                {% if item.current_quantity == 0 %}
+                <span class="badge" style="background-color: #000000"
+                  >Out of Stock</span
+                >
+                {% elif item.expiry_date < today %}
+                <span class="badge" style="background-color: #c1121f"
+                  >Expired</span
+                >
+                {% elif item.current_quantity <= item.reorder_threshold %}
+                <span class="badge" style="background-color: #f4a261"
+                  >Low Stock</span
+                >
                 {% else %}
                 <span class="badge bg-success">OK</span>
                 {% endif %}

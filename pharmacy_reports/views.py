@@ -40,11 +40,12 @@ def index(request):
     ).count()
 
     context = {
-        'dispensing_logs': dispensing_logs,
-        'stock_items': stock_items,
-        'total_dispensed': total_dispensed,
-        'low_stock_count': low_stock_count,
-        'near_expiry_count': near_expiry_count,
-    }
+    'today': today,
+    'dispensing_logs': dispensing_logs,
+    'stock_items': stock_items,
+    'total_dispensed': total_dispensed,
+    'low_stock_count': low_stock_count,
+    'near_expiry_count': near_expiry_count,
+}
 
     return render(request, 'pharmacy_reports/index.html', context)
