@@ -1,0 +1,166 @@
+{% extends 'users_ruhul/base.html' %}
+
+{% block content %}
+<div class="container">
+        {% include 'users_ruhul/message.html' %}
+    </div>
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-8 col-lg-6">
+
+            <div class="card border-0 shadow-lg">
+
+                <!-- Profile Header -->
+                <div class="card-header bg-primary text-white text-center py-4">
+
+                    {% comment %} <div
+                        class="bg-white text-primary rounded-circle
+                               d-inline-flex align-items-center
+                               justify-content-center shadow"
+                        style="width: 80px; height: 80px;"
+                    >
+                        <i class="bi bi-person-fill fs-1"></i>
+                    </div> {% endcomment %}
+
+                    <h3 class="mt-3 mb-1">
+                        {{ request.user.username }}
+                    </h3>
+
+                    <p class="mb-0">
+                        Finance Profile
+                    </p>
+
+                </div>
+
+
+                <!-- Profile Body -->
+                <div class="card-body p-4">
+
+                    <h5 class="mb-4">
+                        <i class="bi bi-person-vcard text-primary"></i>
+                        Personal Information
+                    </h5>
+
+
+                    <!-- Username -->
+                    <div class="d-flex justify-content-between
+                                border-bottom py-3">
+
+                        <span class="text-muted">
+                            <i class="bi bi-person"></i>
+                            Username
+                        </span>
+
+                        <strong>
+                            {{ request.user.username }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- Email -->
+                    <div class="d-flex justify-content-between
+                                border-bottom py-3">
+
+                        <span class="text-muted">
+                            <i class="bi bi-envelope"></i>
+                            Email
+                        </span>
+
+                        <strong>
+                            {{ request.user.email }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- Finance Role -->
+                    <div class="d-flex justify-content-between
+                                border-bottom py-3">
+
+                        <span class="text-muted">
+                            <i class="bi bi-briefcase"></i>
+                            Finance Role
+                        </span>
+
+                        <span class="badge bg-primary fs-6">
+                            {{ profile.finance_role }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- Assigned Counter -->
+                    <div class="d-flex justify-content-between
+                                border-bottom py-3">
+
+                        <span class="text-muted">
+                            <i class="bi bi-shop"></i>
+                            Assigned Counter
+                        </span>
+
+                        <strong>
+                            {{ profile.assigned_counter }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- Approval Limit -->
+                    <div class="d-flex justify-content-between py-3">
+
+                        <span class="text-muted">
+                            <i class="bi bi-cash-stack"></i>
+                            Approval Limit
+                        </span>
+
+                        <strong class="text-success">
+                            ৳ {{ profile.discount_approval_limit }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- Status -->
+                    <div class="alert alert-success mt-4 mb-0">
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                        <strong>Account Active</strong>
+
+                        <br>
+
+                        <small>
+                            Your finance profile is active and ready to use.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Footer -->
+                <div class="card-footer bg-white text-center py-3">
+
+                    <a
+                        href="{% url 'ruhul_logout' %}"
+                        class="btn btn-outline-danger"
+                    >
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock content %}
