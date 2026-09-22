@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,4 +10,144 @@
     <p>Assigned Developer: <strong>Adnan</strong></p>
     <p>App: <code>pharmacy_reports</code></p>
 </body>
+</html> -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pharmacy Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #eaf4fb;
+      }
+      .card {
+        border-radius: 16px;
+      }
+      .stat-card {
+        background: white;
+        border-left: 5px solid #0077b6;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark" style="background-color: #0077b6">
+      <div class="container">
+        <span class="navbar-brand">IIEH — Eye Pharmacy & Consumables</span>
+        <a href="/adnan/logout/" class="btn btn-outline-light btn-sm">Logout</a>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <!-- Stat Cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card stat-card p-3 shadow-sm">
+            <p class="text-muted mb-1">Total Medicines Dispensed Today</p>
+            <h3 class="text-primary">{{ total_dispensed }}</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div
+            class="card stat-card p-3 shadow-sm"
+            style="border-left-color: #e63946"
+          >
+            <p class="text-muted mb-1">Low Stock Alerts</p>
+            <h3 class="text-danger">{{ low_stock_count }}</h3>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div
+            class="card stat-card p-3 shadow-sm"
+            style="border-left-color: #f4a261"
+          >
+            <p class="text-muted mb-1">Near-Expiry Items</p>
+            <h3 class="text-warning">{{ near_expiry_count }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispensing Log Table -->
+      <div class="card shadow-sm p-4 mb-4">
+        <h5 class="mb-3">Medicine Dispensing Log</h5>
+        <table class="table table-hover">
+          <thead class="table-primary">
+            <tr>
+              <th>Date</th>
+              <th>Patient MRN</th>
+              <th>Medicine</th>
+              <th>Category</th>
+              <th>Branch</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in dispensing_logs %}
+            <tr>
+              <td>{{ log.date }}</td>
+              <td>{{ log.patient_mrn }}</td>
+              <td>{{ log.medicine_name }}</td>
+              <td>{{ log.category }}</td>
+              <td>{{ log.hospital_branch }}</td>
+              <td>{{ log.quantity_dispensed }}</td>
+              <td>{{ log.unit_price }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted">
+                No records yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Surgical Stock Table -->
+      <div class="card shadow-sm p-4">
+        <h5 class="mb-3">Surgical Consumable Stock</h5>
+        <table class="table table-hover">
+          <thead class="table-warning">
+            <tr>
+              <th>Item</th>
+              <th>Subspecialty</th>
+              <th>Current Qty</th>
+              <th>Reorder At</th>
+              <th>Expiry Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in stock_items %}
+            <tr>
+              <td>{{ item.item_name }}</td>
+              <td>{{ item.subspecialty }}</td>
+              <td>{{ item.current_quantity }}</td>
+              <td>{{ item.reorder_threshold }}</td>
+              <td>{{ item.expiry_date }}</td>
+              <td>
+                {% if item.current_quantity <= item.reorder_threshold %}
+                <span class="badge bg-danger">Low Stock</span>
+                {% else %}
+                <span class="badge bg-success">OK</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">
+                No stock records yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
 </html>
