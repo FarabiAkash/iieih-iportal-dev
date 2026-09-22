@@ -13,8 +13,9 @@ Click on your name below to open your personalized, simplified step-by-step task
 | **Naimul** | Developer | `naimul` | `surgeries_procedures`, `users_naimul` | [README_NAIMUL.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_NAIMUL.md) | Eye Surgeries (Cataract, Retina, Glaucoma), OT utilization & Ocular Diagnostics |
 | **Nusrat** | Developer | `nusrat` | `opd_ipd_reports`, `users_nusrat` | [README_NUSRAT.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_NUSRAT.md) | Outpatient (OPD) census, specialty eye clinics, branch footfalls, and IPD bed occupancy |
 | **Ruhul** | Developer | `ruhul` | `financial_reports`, `users_ruhul` | [README_RUHUL.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_RUHUL.md) | Daily counter collections, Cash vs Digital payments, and Zakat/Charity patient concessions |
+| **Adnan** | Developer | `adnan` | `pharmacy_reports`, `users_adnan` | [README_ADNAN.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_ADNAN.md) | Hospital eye pharmacy dispensing, surgical IOL consumables, and expiry tracking |
 | **Subhendu** | QA Engineer | `subhendu` / `dev` | `tests/` | [README_SUBHENDU.md](file:///e:/IIEH/Projects/iieih-iportal-dev/README_SUBHENDU.md) | Automated unit & integration testing on `dev`, regression testing & bug reporting |
-| *(All 4)* | Full Team | `dev` | `executive_dashboard` | *(Integrated Phase)* | Consolidated executive dashboard integrating components after Apps 1-3 are built |
+| *(All 5)* | Full Team | `dev` | `executive_dashboard` | *(Integrated Phase)* | Consolidated executive dashboard integrating components after Apps 1-4 are built |
 
 ---
 

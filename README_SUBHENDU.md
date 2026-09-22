@@ -135,3 +135,4 @@ When a test fails or you discover a bug after an intern merges to `dev`:
 ### Step 5: Preparing for App 4 (Executive Dashboard)
 
 Once all 3 apps are stable and your test suite passes 100%, you will collaborate with Naimul, Nusrat, and Ruhul to test the final integrated app: `executive_dashboard`.
+
