@@ -3,7 +3,25 @@ from . import views
 
 app_name = 'users_nusrat'
 
+
 urlpatterns = [
-    path('login/', views.login_view, name='login'),
-    # Nusrat: Add more URLs here (e.g. logout, profile, register)
+
+    path(
+        'login/',
+        views.login_view,
+        name='login'
+    ),
+
+    path(
+        'logout/',
+        views.logout_view,
+        name='logout'
+    ),
+
+    path(
+        'profile/',
+        views.profile_view,
+        name='profile'
+    ),
+
 ]
