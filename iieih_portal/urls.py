@@ -15,11 +15,13 @@ urlpatterns = [
     path('naimul/', include('users_naimul.urls')),
     path('nusrat/', include('users_nusrat.urls')),
     path('ruhul/', include('users_ruhul.urls')),
+    path('adnan/', include('users_adnan.urls')),
 
     # Intern Domain Reporting Modules
     path('surgeries/', include('surgeries_procedures.urls')),
     path('opd-ipd/', include('opd_ipd_reports.urls')),
     path('finance/', include('financial_reports.urls')),
+    path('pharmacy/', include('pharmacy_reports.urls')),
 
     # App 4: Consolidated Executive Dashboard
     path('dashboard/', include('executive_dashboard.urls')),
