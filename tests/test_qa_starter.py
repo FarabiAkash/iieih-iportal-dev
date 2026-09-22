@@ -35,3 +35,4 @@ class StarterQATestCase(TestCase):
     def test_executive_dashboard_index_renders(self):
         response = self.client.get(reverse('executive_dashboard:index'))
         self.assertEqual(response.status_code, 200)
+
