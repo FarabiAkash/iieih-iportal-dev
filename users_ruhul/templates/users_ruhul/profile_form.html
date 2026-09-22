@@ -1,0 +1,590 @@
+{% extends 'users_ruhul/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="auth-page">
+
+    <div class="auth-wrapper">
+
+        <!-- ================= LEFT SIDE ================= -->
+        <div class="auth-form-section">
+
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="logo-circle">
+                    <i class="bi bi-hospital"></i>
+                </div>
+            </div>
+
+
+            <!-- Form Header -->
+            <div class="form-header">
+
+                {% if form_btn == 'Login' %}
+
+                    <div class="user-icon">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+
+                    <h2>Finance Login</h2>
+
+                    <p>
+                        Sign in to access the finance workspace.
+                    </p>
+
+                {% else %}
+
+                    <div class="user-icon">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+
+                    <h2>Finance Registration</h2>
+
+                    <p>
+                        Create your finance officer account.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- Messages -->
+            {% include 'users_ruhul/message.html' %}
+
+
+            <!-- Form -->
+            <form method="POST" action="" class="auth-form">
+
+                {% csrf_token %}
+
+                {{ form_data|crispy }}
+
+                <button
+                    type="submit"
+                    class="btn auth-submit-btn w-100"
+                >
+                    {% if form_btn == 'Login' %}
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                    {% else %}
+                        <i class="bi bi-person-plus me-2"></i>
+                    {% endif %}
+
+                    {{ form_btn }}
+                </button>
+
+            </form>
+
+
+            <!-- Login / Registration Link -->
+
+            {% if form_btn == 'Login' %}
+
+                <div class="switch-link">
+
+                    <span>Don't have an account?</span>
+
+                    <a href="{% url 'ruhul_registration' %}">
+                        Register here
+                    </a>
+
+                </div>
+
+            {% elif form_btn == 'Register' %}
+
+                <div class="switch-link">
+
+                    <span>Already have an account?</span>
+
+                    <a href="{% url 'ruhul_login' %}">
+                        Login here
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ================= RIGHT SIDE ================= -->
+
+        <div class="auth-welcome-section">
+
+            <div class="welcome-overlay"></div>
+
+            <div class="welcome-content">
+
+                <div class="welcome-icon">
+                    <i class="bi bi-hospital"></i>
+                </div>
+
+                <h1>Welcome</h1>
+
+                <p>
+                    Manage financial collections, billing,
+                    counter reports and concessions from one
+                    secure finance portal.
+                </p>
+
+                <a href="#" class="welcome-link">
+                    Learn more about the portal
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+/* =========================================
+   MAIN AUTH PAGE
+========================================= */
+
+.auth-page {
+    min-height: calc(100vh - 70px);
+    background: #f5f7fa;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+}
+
+
+/* =========================================
+   AUTH WRAPPER
+========================================= */
+
+.auth-wrapper {
+
+    width: 100%;
+    max-width: 1250px;
+
+    min-height: 680px;
+
+    background: white;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    display: grid;
+
+    grid-template-columns: 42% 58%;
+
+    box-shadow:
+        0 15px 45px rgba(0, 0, 0, 0.12);
+}
+
+
+/* =========================================
+   LEFT FORM SECTION
+========================================= */
+
+.auth-form-section {
+
+    background: #ffffff;
+
+    padding: 35px 55px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.auth-logo {
+
+    margin-bottom: 10px;
+}
+
+.logo-circle {
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f1f8fb;
+
+    color: #087ea4;
+
+    font-size: 25px;
+}
+
+
+/* =========================================
+   FORM HEADER
+========================================= */
+
+.form-header {
+
+    text-align: center;
+
+    margin-bottom: 25px;
+}
+
+
+.user-icon {
+
+    width: 70px;
+    height: 70px;
+
+    margin: 0 auto 12px;
+
+    border-radius: 50%;
+
+    background: #087ea4;
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 32px;
+
+    box-shadow:
+        0 8px 20px rgba(8, 126, 164, 0.25);
+}
+
+
+.form-header h2 {
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    color: #202b33;
+
+    margin-bottom: 6px;
+}
+
+
+.form-header p {
+
+    color: #68747c;
+
+    font-size: 14px;
+
+    margin-bottom: 0;
+}
+
+
+/* =========================================
+   FORM
+========================================= */
+
+.auth-form .form-label {
+
+    font-weight: 600;
+
+    color: #39444c;
+
+    font-size: 14px;
+}
+
+
+.auth-form .form-control,
+.auth-form .form-select {
+
+    min-height: 48px;
+
+    border-radius: 9px;
+
+    border: 1px solid #d6dce1;
+
+    padding: 10px 14px;
+
+    font-size: 14px;
+
+    transition: 0.2s;
+}
+
+
+.auth-form .form-control:focus,
+.auth-form .form-select:focus {
+
+    border-color: #087ea4;
+
+    box-shadow:
+        0 0 0 0.2rem rgba(8, 126, 164, 0.12);
+}
+
+
+.auth-form .mb-3 {
+
+    margin-bottom: 15px !important;
+}
+
+
+/* =========================================
+   SUBMIT BUTTON
+========================================= */
+
+.auth-submit-btn {
+
+    min-height: 48px;
+
+    margin-top: 8px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: #087ea4;
+
+    color: white;
+
+    font-weight: 600;
+
+    transition: all 0.25s;
+}
+
+
+.auth-submit-btn:hover {
+
+    background: #056b8c;
+
+    color: white;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 15px rgba(8, 126, 164, 0.25);
+}
+
+
+/* =========================================
+   SWITCH LOGIN / REGISTER
+========================================= */
+
+.switch-link {
+
+    text-align: center;
+
+    margin-top: 20px;
+
+    font-size: 14px;
+
+    color: #68747c;
+}
+
+
+.switch-link a {
+
+    color: #087ea4;
+
+    font-weight: 700;
+
+    text-decoration: none;
+
+    margin-left: 5px;
+}
+
+
+.switch-link a:hover {
+
+    text-decoration: underline;
+}
+
+
+/* =========================================
+   RIGHT WELCOME SECTION
+========================================= */
+
+.auth-welcome-section {
+
+    position: relative;
+
+    min-height: 680px;
+
+    background-image:
+        url("/static/users_ruhul/images/hospital_background.jpg");
+
+    background-size: cover;
+
+    background-position: center;
+}
+
+
+/* Blue overlay */
+
+.welcome-overlay {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 105, 145, 0.88),
+            rgba(0, 125, 170, 0.72)
+        );
+}
+
+
+/* =========================================
+   WELCOME CONTENT
+========================================= */
+
+.welcome-content {
+
+    position: relative;
+
+    z-index: 2;
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding: 70px;
+
+    color: white;
+}
+
+
+.welcome-icon {
+
+    width: 65px;
+    height: 65px;
+
+    border-radius: 15px;
+
+    background: rgba(255,255,255,0.15);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 30px;
+
+    margin-bottom: 20px;
+}
+
+
+.welcome-content h1 {
+
+    font-size: 58px;
+
+    font-weight: 800;
+
+    margin-bottom: 15px;
+}
+
+
+.welcome-content p {
+
+    max-width: 550px;
+
+    font-size: 16px;
+
+    line-height: 1.7;
+
+    color: rgba(255,255,255,0.92);
+
+    margin-bottom: 25px;
+}
+
+
+.welcome-link {
+
+    width: fit-content;
+
+    color: white;
+
+    font-weight: 700;
+
+    text-decoration: none;
+
+    border-bottom: 2px solid #ffc107;
+
+    padding-bottom: 5px;
+}
+
+
+.welcome-link:hover {
+
+    color: #ffc107;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 991px) {
+
+    .auth-wrapper {
+
+        grid-template-columns: 1fr;
+
+        max-width: 600px;
+    }
+
+    .auth-welcome-section {
+
+        display: none;
+    }
+
+    .auth-form-section {
+
+        padding: 40px 35px;
+    }
+}
+
+
+@media (max-width: 576px) {
+
+    .auth-page {
+
+        padding: 15px;
+    }
+
+    .auth-wrapper {
+
+        border-radius: 12px;
+    }
+
+    .auth-form-section {
+
+        padding: 30px 20px;
+    }
+
+    .form-header h2 {
+
+        font-size: 24px;
+    }
+}
+
+</style>
+
+{% endblock content %}

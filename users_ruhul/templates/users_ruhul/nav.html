@@ -1,0 +1,82 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+    <div class="container">
+
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold fs-4" href="#">
+            <i class="bi bi-cash-coin"></i>
+            Ruhul Finance
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+
+                {% if request.user.is_authenticated %}
+
+                    <!-- Logout -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link px-3"
+                            href="{% url 'ruhul_logout' %}"
+                        >
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </a>
+                    </li>
+
+                    <!-- Profile -->
+                    <li class="nav-item ms-lg-2">
+                        <a
+                            class="btn btn-light text-primary fw-semibold px-4"
+                            href="{% url 'ruhul_profile' %}"
+                        >
+                            <i class="bi bi-person-circle"></i>
+                            Profile
+                        </a>
+                    </li>
+
+                {% else %}
+
+                    <!-- Registration -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link active px-3"
+                            href="{% url 'ruhul_registration' %}"
+                        >
+                            <i class="bi bi-person-plus"></i>
+                            Registration
+                        </a>
+                    </li>
+
+                    <!-- Login -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link px-3"
+                            href="{% url 'ruhul_login' %}"
+                        >
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Login
+                        </a>
+                    </li>
+
+                {% endif %}
+
+            </ul>
+
+        </div>
+    </div>
+</nav>
