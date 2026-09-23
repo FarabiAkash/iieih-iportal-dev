@@ -72,7 +72,7 @@ class SurgeryRecord(models.Model):
     surgeon_name = models.CharField(max_length=100, help_text="Name of the Surgeon")
     
     ot_room = models.CharField(max_length=10, choices=OT_Room_Choices, help_text="Operating Theater Room")
-    ot_slot = models.CharField(max_length=30, choices=OT_Slot_Choices, help_text="Operating Theater Slot")
+    ot_slot = models.CharField(max_length=30, choices=OT_Slot_Choices, blank=True, null=True, help_text="Operating Theater Slot")
     outcome = models.CharField(max_length=20, choices=Outcome_Choices, help_text="Outcome of the Surgery")
     
     medical_history = models.TextField(blank=True, help_text="Patient's Medical History and Previous Surgeries")

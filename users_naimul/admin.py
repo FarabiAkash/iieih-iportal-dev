@@ -28,7 +28,7 @@ class SurgeryRecordAdmin(admin.ModelAdmin):
 
 @admin.register(DiagnosisProcedure)
 class DiagnosisProcedureAdmin(admin.ModelAdmin):
-    list_display = ('patient_mrn', 'patient_name', 'procedure_name', 'eye', 'date', 'technician_name')
+    list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name')
     search_fields = ('patient_mrn', 'patient_name', 'technician_name')
     list_filter = ('procedure_name', 'eye', 'date')
 
