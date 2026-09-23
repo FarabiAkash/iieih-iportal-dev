@@ -3,7 +3,9 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .forms import RegistrationForm, LoginForm
+from .models import *
+
+from .forms import RegistrationForm, LoginForm ,ProfileUpdateForm
 
 
 def registration_view(request):
@@ -85,17 +87,98 @@ def logout_view(request):
     return redirect('ruhul_login')
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import RuhulProfile
+
+
 @login_required
 def profile_view(request):
 
-    profile = request.user.ruhul_profile
+    user = request.user
+
+    profile, created = RuhulProfile.objects.get_or_create(
+        user=user
+    )
 
     context = {
-        'profile': profile
+        'profile': profile,
+        'user_profile': user,
     }
 
     return render(
         request,
         'users_ruhul/profile.html',
+        context
+    )
+
+@login_required
+def profile_update_view(request):
+
+    user = request.user
+
+    profile, created = RuhulProfile.objects.get_or_create(
+        user=user
+    )
+
+    if request.method == 'POST':
+
+        form = ProfileUpdateForm(
+            request.POST,
+            instance=profile,
+            user=user
+        )
+
+        if form.is_valid():
+
+            # =========================
+            # Update User Information
+            # =========================
+
+            user.first_name = form.cleaned_data['first_name']
+
+            user.last_name = form.cleaned_data['last_name']
+
+            user.username = form.cleaned_data['username']
+
+            user.email = form.cleaned_data['email']
+
+            user.save()
+
+
+            # =========================
+            # Update Profile Information
+            # =========================
+
+            profile = form.save(commit=False)
+
+            profile.user = user
+
+            profile.save()
+
+
+            messages.success(
+                request,
+                'Profile updated successfully.'
+            )
+
+            return redirect('ruhul_profile')
+
+    else:
+
+        form = ProfileUpdateForm(
+            instance=profile,
+            user=user
+        )
+
+    context = {
+        'form_data': form,
+        'form_title': 'Update Profile',
+        'form_btn': 'Update Profile'
+    }
+
+    return render(
+        request,
+        'users_ruhul/profile_Update_form.html',
         context
     )

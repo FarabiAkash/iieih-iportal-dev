@@ -1,0 +1,262 @@
+{% extends 'users_ruhul//base.html' %}
+
+{% block content %}
+
+<div class="container mt-4 mb-5">
+
+    <!-- Messages -->
+    <div class="container">
+
+    {% include 'users_ruhul/message.html' %}
+
+     </div>
+
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                {{ form_title }}
+            </h2>
+
+            <p class="text-muted mb-0">
+                Enter daily hospital counter collection information
+            </p>
+        </div>
+
+        <a href="{% url 'daily_collection_list' %}"
+           class="btn btn-outline-secondary">
+            Back to Collections
+        </a>
+
+    </div>
+
+
+    <!-- Form Card -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-primary text-white py-3">
+
+            <h5 class="mb-0">
+                Daily Collection Information
+            </h5>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- Date & Branch -->
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label for="{{ form_data.date.id_for_label }}"
+                               class="form-label fw-semibold">
+
+                            Collection Date
+
+                        </label>
+
+                        {{ form_data.date }}
+
+                        {% if form_data.date.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form_data.date.errors }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label for="{{ form_data.hospital_branch.id_for_label }}"
+                               class="form-label fw-semibold">
+
+                            Hospital Branch
+
+                        </label>
+
+                        {{ form_data.hospital_branch }}
+
+                        {% if form_data.hospital_branch.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form_data.hospital_branch.errors }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Counter -->
+                <div class="mb-4">
+
+                    <label for="{{ form_data.counter_name.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        Counter Name
+
+                    </label>
+
+                    {{ form_data.counter_name }}
+
+                    {% if form_data.counter_name.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form_data.counter_name.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- Payment Section -->
+                <div class="border rounded p-3 mb-4">
+
+                    <h5 class="fw-bold mb-3">
+                        Payment Collection
+                    </h5>
+
+                    <div class="row">
+
+                        <!-- Cash -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form_data.cash_amount.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Cash Amount
+
+                            </label>
+
+                            {{ form_data.cash_amount }}
+
+                            {% if form_data.cash_amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form_data.cash_amount.errors }}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- Card -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form_data.card_amount.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Card Amount
+
+                            </label>
+
+                            {{ form_data.card_amount }}
+
+                            {% if form_data.card_amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form_data.card_amount.errors }}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- MFS -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form_data.mfs_amount.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                MFS Amount
+
+                            </label>
+
+                            {{ form_data.mfs_amount }}
+
+                            {% if form_data.mfs_amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form_data.mfs_amount.errors }}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {% comment %} <!-- Total Amount -->
+                <div class="mb-4">
+
+                    <label for="{{ form_data.total_amount.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        Total Collection
+
+                    </label>
+
+                    {{ form_data.total_amount }}
+
+                    <div class="form-text">
+                        Enter the total amount collected through
+                        cash, card and MFS.
+                    </div>
+
+                    {% if form_data.total_amount.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form_data.total_amount.errors }}
+                        </div>
+                    {% endif %}
+
+                </div> {% endcomment %}
+
+
+                <!-- Non Field Errors -->
+                {% if form_data.non_field_errors %}
+
+                    <div class="alert alert-danger">
+
+                        {{ form_data.non_field_errors }}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a href="{% url 'daily_collection_list' %}"
+                       class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        {{ form_btn }}
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
