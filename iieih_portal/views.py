@@ -11,10 +11,10 @@ def home(request):
                 <li><strong>Naimul:</strong> <a href="/naimul/login/">/naimul/login/</a> &bull; <a href="/surgeries/">/surgeries/</a></li>
                 <li><strong>Nusrat:</strong> <a href="/nusrat/login/">/nusrat/login/</a> &bull; <a href="/opd-ipd/">/opd-ipd/</a></li>
                 <li><strong>Ruhul:</strong> <a href="/ruhul/login/">/ruhul/login/</a> &bull; <a href="/finance/">/finance/</a></li>
+                <li><strong>Adnan:</strong> <a href="/adnan/login/">/adnan/login/</a> &bull; <a href="/pharmacy/">/pharmacy/</a></li>
                 <li><strong>App 4 (Executive Dashboard):</strong> <a href="/dashboard/">/dashboard/</a></li>
                 <li><strong>Admin:</strong> <a href="/admin/">/admin/</a></li>
             </ul>
         </body>
     </html>
     """)
-

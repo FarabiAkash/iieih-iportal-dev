@@ -20,6 +20,10 @@ class StarterQATestCase(TestCase):
         response = self.client.get(reverse('users_ruhul:login'))
         self.assertEqual(response.status_code, 200)
 
+    def test_adnan_login_page_renders(self):
+        response = self.client.get(reverse('users_adnan:login'))
+        self.assertEqual(response.status_code, 200)
+
     def test_surgeries_index_renders(self):
         response = self.client.get(reverse('surgeries_procedures:index'))
         self.assertEqual(response.status_code, 200)
@@ -32,7 +36,10 @@ class StarterQATestCase(TestCase):
         response = self.client.get(reverse('financial_reports:index'))
         self.assertEqual(response.status_code, 200)
 
+    def test_pharmacy_reports_index_renders(self):
+        response = self.client.get(reverse('pharmacy_reports:index'))
+        self.assertEqual(response.status_code, 200)
+
     def test_executive_dashboard_index_renders(self):
         response = self.client.get(reverse('executive_dashboard:index'))
         self.assertEqual(response.status_code, 200)
-
