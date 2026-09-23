@@ -7,20 +7,6 @@ from .models import RuhulProfile
 
 class RegistrationForm(UserCreationForm):
 
-    finance_role = forms.ChoiceField(
-        choices=RuhulProfile.ROLE_CHOICES
-    )
-
-    assigned_counter = forms.CharField(
-        max_length=100
-    )
-
-    discount_approval_limit = forms.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        min_value=0
-    )
-
     class Meta:
         model = User
 
@@ -29,9 +15,6 @@ class RegistrationForm(UserCreationForm):
             'email',
             'password1',
             'password2',
-            'finance_role',
-            'assigned_counter',
-            'discount_approval_limit',
         ]
 
     def clean_username(self):
@@ -82,23 +65,66 @@ class RegistrationForm(UserCreationForm):
 
         return password
 
-    def save(self, commit=True):
-
-        user = super().save(commit=commit)
-
-        if commit:
-
-            RuhulProfile.objects.create(
-                user=user,
-                finance_role=self.cleaned_data['finance_role'],
-                assigned_counter=self.cleaned_data['assigned_counter'],
-                discount_approval_limit=self.cleaned_data[
-                    'discount_approval_limit'
-                ]
-            )
-
-        return user
-
 
 class LoginForm(AuthenticationForm):
     pass
+
+
+from django import forms
+from .models import RuhulProfile
+
+
+class ProfileUpdateForm(forms.ModelForm):
+
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label="First Name"
+    )
+
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Last Name"
+    )
+
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Username"
+    )
+
+    email = forms.EmailField(
+        required=True,
+        label="Email"
+    )
+
+    class Meta:
+
+        model = RuhulProfile
+
+        fields = [
+            'first_name',
+            'last_name',
+            'username',
+            'email',
+            'finance_role',
+            'assigned_counter',
+            'discount_approval_limit',
+        ]
+
+    def __init__(self, *args, **kwargs):
+
+        user = kwargs.pop('user', None)
+
+        super().__init__(*args, **kwargs)
+
+        if user:
+
+            self.fields['first_name'].initial = user.first_name
+
+            self.fields['last_name'].initial = user.last_name
+
+            self.fields['username'].initial = user.username
+
+            self.fields['email'].initial = user.email

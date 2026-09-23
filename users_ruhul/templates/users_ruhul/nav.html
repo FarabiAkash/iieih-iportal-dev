@@ -27,16 +27,6 @@
 
                 {% if request.user.is_authenticated %}
 
-                    <!-- Logout -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link px-3"
-                            href="{% url 'ruhul_logout' %}"
-                        >
-                            <i class="bi bi-box-arrow-right"></i>
-                            Logout
-                        </a>
-                    </li>
 
                     <!-- Profile -->
                     <li class="nav-item ms-lg-2">
@@ -46,6 +36,40 @@
                         >
                             <i class="bi bi-person-circle"></i>
                             Profile
+                        </a>
+                    </li>
+
+
+                    <!-- Daily Collection -->
+                     <li class="nav-item ms-lg-2">
+                        <a
+                            class="btn btn-light text-primary fw-semibold px-4"
+                            href="{% url 'daily_collection_list' %}"
+                        >
+                            <i class="bi bi-person-circle"></i>
+                            Daily Collection
+                        </a>
+                    </li>
+
+                    <!-- Daily Collection -->
+                     <li class="nav-item ms-lg-2">
+                        <a
+                            class="btn btn-light text-primary fw-semibold px-4"
+                            href="{% url 'concession_record_list' %}"
+                        >
+                            <i class="bi bi-person-circle"></i>
+                            Concession
+                        </a>
+                    </li>
+
+                    <!-- Logout -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link px-3"
+                            href="{% url 'ruhul_logout' %}"
+                        >
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
                         </a>
                     </li>
 
