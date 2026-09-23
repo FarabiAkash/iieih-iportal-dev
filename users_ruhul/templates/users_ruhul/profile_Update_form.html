@@ -38,6 +38,9 @@
 
             {% csrf_token %}
 
+
+            <!-- ================= PERSONAL INFORMATION ================= -->
+
             <div class="form-section">
 
                 <div class="section-title">
@@ -49,26 +52,25 @@
                 </div>
 
 
-                <div class="row">
-                     <!-- First name -->
+                <div class="row g-4">
 
-                    <div class="col-md-6 mb-3">
+                    <!-- First Name -->
 
-                        <label for="{{ form_data.username.id_for_label }}"
-                               class="form-label">
+                    <div class="col-md-6">
 
+                        <label
+                            for="{{ form_data.first_name.id_for_label }}"
+                            class="form-label"
+                        >
                             First Name
-
                         </label>
 
                         {{ form_data.first_name }}
 
                         {% if form_data.first_name.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.first_name.errors }}
-
                             </div>
 
                         {% endif %}
@@ -76,25 +78,23 @@
                     </div>
 
 
-                     <!-- Last name -->
+                    <!-- Last Name -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.username.id_for_label }}"
-                               class="form-label">
-
+                        <label
+                            for="{{ form_data.last_name.id_for_label }}"
+                            class="form-label"
+                        >
                             Last Name
-
                         </label>
 
                         {{ form_data.last_name }}
 
                         {% if form_data.last_name.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.last_name.errors }}
-
                             </div>
 
                         {% endif %}
@@ -104,23 +104,21 @@
 
                     <!-- Username -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.username.id_for_label }}"
-                               class="form-label">
-
+                        <label
+                            for="{{ form_data.username.id_for_label }}"
+                            class="form-label"
+                        >
                             Username
-
                         </label>
 
                         {{ form_data.username }}
 
                         {% if form_data.username.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.username.errors }}
-
                             </div>
 
                         {% endif %}
@@ -130,23 +128,21 @@
 
                     <!-- Email -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.email.id_for_label }}"
-                               class="form-label">
-
-                            Email
-
+                        <label
+                            for="{{ form_data.email.id_for_label }}"
+                            class="form-label"
+                        >
+                            Email Address
                         </label>
 
                         {{ form_data.email }}
 
                         {% if form_data.email.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.email.errors }}
-
                             </div>
 
                         {% endif %}
@@ -171,27 +167,25 @@
                 </div>
 
 
-                <div class="row">
+                <div class="row g-4">
 
                     <!-- Finance Role -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.finance_role.id_for_label }}"
-                               class="form-label">
-
+                        <label
+                            for="{{ form_data.finance_role.id_for_label }}"
+                            class="form-label"
+                        >
                             Finance Role
-
                         </label>
 
                         {{ form_data.finance_role }}
 
                         {% if form_data.finance_role.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.finance_role.errors }}
-
                             </div>
 
                         {% endif %}
@@ -201,23 +195,21 @@
 
                     <!-- Assigned Counter -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.assigned_counter.id_for_label }}"
-                               class="form-label">
-
+                        <label
+                            for="{{ form_data.assigned_counter.id_for_label }}"
+                            class="form-label"
+                        >
                             Assigned Counter
-
                         </label>
 
                         {{ form_data.assigned_counter }}
 
                         {% if form_data.assigned_counter.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.assigned_counter.errors }}
-
                             </div>
 
                         {% endif %}
@@ -227,23 +219,29 @@
 
                     <!-- Discount Approval Limit -->
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
 
-                        <label for="{{ form_data.discount_approval_limit.id_for_label }}"
-                               class="form-label">
-
+                        <label
+                            for="{{ form_data.discount_approval_limit.id_for_label }}"
+                            class="form-label"
+                        >
                             Discount Approval Limit
-
                         </label>
 
-                        {{ form_data.discount_approval_limit }}
+                        <div class="input-group">
+
+                            {{ form_data.discount_approval_limit }}
+
+                            <span class="input-group-text">
+                                TK
+                            </span>
+
+                        </div>
 
                         {% if form_data.discount_approval_limit.errors %}
 
-                            <div class="text-danger small mt-1">
-
+                            <div class="field-error">
                                 {{ form_data.discount_approval_limit.errors }}
-
                             </div>
 
                         {% endif %}
@@ -259,8 +257,10 @@
 
             <div class="form-actions">
 
-                <a href="{% url 'ruhul_profile' %}"
-                   class="btn btn-secondary">
+                <a
+                    href="{% url 'ruhul_profile' %}"
+                    class="btn btn-outline-secondary"
+                >
 
                     <i class="bi bi-arrow-left me-1"></i>
 
@@ -269,8 +269,10 @@
                 </a>
 
 
-                <button type="submit"
-                        class="btn btn-primary">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
 
                     <i class="bi bi-check-circle me-1"></i>
 
@@ -287,6 +289,8 @@
 </div>
 
 
+<!-- ================= CUSTOM CSS ================= -->
+
 <style>
 
 /* =========================================
@@ -300,18 +304,19 @@
     background: #f5f7fa;
 
     padding: 45px 20px;
+
 }
 
 
 /* =========================================
-   CONTAINER
+   MAIN CONTAINER
 ========================================= */
 
 .profile-update-container {
 
     max-width: 900px;
 
-    margin: auto;
+    margin: 0 auto;
 
     background: #ffffff;
 
@@ -321,6 +326,7 @@
 
     box-shadow:
         0 8px 30px rgba(0, 0, 0, 0.08);
+
 }
 
 
@@ -336,19 +342,22 @@
 
     gap: 18px;
 
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 
     padding-bottom: 25px;
 
     border-bottom: 1px solid #e9ecef;
+
 }
 
 
 .profile-icon {
 
-    width: 60px;
+    width: 58px;
 
-    height: 60px;
+    height: 58px;
+
+    flex-shrink: 0;
 
     border-radius: 12px;
 
@@ -362,7 +371,8 @@
 
     justify-content: center;
 
-    font-size: 28px;
+    font-size: 26px;
+
 }
 
 
@@ -370,11 +380,12 @@
 
     margin: 0;
 
-    font-size: 28px;
+    font-size: 26px;
 
     font-weight: 700;
 
     color: #202b33;
+
 }
 
 
@@ -385,6 +396,7 @@
     color: #6c757d;
 
     font-size: 14px;
+
 }
 
 
@@ -397,8 +409,20 @@
     padding: 25px 0;
 
     border-bottom: 1px solid #eeeeee;
+
 }
 
+
+.form-section:last-of-type {
+
+    border-bottom: none;
+
+}
+
+
+/* =========================================
+   SECTION TITLE
+========================================= */
 
 .section-title {
 
@@ -408,13 +432,14 @@
 
     gap: 9px;
 
-    margin-bottom: 22px;
+    margin-bottom: 24px;
 
     font-size: 17px;
 
     font-weight: 700;
 
     color: #202b33;
+
 }
 
 
@@ -423,14 +448,19 @@
     color: #087ea4;
 
     font-size: 20px;
+
 }
 
 
 /* =========================================
-   LABEL
+   FORM LABEL
 ========================================= */
 
 .form-label {
+
+    display: block;
+
+    margin-bottom: 8px;
 
     font-size: 14px;
 
@@ -438,16 +468,25 @@
 
     color: #39444c;
 
-    margin-bottom: 7px;
+}
+
+
+.form-label::after {
+
+    content: "";
+
 }
 
 
 /* =========================================
-   INPUT
+   FORM INPUT
 ========================================= */
 
 .form-control,
+
 .form-select {
+
+    width: 100%;
 
     min-height: 46px;
 
@@ -455,21 +494,100 @@
 
     border-radius: 8px;
 
-    padding: 9px 13px;
+    padding: 10px 13px;
 
     font-size: 14px;
 
-    transition: 0.2s;
+    color: #212529;
+
+    background-color: #ffffff;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+.form-control:hover,
+
+.form-select:hover {
+
+    border-color: #b8c1c8;
+
 }
 
 
 .form-control:focus,
+
 .form-select:focus {
 
     border-color: #087ea4;
 
     box-shadow:
         0 0 0 0.2rem rgba(8, 126, 164, 0.12);
+
+    outline: none;
+
+}
+
+
+/* =========================================
+   INPUT GROUP
+========================================= */
+
+.input-group .form-control {
+
+    border-top-right-radius: 0;
+
+    border-bottom-right-radius: 0;
+
+}
+
+
+.input-group-text {
+
+    min-height: 46px;
+
+    background: #f8f9fa;
+
+    border: 1px solid #d6dce1;
+
+    color: #6c757d;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================
+   ERROR MESSAGE
+========================================= */
+
+.field-error {
+
+    margin-top: 6px;
+
+    font-size: 13px;
+
+    color: #dc3545;
+
+}
+
+
+.field-error ul {
+
+    margin: 0;
+
+    padding-left: 18px;
+
+}
+
+
+.field-error li {
+
+    margin-bottom: 2px;
+
 }
 
 
@@ -483,9 +601,12 @@
 
     justify-content: flex-end;
 
+    align-items: center;
+
     gap: 10px;
 
-    padding-top: 25px;
+    padding-top: 28px;
+
 }
 
 
@@ -500,30 +621,45 @@
     font-size: 14px;
 
     font-weight: 600;
+
 }
 
 
-.btn-primary {
+.form-actions .btn-primary {
 
     background: #087ea4;
 
     border-color: #087ea4;
+
 }
 
 
-.btn-primary:hover {
+.form-actions .btn-primary:hover {
 
     background: #056b8c;
 
     border-color: #056b8c;
+
 }
 
 
-.btn-secondary {
+.form-actions .btn-outline-secondary {
+
+    border-color: #adb5bd;
+
+    color: #495057;
+
+}
+
+
+.form-actions .btn-outline-secondary:hover {
 
     background: #6c757d;
 
     border-color: #6c757d;
+
+    color: #ffffff;
+
 }
 
 
@@ -531,35 +667,108 @@
    RESPONSIVE
 ========================================= */
 
-@media (max-width: 576px) {
+@media (max-width: 767px) {
 
     .profile-update-page {
 
-        padding: 20px 10px;
+        padding: 25px 12px;
+
     }
 
 
     .profile-update-container {
 
         padding: 25px 20px;
+
+        border-radius: 12px;
+
+    }
+
+
+    .profile-header {
+
+        align-items: flex-start;
+
     }
 
 
     .profile-header h2 {
 
-        font-size: 23px;
+        font-size: 22px;
+
+    }
+
+
+    .form-section {
+
+        padding: 22px 0;
+
+    }
+
+}
+
+
+@media (max-width: 576px) {
+
+    .profile-update-page {
+
+        padding: 15px 8px;
+
+    }
+
+
+    .profile-update-container {
+
+        padding: 22px 16px;
+
+    }
+
+
+    .profile-header {
+
+        gap: 12px;
+
+    }
+
+
+    .profile-icon {
+
+        width: 50px;
+
+        height: 50px;
+
+        font-size: 22px;
+
+    }
+
+
+    .profile-header h2 {
+
+        font-size: 20px;
+
+    }
+
+
+    .profile-header p {
+
+        font-size: 13px;
+
     }
 
 
     .form-actions {
 
         flex-direction: column-reverse;
+
+        width: 100%;
+
     }
 
 
     .form-actions .btn {
 
         width: 100%;
+
     }
 
 }
