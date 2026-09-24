@@ -1,0 +1,217 @@
+{% extends 'users_ruhul/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4 mb-5">
+
+    <!-- Messages -->
+    <div class="container">
+
+    {% include 'users_ruhul/message.html' %}
+
+    </div>
+
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                Concession Records
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage patient concession and discount records
+            </p>
+        </div>
+
+        <a href="{% url 'concession_record_create' %}"
+           class="btn btn-primary">
+
+            <i class="bi bi-plus-circle"></i>
+            Add Concession
+
+        </a>
+
+    </div>
+
+
+    <!-- Records Card -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-primary text-white py-3">
+
+            <h5 class="mb-0">
+                Concession & Discount Records
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            {% if concessions %}
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Date</th>
+
+                            <th>Patient MRN</th>
+
+                            <th>Concession Type</th>
+
+                            <th>Bill Total</th>
+
+                            <th>Discount</th>
+
+                            <th>Payable Amount</th>
+
+                            <th>Approved By</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for concession in concessions %}
+
+                        <tr>
+
+                            <!-- Serial -->
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
+
+
+                            <!-- Date -->
+                            <td>
+                                {{ concession.date|date:"d M Y" }}
+                            </td>
+
+
+                            <!-- Patient MRN -->
+                            <td>
+
+                                <span class="fw-semibold">
+                                    {{ concession.patient_mrn }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- Concession Type -->
+                            <td>
+
+                                <span class="badge bg-info text-dark">
+
+                                    {{ concession.get_concession_type_display }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- Bill Total -->
+                            <td>
+                                {{ concession.bill_total }}
+                            </td>
+
+
+                            <!-- Discount -->
+                            <td class="text-danger fw-semibold">
+                                {{ concession.discount_amount }}
+                            </td>
+
+
+                            <!-- Payable Amount -->
+                            <td class="fw-bold text-success">
+
+                                {{ concession.payable_amount}}
+
+                            </td>
+
+
+                            <!-- Approved By -->
+                            <td>
+                                {{ concession.approved_by }}
+                            </td>
+
+
+                            <!-- Actions -->
+                            <td>
+
+                                <div class="btn-group" role="group">
+
+                                    <a href="{% url 'concession_record_update' concession.pk %}"
+                                       class="btn btn-sm btn-outline-primary">
+
+                                        Edit
+
+                                    </a>
+
+
+                                    <a href="{% url 'concession_record_delete' concession.pk %}"
+                                       class="btn btn-sm btn-outline-danger">
+
+                                        Delete
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+                <!-- Empty State -->
+
+                <div class="text-center py-5">
+
+                    <h5 class="text-muted">
+                        No concession records found.
+                    </h5>
+
+                    <p class="text-muted">
+                        Add your first concession record.
+                    </p>
+
+                    <a href="{% url 'concession_record_create' %}"
+                       class="btn btn-primary">
+
+                        Add Concession
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

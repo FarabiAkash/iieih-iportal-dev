@@ -1,0 +1,163 @@
+{% extends 'users_ruhul/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="container">
+
+    {% include 'users_ruhul/message.html' %}
+
+</div>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                Daily Collections
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage daily hospital counter collections
+            </p>
+        </div>
+
+        <a href="{% url 'daily_collection_create' %}"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Add Collection
+        </a>
+
+    </div>
+
+
+    <!-- Collection Table Card -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                Daily Collection Records
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            {% if collections %}
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Hospital Branch</th>
+                            <th>Counter</th>
+                            <th>Cash</th>
+                            <th>Card</th>
+                            <th>MFS</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for collection in collections %}
+
+                        <tr>
+
+                            <td>
+                                {{ forloop.counter }}
+                            </td>
+
+                            <td>
+                                {{ collection.date|date:"d M Y" }}
+                            </td>
+
+                            <td>
+                                {{ collection.hospital_branch }}
+                            </td>
+
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ collection.get_counter_name_display }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{ collection.cash_amount }}
+                            </td>
+
+                            <td>
+                                {{ collection.card_amount }}
+                            </td>
+
+                            <td>
+                                {{ collection.mfs_amount }}
+                            </td>
+
+                            <td class="fw-bold">
+                                {{ collection.total_amount }}
+                            </td>
+
+                            <td>
+
+                                <div class="btn-group" role="group">
+
+                                    <a href="{% url 'daily_collection_update' collection.pk %}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
+
+                                    <a href="{% url 'daily_collection_delete' collection.pk %}"
+                                       class="btn btn-sm btn-outline-danger">
+                                        Delete
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+                <div class="text-center py-5">
+
+                    <h5 class="text-muted">
+                        No collection records found.
+                    </h5>
+
+                    <p class="text-muted">
+                        Add your first daily collection record.
+                    </p>
+
+                    <a href="{% url 'daily_collection_create' %}"
+                       class="btn btn-primary">
+                        Add Collection
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
