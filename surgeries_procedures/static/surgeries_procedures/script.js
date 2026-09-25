@@ -57,3 +57,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     setAppTheme(currentTheme);
 });
+
