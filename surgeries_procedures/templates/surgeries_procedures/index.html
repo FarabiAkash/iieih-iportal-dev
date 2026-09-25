@@ -1,14 +1,554 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surgeries & Procedures Report</title>
-</head>
-<body>
-    <h1>Eye Surgeries & Diagnostic Procedures Report</h1>
-    <p>Assigned Developer: <strong>Naimul</strong></p>
-    <p>App: <code>surgeries_procedures</code></p>
-</body>
-</html>
+    <title>Surgeries &amp; OT Procedures Console | IIEI&amp;H </title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Pre-render theme check to prevent flash -->
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('iieih_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="{% static 'surgeries_procedures/style.css' %}">
+</head>
+
+<body>
+
+    <!-- Main Navigation Header -->
+    <header class="header-nav">
+        <a href="/surgeries/" class="brand-section">
+            <div class="brand-badge">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+            <div class="brand-titles">
+                <h1>IIEI&amp;H Eye Microsurgery Complex</h1>
+                <span>Operation Theatre &amp; Clinical Reports System</span>
+            </div>
+        </a>
+
+        <div class="user-nav-actions">
+            <!-- Day & Night Theme Bar -->
+            <div class="theme-switch-bar" role="group" aria-label="Day and Night Theme Switcher">
+                <button type="button" class="theme-switch-btn" data-theme-val="light" onclick="setAppTheme('light')"
+                    title="Switch to Day Mode">
+                    <i class="fa-solid fa-sun" style="color: #f59e0b;"></i> <span>Day</span>
+                </button>
+                <button type="button" class="theme-switch-btn" data-theme-val="dark" onclick="setAppTheme('dark')"
+                    title="Switch to Night Mode">
+                    <i class="fa-solid fa-moon" style="color: #38bdf8;"></i> <span>Night</span>
+                </button>
+            </div>
+
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'users_naimul:profile' %}" class="btn-nav">
+                <i class="fa-solid fa-user-doctor" style="color: #38bdf8;"></i>
+                <span>Dr. {{ request.user.get_full_name|default:request.user.username }}</span>
+            </a>
+            <button type="button" class="btn-nav btn-action-primary" onclick="openNewSurgeryModal()">
+                <i class="fa-solid fa-plus"></i> New Surgery Entry
+            </button>
+            <a href="{% url 'users_naimul:logout' %}" class="btn-nav"
+                style="border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
+                <i class="fa-solid fa-power-off"></i>
+            </a>
+            {% else %}
+            <a href="/naimul/login/" class="btn-nav btn-action-primary">
+                <i class="fa-solid fa-stethoscope"></i> Surgeon Portal Login
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-container">
+
+        <!-- Django Toast Notifications -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert-toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+            <span><i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"
+                    style="margin-right: 8px;"></i> {{ message }}</span>
+            <button type="button" onclick="this.parentElement.remove()"
+                style="background:none;border:none;color:inherit;cursor:pointer;"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Surgical KPI Overview -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-box icon-blue">
+                    <i class="fa-solid fa-microscope"></i>
+                </div>
+                <div class="kpi-content">
+                    <h3>Total Surgeries Logged</h3>
+                    <div class="kpi-value">{{ total_count }}</div>
+                    <div class="kpi-subtext">Active Operation Theatre Roster</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box icon-emerald">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="kpi-content">
+                    <h3>Surgical Success Rate</h3>
+                    <div class="kpi-value">{{ success_rate }}%</div>
+                    <div class="kpi-subtext">Optimal Clinical Outcomes</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box icon-teal">
+                    <i class="fa-solid fa-eye-dropper"></i>
+                </div>
+                <div class="kpi-content">
+                    <h3>Cataract Micro-Incisions</h3>
+                    <div class="kpi-value">{{ cataract_count }}</div>
+                    <div class="kpi-subtext">Phaco + Foldable IOL &amp; SICS</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box icon-amber">
+                    <i class="fa-solid fa-radiation"></i>
+                </div>
+                <div class="kpi-content">
+                    <h3>Subspecialty Surgeries</h3>
+                    <div class="kpi-value">{{ retina_count|add:glaucoma_count|add:cornea_count }}</div>
+                    <div class="kpi-subtext">Retina, Glaucoma &amp; Cornea Grafts</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Operation Theatre Active Suites Status -->
+        <section class="ot-status-bar">
+            <div class="ot-bar-title">
+                <i class="fa-solid fa-hospital-user" style="color: var(--primary-light);"></i>
+                <span>OT Complex Suite Utilization:</span>
+            </div>
+            <div class="ot-chips">
+                <a href="?ot_room=OT-1" class="ot-chip {% if selected_ot == 'OT-1' %}active{% endif %}">
+                    <span class="chip-dot"></span> OT-1 Phaco Suite ({{ ot1_count }})
+                </a>
+                <a href="?ot_room=OT-2" class="ot-chip {% if selected_ot == 'OT-2' %}active{% endif %}">
+                    <span class="chip-dot"></span> OT-2 Retina Suite ({{ ot2_count }})
+                </a>
+                <a href="?ot_room=OT-3" class="ot-chip {% if selected_ot == 'OT-3' %}active{% endif %}">
+                    <span class="chip-dot"></span> OT-3 Laser &amp; Cornea ({{ ot3_count }})
+                </a>
+                <a href="?ot_room=OT-4" class="ot-chip {% if selected_ot == 'OT-4' %}active{% endif %}">
+                    <span class="chip-dot"></span> OT-4 Pediatric OT ({{ ot4_count }})
+                </a>
+                {% if selected_ot %}
+                <a href="?" class="ot-chip" style="border-color: #ef4444; color: #fca5a5;">
+                    <i class="fa-solid fa-xmark"></i> Clear Filter
+                </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Clinical Search & Filter Panel -->
+        <section class="filter-panel">
+            <form method="get" action="/surgeries/" class="filter-form">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" name="q" value="{{ search_query }}" class="search-input"
+                        placeholder="Search by Patient MRN, Patient Name, or Surgeon...">
+                </div>
+
+                <select name="surgery_type" class="filter-select">
+                    <option value="">All Surgery Types</option>
+                    {% for val, label in surgery_type_choices %}
+                    <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="outcome" class="filter-select">
+                    <option value="">All Outcomes</option>
+                    {% for val, label in outcome_choices %}
+                    <option value="{{ val }}" {% if selected_outcome == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn-filter">
+                    <i class="fa-solid fa-filter"></i> Apply Filters
+                </button>
+
+                {% if search_query or selected_type or selected_outcome or selected_ot %}
+                <a href="/surgeries/" class="btn-reset">Reset All</a>
+                {% endif %}
+            </form>
+        </section>
+
+        <!-- Surgery Register Table -->
+        <div class="table-card">
+            <div class="table-header-bar">
+                <div class="table-title">
+                    <i class="fa-solid fa-clipboard-list" style="color: #38bdf8;"></i>
+                    <span>Operation Theatre Surgical Ledger</span>
+                    <span style="font-size: 0.8rem; font-weight: 500; color: #94a3b8;">({{ surgeries.count }} records
+                        matching)</span>
+                </div>
+                <div class="table-actions">
+                    <button type="button" class="btn-nav" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print Register
+                    </button>
+                    <button type="button" class="btn-nav btn-action-primary" onclick="openNewSurgeryModal()">
+                        <i class="fa-solid fa-plus"></i> New Case
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="surgical-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Patient MRN</th>
+                            <th>Patient Details</th>
+                            <th>Eye</th>
+                            <th>Procedure / Surgery</th>
+                            <th>Operating Surgeon</th>
+                            <th>OT Suite &amp; Slot</th>
+                            <th>Medical History (Models.py)</th>
+                            <th>Outcome</th>
+                            <th>Operative Notes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in surgeries %}
+                        <tr>
+                            <td style="white-space: nowrap; color: #94a3b8;">{{ s.date|date:"d M Y" }}</td>
+                            <td><span class="mrn-badge">{{ s.patient_mrn }}</span></td>
+                            <td>
+                                <strong style="color: var(--text-main);">{{ s.patient_name }}</strong>
+                                <div style="font-size: 0.76rem; color: #94a3b8;">{{ s.patient_age }} yrs &bull; {{
+                                    s.patient_gender }}</div>
+                            </td>
+                            <td>
+                                {% if s.eye == 'RE' %}
+                                <span class="eye-badge eye-re"><i class="fa-regular fa-eye"></i> OD (Right)</span>
+                                {% elif s.eye == 'LE' %}
+                                <span class="eye-badge eye-le"><i class="fa-regular fa-eye"></i> OS (Left)</span>
+                                {% else %}
+                                <span class="eye-badge eye-be"><i class="fa-regular fa-eye"></i> OU (Both)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-main);">{{ s.surgery_type }}</strong>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-user-doctor" style="color: #38bdf8; font-size: 0.85rem;"></i>
+                                    <span>{{ s.surgeon_name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="ot-badge">{{ s.ot_room }}</span>
+                                <div
+                                    style="font-size: 0.74rem; color: var(--primary-light); margin-top: 3px; font-weight: 600;">
+                                    {{ s.ot_slot|default:"Slot 1" }}</div>
+                            </td>
+                            <td style="max-width: 240px; font-size: 0.8rem; line-height: 1.4; color: var(--text-main);">
+                                <i class="fa-solid fa-notes-medical" style="color: #38bdf8; margin-right: 4px;"></i>{{
+                                s.medical_history|default:"No systemic comorbidities reported." }}
+                            </td>
+                            <td>
+                                {% if s.outcome == 'Successful' %}
+                                <span class="status-badge status-success"><i class="fa-solid fa-check"></i>
+                                    Successful</span>
+                                {% elif s.outcome == 'Under Observation' %}
+                                <span class="status-badge status-observation"><i class="fa-solid fa-clock"></i>
+                                    Observation</span>
+                                {% else %}
+                                <span class="status-badge status-complications"><i
+                                        class="fa-solid fa-triangle-exclamation"></i> Complication</span>
+                                {% endif %}
+                            </td>
+                            <td
+                                style="max-width: 240px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                                {{ s.notes|default:"Uneventful operative procedure." }}
+                            </td>
+                            <td style="white-space: nowrap;">
+                                <button type="button" class="btn-nav"
+                                    style="padding: 5px 12px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px;"
+                                    onclick="openEditSurgeryModal('{{ s.id }}', '{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.surgeon_name }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}')">
+                                    <i class="fa-solid fa-pen-to-square" style="color: #f59e0b;"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                                <i class="fa-solid fa-clipboard-question"
+                                    style="font-size: 2.2rem; color: #475569; margin-bottom: 12px; display: block;"></i>
+                                <p style="font-size: 1rem; font-weight: 600; color: #cbd5e1;">No surgical procedures
+                                    found matching your query.</p>
+                                <p style="font-size: 0.82rem; margin-top: 4px;">Try clearing filters or enter a new
+                                    surgery record using the button above.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal for Logging New Surgery -->
+    <div class="modal-overlay" id="surgeryModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-notes-medical" style="color: var(--primary-light);"></i> Log Operative
+                    Procedure</h2>
+                <button type="button" class="modal-close" onclick="closeNewSurgeryModal()">&times;</button>
+            </div>
+            <form method="post" action="/surgeries/">
+                {% csrf_token %}
+                <input type="hidden" name="add_surgery" value="1">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Patient MRN *</label>
+                            <input type="text" name="patient_mrn" class="form-input" placeholder="e.g. MRN-1028"
+                                required>
+                        </div>
+                        <div>
+                            <label class="form-label">Patient Full Name *</label>
+                            <input type="text" name="patient_name" class="form-input" placeholder="e.g. Rafiqul Islam"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Patient Age</label>
+                            <input type="number" name="patient_age" class="form-input" value="50" min="1" max="110"
+                                required>
+                        </div>
+                        <div>
+                            <label class="form-label">Gender</label>
+                            <select name="patient_gender" class="form-input">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Eye Operative Side</label>
+                            <select name="eye" class="form-input">
+                                <option value="RE">Right Eye (OD)</option>
+                                <option value="LE">Left Eye (OS)</option>
+                                <option value="BE">Both Eyes (OU)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Surgery Category</label>
+                            <select name="surgery_type" class="form-input">
+                                {% for val, label in surgery_type_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Lead Operating Surgeon</label>
+                            <input type="text" name="surgeon_name" class="form-input" value="Dr. Naimul Hasan" required>
+                        </div>
+                        <div>
+                            <label class="form-label">OT Suite Room</label>
+                            <select name="ot_room" class="form-input">
+                                <option value="OT-1">OT Room 1 (General / Phaco)</option>
+                                <option value="OT-2">OT Room 2 (Retina OT)</option>
+                                <option value="OT-3">OT Room 3 (Laser OT)</option>
+                                <option value="OT-4">OT Room 4 (Pediatric OT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Scheduled OT Slot *</label>
+                            <select name="ot_slot" class="form-input">
+                                {% for val, label in ot_slot_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Surgical Outcome</label>
+                            <select name="outcome" class="form-input">
+                                <option value="Successful">Successful</option>
+                                <option value="Under Observation">Under Observation</option>
+                                <option value="Complications">Complications</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label class="form-label">Patient Medical History (as in models.py)</label>
+                        <textarea name="medical_history" class="form-input" rows="2"
+                            placeholder="e.g. Type-2 Diabetes on insulin, Controlled Hypertension, previous ocular laser, allergies."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Operative Notes / IOL Details / Remarks</label>
+                        <textarea name="notes" class="form-input" rows="2"
+                            placeholder="e.g. Phacoemulsification with Foldable IOL. Uneventful procedure. Clear cornea."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-nav" onclick="closeNewSurgeryModal()">Cancel</button>
+                    <button type="submit" class="btn-nav btn-action-primary">
+                        <i class="fa-solid fa-check"></i> Save to Surgical Register
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Surgery Record -->
+    <div class="modal-overlay" id="editSurgeryModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Edit Operative Record</h2>
+                <button type="button" class="modal-close" onclick="closeEditSurgeryModal()">&times;</button>
+            </div>
+            <form method="post" action="/surgeries/">
+                {% csrf_token %}
+                <input type="hidden" name="edit_surgery" value="1">
+                <input type="hidden" name="surgery_id" id="edit_surgery_id">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Patient MRN *</label>
+                            <input type="text" id="edit_patient_mrn" name="patient_mrn" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Patient Full Name *</label>
+                            <input type="text" id="edit_patient_name" name="patient_name" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Patient Age</label>
+                            <input type="number" id="edit_patient_age" name="patient_age" class="form-input" min="1"
+                                max="120" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Gender</label>
+                            <select id="edit_patient_gender" name="patient_gender" class="form-input">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Eye Operative Side</label>
+                            <select id="edit_eye" name="eye" class="form-input">
+                                <option value="RE">Right Eye (OD)</option>
+                                <option value="LE">Left Eye (OS)</option>
+                                <option value="BE">Both Eyes (OU)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Surgery Category</label>
+                            <select id="edit_surgery_type" name="surgery_type" class="form-input">
+                                {% for val, label in surgery_type_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Lead Operating Surgeon</label>
+                            <input type="text" id="edit_surgeon_name" name="surgeon_name" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="form-label">OT Suite Room</label>
+                            <select id="edit_ot_room" name="ot_room" class="form-input">
+                                <option value="OT-1">OT Room 1 (General / Phaco)</option>
+                                <option value="OT-2">OT Room 2 (Retina OT)</option>
+                                <option value="OT-3">OT Room 3 (Laser OT)</option>
+                                <option value="OT-4">OT Room 4 (Pediatric OT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label">Scheduled OT Slot *</label>
+                            <select id="edit_ot_slot" name="ot_slot" class="form-input">
+                                {% for val, label in ot_slot_choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Surgical Outcome</label>
+                            <select id="edit_outcome" name="outcome" class="form-input">
+                                <option value="Successful">Successful</option>
+                                <option value="Under Observation">Under Observation</option>
+                                <option value="Complications">Complications</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label class="form-label">Patient Medical History (as in models.py)</label>
+                        <textarea id="edit_medical_history" name="medical_history" class="form-input"
+                            rows="2"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Operative Notes / IOL Details / Remarks</label>
+                        <textarea id="edit_notes" name="notes" class="form-input" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-nav" onclick="closeEditSurgeryModal()">Cancel</button>
+                    <button type="submit" class="btn-nav btn-action-primary">
+                        <i class="fa-solid fa-check"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="{% static 'surgeries_procedures/script.js' %}"></script>
+
+</body>
+
+</html>

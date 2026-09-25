@@ -9,15 +9,24 @@ class Migration(migrations.Migration):
         ('users_naimul', '0002_diagnosisrecord'),
     ]
 
+    # operations = [
+    #     migrations.CreateModel(
+    #         name='DoctorProfile',
+    #         fields=[
+    #             ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+    #         ],
+    #     ),
+    #     migrations.RenameModel(
+    #         old_name='DiagnosisRecord',
+    #         new_name='DiagnosisProcedure',
+    #     ),
+    # ]
+    
     operations = [
         migrations.CreateModel(
             name='DoctorProfile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
             ],
-        ),
-        migrations.RenameModel(
-            old_name='DiagnosisRecord',
-            new_name='DiagnosisProcedure',
         ),
     ]
