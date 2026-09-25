@@ -17,7 +17,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Q
 from datetime import date
-from users_naimul.models import SurgeryRecord, DiagnosisRecord, NaimulProfile
+from users_naimul.models import SurgeryRecord, DiagnosisProcedure, NaimulProfile
 
 def index(request):
     """

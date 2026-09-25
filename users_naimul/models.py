@@ -145,7 +145,7 @@ class NaimulProfile(models.Model):
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='naimul_profile')
-    role = models.CharField(max_length=30, choices=Role_Choices, default='Consultant')
+    role = models.CharField(max_length=30, choices=Role_Choices, default='Surgeon')
     specialty = models.CharField(max_length=50, choices=Specialty_Choices, default='Cataract')
     assigned_ot_room = models.CharField(max_length=20, choices=OT_Room_Choices, default='OT-1')
     surgeon_code = models.CharField(max_length=30, default='SURG-101', help_text="Hospital Surgeon ID Code")

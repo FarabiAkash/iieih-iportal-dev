@@ -18,7 +18,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from datetime import date
-from .models import NaimulProfile, SurgeryRecord, DiagnosisRecord, Appointment
+from .models import NaimulProfile, SurgeryRecord, DiagnosisProcedure, Appointment
 
 def login_view(request):
     """
@@ -45,7 +45,7 @@ def login_view(request):
             # Ensure profile exists
             profile, _ = NaimulProfile.objects.get_or_create(user=user)
             
-            if profile.is_staff_role:
+            if profile.Role_Choices:
                 welcome_msg = f"Welcome, {user.get_full_name() or user.username}! OT Coordinator Console is ready."
             else:
                 welcome_msg = f"Welcome back, Dr. {user.get_full_name() or user.username}! Operation Theatre roster loaded."
@@ -128,7 +128,7 @@ def profile_view(request):
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
         appt_type = request.POST.get('appointment_type', 'Consultant Clinic')
-        doctor = request.POST.get('doctor_name', '').strip() or 'Dr. Naimul Hasan'
+        doctor = request.POST.get('doctor_name', '').strip() or 'Dr. Naimul Islam'
         appt_date = request.POST.get('appointment_date', '')
         time_slot = request.POST.get('appointment_time_slot', '09:00 - 10:00 AM')
         status = request.POST.get('status', 'Scheduled')
@@ -226,7 +226,7 @@ def profile_view(request):
     # Search Query Handling
     search_mrn = request.GET.get('patient_mrn', '').strip()
     general_query = request.GET.get('q', '').strip()
-    active_tab = request.GET.get('tab', 'patients' if not profile.is_staff_role else 'ot-matrix')
+    active_tab = request.GET.get('tab', 'patients' if not profile.Role_Choices else 'ot-matrix')
 
     is_cross_doctor_lookup = False
     searched_patient_found = None
@@ -254,13 +254,13 @@ def profile_view(request):
         # DEFAULT: Strictly show only my own patients!
         displayed_patients = my_surgeries
 
-    # Diagnostic records & Ocular Diagnostic Reports
-    diagnostic_records = DiagnosisRecord.objects.all().order_by('-date', '-id')
+    # Diagnostic procedures & Ocular Diagnostic Reports
+    diagnostic_procedures = DiagnosisProcedure.objects.all().order_by('-date', '-id')
     if search_mrn:
-        displayed_diagnostics = DiagnosisRecord.objects.filter(patient_mrn__icontains=search_mrn)
+        displayed_diagnostics = DiagnosisProcedure.objects.filter(patient_mrn__icontains=search_mrn)
     else:
         my_mrns = my_surgeries.values_list('patient_mrn', flat=True)
-        displayed_diagnostics = DiagnosisRecord.objects.filter(patient_mrn__in=my_mrns)
+        displayed_diagnostics = DiagnosisProcedure.objects.filter(patient_mrn__in=my_mrns)
 
     # OT Utilization Analytics
     total_ot_capacity = 20  # 4 suites * 5 slots
@@ -329,7 +329,7 @@ def profile_view(request):
         'is_cross_doctor_lookup': is_cross_doctor_lookup,
         'searched_patient_found': searched_patient_found,
         'searched_doctor_name': searched_doctor_name,
-        'diagnostic_records': diagnostic_records,
+        'diagnostic_procedures': diagnostic_procedures,
         'displayed_diagnostics': displayed_diagnostics,
         'overall_ot_utilization': overall_ot_utilization,
         'total_booked_cases': total_booked_cases,
@@ -341,9 +341,9 @@ def profile_view(request):
         'ot_suite_surgeries': ot_suite_surgeries,
         'ot_suite_matrix': ot_suite_matrix,
         'active_tab': active_tab,
-        'specialty_choices': NaimulProfile.SPECIALTY_CHOICES,
-        'ot_room_choices': NaimulProfile.OT_ROOM_CHOICES,
-        'role_choices': NaimulProfile.ROLE_CHOICES,
+        'specialty_choices': NaimulProfile.Specialty_Choices,
+        'ot_room_choices': NaimulProfile.OT_Room_Choices,
+        'role_choices': NaimulProfile.Role_Choices,
         'ot_slot_choices': SurgeryRecord.OT_Slot_Choices,
         'surgery_type_choices': SurgeryRecord.Surgery_Type_Choices,
         'outcome_choices': SurgeryRecord.Outcome_Choices,
