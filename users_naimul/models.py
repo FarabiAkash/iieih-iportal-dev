@@ -224,3 +224,8 @@ class Appointment(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, help_text="Staff user who created the appointment")
     created_at = models.DateTimeField(auto_now_add=True)
 
+# role = models.CharField(
+#     max_length=30,
+#     choices=ROLE_CHOICES,
+#     default='Doctor'
+# )
