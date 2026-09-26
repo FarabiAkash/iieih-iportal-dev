@@ -1,526 +1,2025 @@
+{% load static %}
+
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>OPD & IPD Reports</title>
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+<title>IIEIH iPortal | OPD & IPD Reports</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    :root {
+        --primary: #0f766e;
+        --primary-dark: #115e59;
+        --secondary: #2563eb;
+        --background: #f1f5f9;
+        --surface: #ffffff;
+        --surface-soft: #f8fafc;
+        --text: #172033;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --success: #16a34a;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --shadow: 0 8px 30px rgba(15, 23, 42, 0.07);
+    }
+
+    body.dark-mode {
+        --background: #0f172a;
+        --surface: #1e293b;
+        --surface-soft: #172033;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --border: #334155;
+        --shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--background);
+        color: var(--text);
+        transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    a {
+        color: inherit;
+    }
+
+
+    .header {
+        background: linear-gradient(135deg, #0f4c5c, #0f766e);
+        color: white;
+        min-height: 82px;
+        padding: 16px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 4px 20px rgba(15, 76, 92, 0.18);
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .header-left h1 {
+        margin: 0;
+        font-size: 23px;
+        letter-spacing: 0.2px;
+    }
+
+    .header-left p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        opacity: 0.82;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .user-name {
+        padding: 9px 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .header-btn {
+        text-decoration: none;
+        border: none;
+        padding: 9px 13px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .header-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .header-btn i {
+        margin-right: 5px;
+    }
+
+    .profile-btn {
+        background: white;
+        color: #0f4c5c;
+    }
+
+    .logout-btn {
+        background: #dc2626;
+        color: white;
+    }
+
+    .theme-btn {
+        background: rgba(255, 255, 255, 0.14);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        min-width: 42px;
+        font-size: 17px;
+    }
+
+    .theme-btn i {
+        margin: 0;
+    }
+
+
+    .report-navigation {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .report-switcher {
+        display: flex;
+        gap: 8px;
+    }
+
+    .report-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        padding: 11px 21px;
+        border-radius: 9px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 700;
+        transition: 0.2s ease;
+    }
+
+    .report-option:hover {
+        background: var(--surface-soft);
+        color: var(--primary);
+    }
+
+    .report-option.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+    }
+
+    .report-option i {
+        font-size: 16px;
+    }
+
+    .navigation-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .small-action {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        padding: 9px 13px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .small-action:hover {
+        background: var(--surface-soft);
+    }
+
+    .small-action i {
+        margin-right: 5px;
+    }
+
+
+    .container {
+        max-width: 1450px;
+        margin: 0 auto;
+        padding: 28px 30px 50px;
+    }
+
+    .report-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 20px;
+        margin-bottom: 22px;
+    }
+
+    .report-title {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .title-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        background: #dff6f3;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    body.dark-mode .title-icon {
+        background: #153e3b;
+    }
+
+    .report-title h2 {
+        margin: 0;
+        color: var(--text);
+        font-size: 25px;
+    }
+
+    .report-title p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .report-date {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 10px 14px;
+        border-radius: 9px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .report-date i {
+        color: var(--primary);
+        margin-right: 5px;
+    }
+
+
+    .filters {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 19px;
+        border-radius: 13px;
+        margin-bottom: 23px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: flex-end;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-heading {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 2px;
+    }
+
+    .filter-heading i {
+        color: var(--primary);
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .filter-group label {
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .filter-group select {
+        min-width: 215px;
+        padding: 11px 13px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        outline: none;
+        font-size: 13px;
+    }
+
+    .filter-group select:focus {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .filter-btn,
+    .reset-btn {
+        border: none;
+        text-decoration: none;
+        padding: 11px 17px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .filter-btn {
+        background: var(--primary);
+        color: white;
+    }
+
+    .filter-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    .reset-btn {
+        background: var(--surface-soft);
+        border: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .filter-btn i,
+    .reset-btn i {
+        margin-right: 5px;
+    }
+
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 23px;
+    }
+
+    .card {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 20px;
+        border-radius: 13px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .card::after {
+        content: "";
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        right: -25px;
+        bottom: -30px;
+        border-radius: 50%;
+        background: rgba(37, 99, 235, 0.06);
+    }
+
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: #e7f5f3;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+    }
+
+    body.dark-mode .card-icon {
+        background: #153e3b;
+    }
+
+    .card-title {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 15px;
+        font-weight: 700;
+    }
+
+    .card-value {
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--text);
+        margin-top: 4px;
+    }
+
+    .card-caption {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+
+    .report-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        margin-bottom: 22px;
+    }
+
+    .panel-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .panel-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .panel-heading-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        background: #eaf2ff;
+        color: var(--secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    body.dark-mode .panel-heading-icon {
+        background: #1e3a5f;
+    }
+
+    .panel-header h3 {
+        margin: 0;
+        color: var(--text);
+        font-size: 15px;
+    }
+
+    .panel-header p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+    .record-count {
+        padding: 7px 10px;
+        border-radius: 20px;
+        background: var(--surface-soft);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        padding: 13px 17px;
+        text-align: left;
+        background: var(--surface-soft);
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 14px 17px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--text);
+    }
+
+    tbody tr:hover {
+        background: var(--surface-soft);
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .clinic-name,
+    .ward-name {
+        font-weight: 700;
+    }
+
+    .clinic-name i,
+    .ward-name i {
+        color: var(--primary);
+        margin-right: 6px;
+    }
+
+    .date-cell {
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .number-cell {
+        font-weight: 800;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 800;
+        background: #e7f5f3;
+        color: var(--primary);
+    }
+
+    body.dark-mode .badge {
+        background: #153e3b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 45px 20px;
+        color: var(--muted);
+    }
+
+    .empty-icon {
+        font-size: 35px;
+        margin-bottom: 8px;
+        color: var(--muted);
+    }
+
+
+    .occupancy-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 22px;
+    }
+
+    .occupancy-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        padding: 21px;
+        box-shadow: var(--shadow);
+    }
+
+    .occupancy-card h3 {
+        margin: 0;
+        font-size: 15px;
+    }
+
+    .occupancy-card h3 i {
+        color: var(--primary);
+        margin-right: 7px;
+    }
+
+    .occupancy-card-subtitle {
+        margin: 5px 0 20px;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+    .occupancy-number {
+        font-size: 42px;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .occupancy-label {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .large-progress {
+        height: 13px;
+        background: var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        margin: 18px 0 8px;
+    }
+
+    .large-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0f766e, #2563eb);
+        border-radius: 20px;
+    }
+
+    .occupancy-details {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+
+    .activity-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .activity-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 19px;
+        border-radius: 13px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .activity-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        background: #fff7ed;
+        color: #d97706;
+    }
+
+    .activity-card:nth-child(2) .activity-icon {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+
+    .activity-card h3 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .activity-value {
+        font-size: 27px;
+        font-weight: 800;
+    }
+
+
+    .report-actions {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        padding: 17px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .actions-info h3 {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .actions-info h3 i {
+        color: var(--primary);
+        margin-right: 6px;
+    }
+
+    .actions-info p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        border: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 800;
+        transition: 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .print-btn {
+        background: var(--primary);
+        color: white;
+    }
+
+    .clear-btn {
+        background: var(--surface-soft);
+        border: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .action-btn i {
+        margin-right: 5px;
+    }
+
+
+    .footer {
+        margin-top: 28px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+    .footer i {
+        margin: 0 4px;
+    }
+
+
+    @media (max-width: 1100px) {
+        .cards {
+            grid-template-columns: repeat(2, 1fr);
         }
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fb;
-            color: #1f2937;
+        .occupancy-section {
+            grid-template-columns: 1fr;
         }
+    }
 
+    @media (max-width: 750px) {
         .header {
-            background-color: #0f766e;
-            color: white;
-            padding: 25px 40px;
+            padding: 16px 20px;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .header h1 {
-            margin-bottom: 8px;
+        .header-right {
+            width: 100%;
+            justify-content: flex-start;
         }
 
-        .header p {
-            opacity: 0.9;
-        }
-
-        .hospital-logo {
-            font-size: 45px;
+        .report-navigation {
+            padding: 12px 20px;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .container {
-            width: 90%;
-            max-width: 1400px;
-            margin: 30px auto;
+            padding: 22px 15px 40px;
         }
 
-        .section-title {
-            margin-bottom: 20px;
-            color: #0f172a;
-        }
-
-        .filter-box {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .filter-form {
-            display: flex;
-            gap: 15px;
-            align-items: end;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            display: flex;
+        .report-heading {
             flex-direction: column;
-            gap: 7px;
-        }
-
-        .form-group label {
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .form-group select {
-            min-width: 220px;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background-color: white;
-        }
-
-        .btn {
-            padding: 10px 22px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            background-color: #0f766e;
-            color: white;
-            font-weight: bold;
-        }
-
-        .btn:hover {
-            background-color: #115e59;
-        }
-
-        .reset-btn {
-            background-color: #6b7280;
-            text-decoration: none;
-            display: inline-block;
+            align-items: flex-start;
         }
 
         .cards {
-            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .activity-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .filter-group select {
+            width: 100%;
+        }
+
+        .filter-btn,
+        .reset-btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        .report-switcher {
+            width: 100%;
+        }
+
+        .report-option {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+
+    @media print {
+        @page {
+            size: A4 landscape;
+            margin: 12mm;
+        }
+
+        body {
+            background: white !important;
+            color: black !important;
+        }
+
+        .header {
+            background: white !important;
+            color: black !important;
+            box-shadow: none;
+            border-bottom: 2px solid #222;
+            padding: 8px 0;
+        }
+
+        .brand-icon {
+            background: white;
+            border: 1px solid #999;
+        }
+
+        .header-left h1,
+        .header-left p {
+            color: black !important;
+        }
+
+        .header-right,
+        .report-navigation,
+        .filters,
+        .report-actions,
+        .footer {
+            display: none !important;
+        }
+
+        .container {
+            max-width: none;
+            padding: 10px 0;
+            margin: 0;
+        }
+
+        .report-heading {
+            margin-bottom: 15px;
+        }
+
+        .report-title h2,
+        .report-title p,
+        .report-date {
+            color: black !important;
+        }
+
+        .title-icon {
+            background: white;
+            border: 1px solid #999;
+        }
+
+        .cards {
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 35px;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .card,
+        .report-panel,
+        .occupancy-card,
+        .activity-card {
+            box-shadow: none;
+            border: 1px solid #999;
+            break-inside: avoid;
         }
 
         .card {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .card-title {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 10px;
+            padding: 12px;
         }
 
         .card-value {
-            font-size: 30px;
-            font-weight: bold;
-            color: #0f766e;
+            font-size: 23px;
+            color: black !important;
         }
 
-        .report-section {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        .card-title,
+        .card-caption {
+            color: #444 !important;
         }
 
-        .report-section h2 {
-            margin-bottom: 20px;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
+        .report-panel {
+            margin-bottom: 12px;
         }
 
         th {
-            background-color: #f1f5f9;
-            font-size: 14px;
+            background: #eeeeee !important;
+            color: black !important;
         }
 
         td {
-            font-size: 14px;
+            color: black !important;
         }
 
-        .progress-container {
-            width: 150px;
-            height: 10px;
-            background-color: #e5e7eb;
-            border-radius: 10px;
-            overflow: hidden;
+        tbody tr:hover {
+            background: white;
         }
 
-        .progress-bar {
-            height: 100%;
-            background-color: #0f766e;
+        .occupancy-section {
+            grid-template-columns: 1fr 1fr;
         }
 
-        .occupancy-text {
-            font-weight: bold;
-            margin-top: 5px;
+        .activity-cards {
+            grid-template-columns: 1fr 1fr;
         }
 
-        .no-data {
-            text-align: center;
-            padding: 25px;
-            color: #6b7280;
+        .badge {
+            border: 1px solid #999;
+            background: white;
+            color: black;
         }
+    }
+</style>
 
-        @media (max-width: 1000px) {
-            .cards {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 600px) {
-            .cards {
-                grid-template-columns: 1fr;
-            }
-
-            .container {
-                width: 95%;
-            }
-
-            .header {
-                padding: 20px;
-            }
-        }
-    </style>
 </head>
 
 <body>
 
-    <div class="header">
-        <div class="hospital-logo">👁️</div>
-        <h1>Eye Hospital Management Reports</h1>
-        <p>OPD & IPD Operations Dashboard</p>
+<header class="header">
+
+<div class="brand">
+    <div class="brand-icon">
+        👁️
+    </div>
+
+    <div class="header-left">
+        <h1>IIEIH iPortal</h1>
+        <p>
+            Eye Hospital Management & Reporting System
+        </p>
+    </div>
+</div>
+
+<div class="header-right">
+
+    <span class="user-name">
+        Welcome, {{ user_name }}!
+    </span>
+
+    <button
+        type="button"
+        class="header-btn theme-btn"
+        id="themeButton"
+        onclick="toggleTheme()"
+        title="Toggle dark/light mode">
+
+        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+
+    </button>
+
+    {% if user.is_authenticated %} 
+
+        <a href="{% url 'users_nusrat:profile' %}" class="header-btn profile-btn"> 
+            <i class="bi bi-person-circle"></i>
+            Profile 
+        </a>
+
+    {% else %}
+
+        <a href="{% url 'users_nusrat:login' %}" class="header-btn profile-btn"> 
+            <i class="bi bi-person-circle"></i>
+            Profile 
+        </a>
+        
+    {% endif %}
+
+    <a
+        href="{% url 'users_nusrat:logout' %}"
+        class="header-btn logout-btn">
+
+        <i class="bi bi-box-arrow-right"></i>
+        Logout
+
+    </a>
+
+</div>
+
+</header>
+
+<nav class="report-navigation">
+
+<div class="report-switcher">
+
+    <a
+        href="?report=opd"
+        class="report-option {% if selected_report == 'opd' %}active{% endif %}">
+
+        <i class="bi bi-people-fill"></i>
+        OPD Reports
+
+    </a>
+
+    <a
+        href="?report=ipd"
+        class="report-option {% if selected_report == 'ipd' %}active{% endif %}">
+
+        <i class="bi bi-hospital-fill"></i>
+        IPD Reports
+
+    </a>
+
+</div>
+
+<div class="navigation-actions">
+
+    <button
+        type="button"
+        class="small-action"
+        onclick="window.print()">
+
+        <i class="bi bi-printer"></i>
+        Print
+
+    </button>
+
+    <button 
+            type="button" 
+            class="refresh-btn" 
+            onclick="location.reload()"> 
+            
+            <i class="bi bi-arrow-clockwise"></i> 
+            Refresh 
+    </button>
+
+</div>
+
+</nav>
+
+<div class="container">
+
+{% if selected_report == 'opd' %}
+
+<!-- OPD HEADING -->
+
+<div class="report-heading">
+
+<div class="report-title">
+
+    <div class="title-icon">
+        <i class="bi bi-people-fill"></i>
+    </div>
+
+    <div>
+        <h2>OPD Daily Census Report</h2>
+
+        <p>
+            Outpatient department visits, patient flow and clinic performance
+        </p>
+    </div>
+
+</div>
+
+<div class="report-date">
+
+    <i class="bi bi-calendar3"></i>
+    Report Date:
+    <span id="currentDate"></span>
+
+</div>
+
+</div>
+
+<!-- OPD FILTERS -->
+
+<form method="get" class="filters">
+
+<input
+    type="hidden"
+    name="report"
+    value="opd">
+
+<div class="filter-heading">
+
+    <i class="bi bi-funnel-fill"></i>
+    Report Filters
+
+</div>
+
+<div class="filter-group">
+
+    <label for="branch">
+        Hospital Branch
+    </label>
+
+    <select name="branch" id="branch">
+
+        <option value="">
+            All Branches
+        </option>
+
+        {% for branch in branches %}
+
+            <option
+                value="{{ branch }}"
+                {% if selected_branch == branch %}selected{% endif %}>
+
+                {{ branch }}
+
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+</div>
+
+
+<div class="filter-group">
+
+    <label for="clinic">
+        Eye Clinic
+    </label>
+
+    <select name="clinic" id="clinic">
+
+        <option value="">
+            All Clinics
+        </option>
+
+        {% for clinic in clinics %}
+
+            <option
+                value="{{ clinic }}"
+                {% if selected_clinic == clinic %}selected{% endif %}>
+
+                {{ clinic }}
+
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+</div>
+
+
+<button
+    type="submit"
+    class="filter-btn">
+
+    <i class="bi bi-search"></i>
+    Apply Filters
+
+</button>
+
+
+<a
+    href="?report=opd"
+    class="reset-btn">
+
+    <i class="bi bi-x-circle"></i>
+    Clear Filters
+
+</a>
+
+</form>
+
+<!-- OPD KPI CARDS -->
+
+<div class="cards">
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Total OPD Visits
+            </div>
+
+            <div class="card-value">
+                {{ total_visits }}
+            </div>
+
+            <div class="card-caption">
+                Total outpatient visits
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-people-fill"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                New Patients
+            </div>
+
+            <div class="card-value">
+                {{ new_patients }}
+            </div>
+
+            <div class="card-caption">
+                First-time patients
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Follow-up Patients
+            </div>
+
+            <div class="card-value">
+                {{ followup_patients }}
+            </div>
+
+            <div class="card-caption">
+                Returning patients
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-arrow-repeat"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Refractions Done
+            </div>
+
+            <div class="card-value">
+                {{ refractions_done }}
+            </div>
+
+            <div class="card-caption">
+                Vision assessments
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-eyeglasses"></i>
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- OPD REPORT TABLE -->
+
+<div class="report-panel">
+
+<div class="panel-header">
+
+    <div class="panel-heading">
+
+        <div class="panel-heading-icon">
+            <i class="bi bi-bar-chart-fill"></i>
+        </div>
+
+        <div>
+
+            <h3>
+                Clinic-wise OPD Report
+            </h3>
+
+            <p>
+                Patient visits and clinical activity by department
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="record-count">
+        {{ opd_records|length }} Records
+    </div>
+
+</div>
+
+
+<div class="table-wrapper">
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>Date</th>
+                <th>Hospital Branch</th>
+                <th>Clinic</th>
+                <th>Total Visits</th>
+                <th>New Patients</th>
+                <th>Follow-up</th>
+                <th>Refractions</th>
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for record in opd_records %}
+
+                <tr>
+
+                    <td class="date-cell">
+                        {{ record.date }}
+                    </td>
+
+                    <td>
+
+                        <span class="badge">
+
+                            <i class="bi bi-building"></i>
+
+                            {{ record.hospital_branch }}
+
+                        </span>
+
+                    </td>
+
+                    <td class="clinic-name">
+
+                        <i class="bi bi-eye-fill"></i>
+
+                        {{ record.clinic_name }}
+
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.total_visits }}
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.new_patients }}
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.followup_patients }}
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.refractions_done }}
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="empty-state">
+
+                        <div class="empty-icon">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+
+                        No OPD records found for the selected filters.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+</div>
+
+<!-- OPD ACTIONS -->
+
+<div class="report-actions">
+
+<div class="actions-info">
+
+    <h3>
+
+        <i class="bi bi-file-earmark-bar-graph"></i>
+        OPD Report Actions
+
+    </h3>
+
+    <p>
+        Print the report from your browser.
+    </p>
+
+</div>
+
+
+<div class="action-buttons">
+
+    <button
+        type="button"
+        class="action-btn print-btn"
+        onclick="window.print()">
+
+        <i class="bi bi-printer-fill"></i>
+        Print OPD Report
+
+    </button>
+
+    <a
+        href="?report=opd"
+        class="action-btn clear-btn">
+
+        <i class="bi bi-x-circle"></i>
+        Clear
+
+    </a>
+
+</div>
+
+</div>
+
+{% endif %}
+
+{% if selected_report == 'ipd' %}
+
+<!-- IPD HEADING -->
+
+<div class="report-heading">
+
+<div class="report-title">
+
+    <div class="title-icon">
+        <i class="bi bi-hospital-fill"></i>
+    </div>
+
+    <div>
+
+        <h2>IPD Bed Occupancy Report</h2>
+
+        <p>
+            Inpatient beds, admissions, discharges and ward utilization
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="report-date">
+
+    <i class="bi bi-calendar3"></i>
+    Report Date:
+    <span id="currentDate"></span>
+
+</div>
+
+</div>
+
+<!-- IPD FILTERS -->
+
+<form method="get" class="filters">
+
+<input
+    type="hidden"
+    name="report"
+    value="ipd">
+
+<div class="filter-heading">
+
+    <i class="bi bi-funnel-fill"></i>
+    Report Filters
+
+</div>
+
+
+<div class="filter-group">
+
+    <label for="ipd-branch">
+        Hospital Branch
+    </label>
+
+    <select
+        name="branch"
+        id="ipd-branch">
+
+        <option value="">
+            All Branches
+        </option>
+
+        {% for branch in branches %}
+
+            <option
+                value="{{ branch }}"
+                {% if selected_branch == branch %}selected{% endif %}>
+
+                {{ branch }}
+
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+</div>
+
+
+<div class="filter-group">
+
+    <label for="ward">
+        Ward Type
+    </label>
+
+    <select
+        name="ward"
+        id="ward">
+
+        <option value="">
+            All Ward Types
+        </option>
+
+        {% for ward in wards %}
+
+            <option
+                value="{{ ward }}"
+                {% if selected_ward == ward %}selected{% endif %}>
+
+                {{ ward }}
+
+            </option>
+
+        {% endfor %}
+
+    </select>
+
+</div>
+
+
+<button
+    type="submit"
+    class="filter-btn">
+
+    <i class="bi bi-search"></i>
+    Apply Filters
+
+</button>
+
+
+<a
+    href="?report=ipd"
+    class="reset-btn">
+
+    <i class="bi bi-x-circle"></i>
+    Clear Filters
+
+</a>
+
+</form>
+
+<!-- IPD KPI CARDS -->
+
+<div class="cards">
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Total Beds
+            </div>
+
+            <div class="card-value">
+                {{ total_beds }}
+            </div>
+
+            <div class="card-caption">
+                Registered inpatient beds
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-hospital"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Occupied Beds
+            </div>
+
+            <div class="card-value">
+                {{ occupied_beds }}
+            </div>
+
+            <div class="card-caption">
+                Currently occupied
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-person-fill"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Available Beds
+            </div>
+
+            <div class="card-value">
+                {{ available_beds }}
+            </div>
+
+            <div class="card-caption">
+                Beds available
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div>
+
+            <div class="card-title">
+                Occupancy Rate
+            </div>
+
+            <div class="card-value">
+                {{ occupancy_percentage }}%
+            </div>
+
+            <div class="card-caption">
+                Overall bed utilization
+            </div>
+
+        </div>
+
+        <div class="card-icon">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- OCCUPANCY OVERVIEW -->
+
+<div class="occupancy-section">
+
+<div class="occupancy-card">
+
+    <h3>
+
+        <i class="bi bi-bar-chart-fill"></i>
+        Overall Bed Occupancy
+
+    </h3>
+
+    <div class="occupancy-card-subtitle">
+        Current inpatient bed utilization
+    </div>
+
+    <div class="occupancy-number">
+        {{ occupancy_percentage }}%
+    </div>
+
+    <div class="large-progress">
+
+        <div
+            class="large-progress-fill"
+            style="width: {{ occupancy_percentage }}%;">
+
+        </div>
+
+    </div>
+
+    <div class="occupancy-details">
+
+        <span>
+            Occupied: {{ occupied_beds }}
+        </span>
+
+        <span>
+            Available: {{ available_beds }}
+        </span>
+
+    </div>
+
+</div>
+
+
+<div class="occupancy-card">
+
+    <h3>
+
+        <i class="bi bi-hospital"></i>
+        Bed Capacity Summary
+
+    </h3>
+
+    <div class="occupancy-card-subtitle">
+        Hospital inpatient capacity
     </div>
 
 
-    <div class="container">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
 
-        <div class="filter-box">
+        <div>
 
-            <h2 class="section-title">Report Filters</h2>
-
-            <form method="GET" class="filter-form">
-
-                <div class="form-group">
-                    <label for="branch">Hospital Branch</label>
-
-                    <select name="branch" id="branch">
-
-                        <option value="">All Branches</option>
-
-                        {% for branch in branches %}
-
-                            <option value="{{ branch }}"
-                                {% if selected_branch == branch %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ branch }}
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-                </div>
-
-
-                <div class="form-group">
-                    <label for="clinic">Clinic</label>
-
-                    <select name="clinic" id="clinic">
-
-                        <option value="">All Clinics</option>
-
-                        {% for clinic in clinics %}
-
-                            <option value="{{ clinic }}"
-                                {% if selected_clinic == clinic %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ clinic }}
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-                </div>
-
-
-                <button type="submit" class="btn">
-                    Apply Filters
-                </button>
-
-
-                <a href="{% url 'opd_ipd_reports:index' %}"
-                   class="btn reset-btn">
-                    Reset
-                </a>
-
-            </form>
-
-        </div>
-
-
-        <div class="report-section">
-
-            <h2>OPD Daily Census</h2>
-
-            <div class="cards">
-
-                <div class="card">
-                    <div class="card-title">
-                        Total OPD Visits
-                    </div>
-
-                    <div class="card-value">
-                        {{ total_visits }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        New Patients
-                    </div>
-
-                    <div class="card-value">
-                        {{ new_patients }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        Follow-up Patients
-                    </div>
-
-                    <div class="card-value">
-                        {{ followup_patients }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        Refractions Done
-                    </div>
-
-                    <div class="card-value">
-                        {{ refractions_done }}
-                    </div>
-                </div>
-
+            <div style="font-size:11px; color:var(--muted);">
+                Total Capacity
             </div>
 
-
-
-            <div class="table-container">
-
-                <table>
-
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Branch</th>
-                            <th>Clinic</th>
-                            <th>Total Visits</th>
-                            <th>New Patients</th>
-                            <th>Follow-up</th>
-                            <th>Refractions</th>
-                        </tr>
-                    </thead>
-
-
-                    <tbody>
-
-                        {% for record in opd_records %}
-
-                        <tr>
-
-                            <td>
-                                {{ record.date }}
-                            </td>
-
-                            <td>
-                                {{ record.hospital_branch }}
-                            </td>
-
-                            <td>
-                                {{ record.clinic_name }}
-                            </td>
-
-                            <td>
-                                {{ record.total_visits }}
-                            </td>
-
-                            <td>
-                                {{ record.new_patients }}
-                            </td>
-
-                            <td>
-                                {{ record.followup_patients }}
-                            </td>
-
-                            <td>
-                                {{ record.refractions_done }}
-                            </td>
-
-                        </tr>
-
-                        {% empty %}
-
-                        <tr>
-                            <td colspan="7" class="no-data">
-                                No OPD records found.
-                            </td>
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
+            <div style="font-size:27px; font-weight:800; margin-top:4px;">
+                {{ total_beds }}
             </div>
 
         </div>
 
 
-        <div class="report-section">
+        <div>
 
-            <h2>IPD Bed Occupancy</h2>
-
-
-            <div class="cards">
-
-                <div class="card">
-                    <div class="card-title">
-                        Total Beds
-                    </div>
-
-                    <div class="card-value">
-                        {{ total_beds }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        Occupied Beds
-                    </div>
-
-                    <div class="card-value">
-                        {{ occupied_beds }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        Available Beds
-                    </div>
-
-                    <div class="card-value">
-                        {{ available_beds }}
-                    </div>
-                </div>
-
-
-                <div class="card">
-                    <div class="card-title">
-                        Occupancy
-                    </div>
-
-                    <div class="card-value">
-                        {{ occupancy_percentage }}%
-                    </div>
-                </div>
-
+            <div style="font-size:11px; color:var(--muted);">
+                Available
             </div>
 
+            <div style="font-size:27px; font-weight:800; color:#16a34a; margin-top:4px;">
+                {{ available_beds }}
+            </div>
 
-            <div class="table-container">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th>Date</th>
-                            <th>Branch</th>
-                            <th>Ward</th>
-                            <th>Total Beds</th>
-                            <th>Occupied</th>
-                            <th>Available</th>
-                            <th>Occupancy</th>
-                            <th>Admissions</th>
-                            <th>Discharges</th>
-                        </tr>
-
-                    </thead>
+        </div>
 
 
-                    <tbody>
+        <div>
 
-                        {% for record in ipd_records %}
+            <div style="font-size:11px; color:var(--muted);">
+                Occupied
+            </div>
 
-                        <tr>
+            <div style="font-size:27px; font-weight:800; color:#2563eb; margin-top:4px;">
+                {{ occupied_beds }}
+            </div>
 
-                            <td>
-                                {{ record.date }}
-                            </td>
+        </div>
 
-                            <td>
-                                {{ record.hospital_branch }}
-                            </td>
 
-                            <td>
-                                {{ record.ward_type }}
-                            </td>
+        <div>
 
-                            <td>
-                                {{ record.total_beds }}
-                            </td>
+            <div style="font-size:11px; color:var(--muted);">
+                Utilization
+            </div>
 
-                            <td>
-                                {{ record.occupied_beds }}
-                            </td>
+            <div style="font-size:27px; font-weight:800; color:#0f766e; margin-top:4px;">
+                {{ occupancy_percentage }}%
+            </div>
 
-                            <td>
-                                {{ record.available_beds }}
-                            </td>
+        </div>
 
-                            <td>
+    </div>
 
-                                {% if record.total_beds > 0 %}
+</div>
+
+</div>
+
+<!-- IPD TABLE -->
+
+<div class="report-panel">
+
+<div class="panel-header">
+
+    <div class="panel-heading">
+
+        <div class="panel-heading-icon">
+            <i class="bi bi-hospital"></i>
+        </div>
+
+        <div>
+
+            <h3>
+                Ward-wise IPD Report
+            </h3>
+
+            <p>
+                Ward capacity and inpatient occupancy details
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="record-count">
+        {{ ipd_records|length }} Records
+    </div>
+
+</div>
+
+
+<div class="table-wrapper">
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>Date</th>
+                <th>Hospital Branch</th>
+                <th>Ward Type</th>
+                <th>Total Beds</th>
+                <th>Occupied</th>
+                <th>Available</th>
+                <th>Occupancy</th>
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for record in ipd_records %}
+
+                <tr>
+
+                    <td class="date-cell">
+                        {{ record.date }}
+                    </td>
+
+                    <td>
+
+                        <span class="badge">
+
+                            <i class="bi bi-building"></i>
+
+                            {{ record.hospital_branch }}
+
+                        </span>
+
+                    </td>
+
+                    <td class="ward-name">
+
+                        <i class="bi bi-hospital"></i>
+
+                        {{ record.ward_type }}
+
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.total_beds }}
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.occupied_beds }}
+                    </td>
+
+                    <td class="number-cell">
+                        {{ record.available_beds }}
+                    </td>
+
+                    <td>
+
+                        <div style="min-width:150px;">
+
+                            <div
+                                style="
+                                width:100%;
+                                height:8px;
+                                background:var(--border);
+                                border-radius:20px;
+                                overflow:hidden;
+                                ">
+
+                                <div
+                                    style="
+                                    height:100%;
+                                    background:linear-gradient(90deg,#0f766e,#2563eb);
+                                    width:
+                                    {% if record.total_beds %}
+                                        {% widthratio record.occupied_beds record.total_beds 100 %}
+                                    {% else %}
+                                        0
+                                    {% endif %}%;
+                                    ">
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                style="
+                                margin-top:5px;
+                                font-size:11px;
+                                color:var(--muted);
+                                font-weight:700;
+                                ">
+
+                                {% if record.total_beds %}
 
                                     {% widthratio record.occupied_beds record.total_beds 100 %}%
 
@@ -530,70 +2029,241 @@
 
                                 {% endif %}
 
-                            </td>
+                            </div>
 
-                            <td>
-                                {{ record.new_admissions }}
-                            </td>
+                        </div>
 
-                            <td>
-                                {{ record.discharges_today }}
-                            </td>
+                    </td>
 
-                        </tr>
+                </tr>
 
-                        {% empty %}
+            {% empty %}
 
-                        <tr>
-                            <td colspan="9" class="no-data">
-                                No IPD records found.
-                            </td>
-                        </tr>
+                <tr>
 
-                        {% endfor %}
+                    <td
+                        colspan="7"
+                        class="empty-state">
 
-                    </tbody>
+                        <div class="empty-icon">
+                            <i class="bi bi-inbox"></i>
+                        </div>
 
-                </table>
+                        No IPD records found for the selected filters.
 
-            </div>
+                    </td>
 
-        </div>
+                </tr>
 
+            {% endfor %}
 
+        </tbody>
 
-        <div class="report-section">
+    </table>
 
-            <h2>IPD Daily Activity</h2>
+</div>
 
-            <div class="cards">
+</div>
 
-                <div class="card">
-                    <div class="card-title">
-                        New Admissions
-                    </div>
+<!-- IPD ACTIVITY -->
 
-                    <div class="card-value">
-                        {{ new_admissions }}
-                    </div>
-                </div>
+<div class="activity-cards">
 
+<div class="activity-card">
 
-                <div class="card">
-                    <div class="card-title">
-                        Discharges Today
-                    </div>
+    <div class="activity-icon">
+        <i class="bi bi-person-plus-fill"></i>
+    </div>
 
-                    <div class="card-value">
-                        {{ discharges_today }}
-                    </div>
-                </div>
+    <div>
 
-            </div>
+        <h3>
+            New Admissions Today
+        </h3>
 
+        <div class="activity-value">
+            {{ new_admissions }}
         </div>
 
     </div>
+
+</div>
+
+
+<div class="activity-card">
+
+    <div class="activity-icon">
+        <i class="bi bi-box-arrow-right"></i>
+    </div>
+
+    <div>
+
+        <h3>
+            Discharges Today
+        </h3>
+
+        <div class="activity-value">
+            {{ discharges_today }}
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+<!-- IPD ACTIONS -->
+
+<div class="report-actions">
+
+<div class="actions-info">
+
+    <h3>
+
+        <i class="bi bi-file-earmark-bar-graph"></i>
+        IPD Report Actions
+
+    </h3>
+
+    <p>
+        Print the report from your browser.
+    </p>
+
+</div>
+
+
+<div class="action-buttons">
+
+    <button
+        type="button"
+        class="action-btn print-btn"
+        onclick="window.print()">
+
+        <i class="bi bi-printer-fill"></i>
+        Print IPD Report
+
+    </button>
+
+    <a
+        href="?report=ipd"
+        class="action-btn clear-btn">
+
+        <i class="bi bi-x-circle"></i>
+        Clear
+
+    </a>
+
+</div>
+
+</div>
+
+{% endif %}
+
+<div class="footer">
+
+IIEIH iPortal
+<i class="bi bi-dot"></i>
+Eye Hospital Management & Reporting System
+<i class="bi bi-dot"></i>
+OPD & IPD Operations
+
+
+</div>
+
+</div>
+
+<script>
+
+
+    function toggleTheme() {
+
+        document.body.classList.toggle("dark-mode");
+
+        const icon = document.getElementById("themeIcon");
+
+        if (document.body.classList.contains("dark-mode")) {
+
+            icon.className = "bi bi-sun-fill";
+
+            localStorage.setItem(
+                "iieh-theme",
+                "dark"
+            );
+
+        } else {
+
+            icon.className = "bi bi-moon-stars-fill";
+
+            localStorage.setItem(
+                "iieh-theme",
+                "light"
+            );
+        }
+    }
+
+
+    function loadTheme() {
+
+        const savedTheme =
+            localStorage.getItem("iieh-theme");
+
+        const icon =
+            document.getElementById("themeIcon");
+
+        if (savedTheme === "dark") {
+
+            document.body.classList.add("dark-mode");
+
+            if (icon) {
+                icon.className = "bi bi-sun-fill";
+            }
+
+        } else {
+
+            if (icon) {
+                icon.className = "bi bi-moon-stars-fill";
+            }
+        }
+    }
+
+
+    function showCurrentDate() {
+
+        const dateElement =
+            document.getElementById("currentDate");
+
+        if (!dateElement) {
+            return;
+        }
+
+        const today = new Date();
+
+        const options = {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        };
+
+        dateElement.innerHTML =
+            today.toLocaleDateString(
+                "en-GB",
+                options
+            );
+    }
+
+
+    window.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            loadTheme();
+            showCurrentDate();
+
+        }
+    );
+
+</script>
 
 </body>
 </html>

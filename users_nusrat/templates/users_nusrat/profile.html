@@ -1,171 +1,928 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
+```
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Staff Profile</title>
+<title>Staff Profile | IIEIH iPortal</title>
 
+<!-- Bootstrap 5 -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-rel="stylesheet">
-
+<!-- Bootstrap Icons -->
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
 
 <style>
 
+    * {
+        box-sizing: border-box;
+    }
 
-body {
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        min-height: 100vh;
 
-    background:
-    linear-gradient(
-        135deg,
-        #e8f5e9,
-        #ffffff
-    );
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(37, 99, 235, 0.12),
+                transparent 35%
+            ),
+            linear-gradient(
+                135deg,
+                #eef8f7,
+                #f8fbff
+            );
 
-    min-height:100vh;
+        transition: 0.3s ease;
+    }
 
-}
+    /* Main wrapper */
 
-
-.profile-card {
-
-    border:none;
-    border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.12);
-
-}
-
-
-.profile-header {
-
-    background:#0077b6;
-    color:white;
-    padding:25px;
-    border-radius:20px 20px 0 0;
-
-}
-
-
-.info-box {
-
-    background:#f8f9fa;
-    border-radius:12px;
-    padding:15px;
-    margin-bottom:12px;
-
-}
+    .profile-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 15px;
+    }
 
 
-.logout-btn {
+    /* Profile card */
 
-    border-radius:12px;
+    .profile-card {
+        width: 100%;
+        max-width: 850px;
 
-}
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
 
+        background: #ffffff;
+
+        box-shadow:
+            0 20px 50px rgba(15, 23, 42, 0.12);
+
+        transition: 0.3s ease;
+    }
+
+
+    /* Header */
+
+    .profile-header {
+        position: relative;
+
+        background:
+            linear-gradient(
+                135deg,
+                #0f766e,
+                #2563eb
+            );
+
+        color: white;
+
+        padding: 38px 35px 70px;
+
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: "";
+
+        position: absolute;
+
+        width: 230px;
+        height: 230px;
+
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.08);
+
+        right: -80px;
+        top: -110px;
+    }
+
+    .profile-header::after {
+        content: "";
+
+        position: absolute;
+
+        width: 160px;
+        height: 160px;
+
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.06);
+
+        left: -70px;
+        bottom: -100px;
+    }
+
+
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+
+    .portal-label {
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+
+        opacity: 0.85;
+
+        margin-bottom: 8px;
+    }
+
+
+    .profile-header h2 {
+        font-size: 30px;
+        font-weight: 700;
+
+        margin-bottom: 8px;
+    }
+
+
+    .profile-header p {
+        margin: 0;
+
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+
+    /* Theme button */
+
+    .theme-button {
+        position: absolute;
+
+        right: 25px;
+        top: 25px;
+
+        width: 42px;
+        height: 42px;
+
+        border: none;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.16);
+
+        color: white;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+
+        font-size: 18px;
+
+        transition: 0.2s ease;
+
+        z-index: 3;
+    }
+
+    .theme-button:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.05);
+    }
+
+
+    /* Avatar */
+
+    .avatar-wrapper {
+        position: relative;
+
+        margin-top: -50px;
+
+        margin-left: 35px;
+
+        z-index: 5;
+    }
+
+
+    .avatar {
+        width: 100px;
+        height: 100px;
+
+        border-radius: 50%;
+
+        background: #ffffff;
+
+        border: 5px solid white;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: #2563eb;
+
+        font-size: 43px;
+
+        box-shadow:
+            0 8px 20px rgba(15, 23, 42, 0.18);
+    }
+
+
+    /* Profile body */
+
+    .profile-body {
+        padding: 30px 35px 35px;
+    }
+
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+
+        color: #172554;
+
+        font-size: 18px;
+        font-weight: 700;
+
+        margin-bottom: 20px;
+    }
+
+    .section-title i {
+        color: #2563eb;
+    }
+
+
+    /* Information grid */
+
+    .info-grid {
+        display: grid;
+
+        grid-template-columns: repeat(2, 1fr);
+
+        gap: 15px;
+    }
+
+
+    .info-box {
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 14px;
+
+        padding: 17px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 14px;
+
+        transition: 0.2s ease;
+    }
+
+
+    .info-box:hover {
+        transform: translateY(-2px);
+
+        box-shadow:
+            0 6px 18px rgba(15, 23, 42, 0.07);
+    }
+
+
+    .info-icon {
+        width: 42px;
+        height: 42px;
+
+        flex-shrink: 0;
+
+        border-radius: 11px;
+
+        background: #e0f2fe;
+
+        color: #2563eb;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 19px;
+    }
+
+
+    .info-content {
+        min-width: 0;
+    }
+
+
+    .info-label {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 12px;
+
+        margin-bottom: 4px;
+    }
+
+
+    .info-value {
+        display: block;
+
+        color: #1e293b;
+
+        font-size: 14px;
+        font-weight: 600;
+
+        word-break: break-word;
+    }
+
+
+    /* Shift badge */
+
+    .shift-badge {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        padding: 5px 10px;
+
+        border-radius: 20px;
+
+        background: #dcfce7;
+
+        color: #15803d;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+
+    /* Account status */
+
+    .account-status {
+        margin-top: 20px;
+
+        padding: 14px 16px;
+
+        border-radius: 13px;
+
+        background: #f0fdf4;
+
+        border: 1px solid #bbf7d0;
+
+        display: flex;
+        align-items: center;
+
+        gap: 10px;
+
+        color: #166534;
+
+        font-size: 13px;
+    }
+
+    .account-status i {
+        font-size: 17px;
+    }
+
+
+    /* Buttons */
+
+    .action-buttons {
+        display: flex;
+
+        gap: 12px;
+
+        margin-top: 25px;
+    }
+
+
+    .back-button,
+    .logout-button {
+        flex: 1;
+
+        padding: 13px;
+
+        border-radius: 11px;
+
+        font-size: 14px;
+        font-weight: 600;
+
+        text-decoration: none;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 8px;
+
+        transition: 0.2s ease;
+    }
+
+
+    .back-button {
+        background: #2563eb;
+        color: white;
+    }
+
+    .back-button:hover {
+        background: #1d4ed8;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+
+    .logout-button {
+        background: #fef2f2;
+        color: #dc2626;
+
+        border: 1px solid #fecaca;
+    }
+
+    .logout-button:hover {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+
+    /* Dark mode */
+
+    body.dark-mode {
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(37, 99, 235, 0.15),
+                transparent 35%
+            ),
+            #0f172a;
+    }
+
+
+    body.dark-mode .profile-card {
+        background: #1e293b;
+
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+
+    body.dark-mode .profile-body {
+        background: #1e293b;
+    }
+
+
+    body.dark-mode .section-title {
+        color: #f8fafc;
+    }
+
+
+    body.dark-mode .info-box {
+        background: #0f172a;
+
+        border-color: #334155;
+    }
+
+
+    body.dark-mode .info-label {
+        color: #94a3b8;
+    }
+
+
+    body.dark-mode .info-value {
+        color: #f1f5f9;
+    }
+
+
+    body.dark-mode .info-icon {
+        background: #1e3a5f;
+        color: #60a5fa;
+    }
+
+
+    body.dark-mode .account-status {
+        background: #052e16;
+
+        border-color: #166534;
+
+        color: #86efac;
+    }
+
+
+    body.dark-mode .shift-badge {
+        background: #14532d;
+        color: #86efac;
+    }
+
+
+    body.dark-mode .logout-button {
+        background: #450a0a;
+        border-color: #7f1d1d;
+        color: #fca5a5;
+    }
+
+
+    body.dark-mode .logout-button:hover {
+        background: #7f1d1d;
+        color: #fecaca;
+    }
+
+
+    /* Responsive */
+
+    @media (max-width: 650px) {
+
+        .profile-wrapper {
+            padding: 20px 12px;
+        }
+
+        .profile-header {
+            padding: 30px 25px 65px;
+        }
+
+        .profile-header h2 {
+            font-size: 25px;
+        }
+
+        .avatar-wrapper {
+            margin-left: 25px;
+        }
+
+        .profile-body {
+            padding: 25px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+
+
+    @media (max-width: 400px) {
+
+        .profile-header h2 {
+            font-size: 22px;
+        }
+
+        .avatar {
+            width: 85px;
+            height: 85px;
+            font-size: 35px;
+        }
+
+        .theme-button {
+            right: 18px;
+            top: 18px;
+        }
+    }
 
 </style>
-
+```
 
 </head>
 
-
-
 <body>
 
+<div class="profile-wrapper">
+
+```
+<div class="profile-card">
 
 
-<div class="container mt-5">
+    <!-- Header -->
+
+    <div class="profile-header">
+
+        <button
+            type="button"
+            class="theme-button"
+            id="themeButton"
+            onclick="toggleTheme()"
+            title="Change day/night mode">
+
+            <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+
+        </button>
 
 
-<div class="row justify-content-center">
+        <div class="header-content">
+
+            <div class="portal-label">
+                IIEIH iPortal
+            </div>
+
+            <h2>
+                Staff Profile
+            </h2>
+
+            <p>
+                <i class="bi bi-hospital-fill"></i>
+                Eye Hospital OPD/IPD Operations
+            </p>
+
+        </div>
+
+    </div>
 
 
-<div class="col-md-6">
+    <!-- Profile Avatar -->
+
+    <div class="avatar-wrapper">
+
+        <div class="avatar">
+
+            <i class="bi bi-person-badge-fill"></i>
+
+        </div>
+
+    </div>
 
 
-<div class="card profile-card">
+    <!-- Profile Body -->
+
+    <div class="profile-body">
 
 
-<div class="profile-header text-center">
+        <div class="section-title">
+
+            <i class="bi bi-person-vcard-fill"></i>
+
+            Staff Information
+
+        </div>
 
 
-<h2>👩‍⚕️ Staff Profile</h2>
+        <div class="info-grid">
 
 
-<p class="mb-0">Eye Hospital OPD/IPD Operations</p>
+            <!-- Username -->
 
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-person-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Username
+                    </span>
+
+                    <span class="info-value">
+                        {{ profile.user.username }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Email -->
+
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-envelope-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Email Address
+                    </span>
+
+                    <span class="info-value">
+                        {{ profile.user.email }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Assigned Counter -->
+
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-building-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Assigned Counter
+                    </span>
+
+                    <span class="info-value">
+                        {{ profile.assigned_counter }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Shift -->
+
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-clock-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Shift
+                    </span>
+
+                    <span class="info-value">
+
+                        <span class="shift-badge">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                            {{ profile.get_shift_display }}
+
+                        </span>
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Desk Extension -->
+
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-telephone-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Desk Extension
+                    </span>
+
+                    <span class="info-value">
+                        {{ profile.desk_extension }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Department -->
+
+            <div class="info-box">
+
+                <div class="info-icon">
+
+                    <i class="bi bi-clipboard2-pulse-fill"></i>
+
+                </div>
+
+                <div class="info-content">
+
+                    <span class="info-label">
+                        Department
+                    </span>
+
+                    <span class="info-value">
+                        OPD & IPD Operations
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- Account Status -->
+
+        <div class="account-status">
+
+            <i class="bi bi-shield-check"></i>
+
+            <span>
+                Staff account is active and authorized for hospital portal access.
+            </span>
+
+        </div>
+
+
+        <!-- Action Buttons -->
+
+        <div class="action-buttons">
+
+            <a
+                href="{% url 'opd_ipd_reports:index' %}"
+                class="back-button">
+
+                <i class="bi bi-arrow-left"></i>
+
+                Back to Reports
+
+            </a>
+
+
+            <a
+                href="{% url 'users_nusrat:logout' %}"
+                class="logout-button">
+
+                <i class="bi bi-box-arrow-right"></i>
+
+                Logout
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+</div>
+```
 
 </div>
 
+<script>
 
-<div class="card-body p-4">
+    function toggleTheme() {
 
+        document.body.classList.toggle("dark-mode");
 
-<div class="info-box">
+        const icon = document.getElementById("themeIcon");
 
-<strong>Username:</strong>
+        if (document.body.classList.contains("dark-mode")) {
 
-{{ profile.user.username }}
+            icon.className = "bi bi-sun-fill";
 
-</div>
+            localStorage.setItem("theme", "dark");
 
+        } else {
 
-<div class="info-box">
+            icon.className = "bi bi-moon-stars-fill";
 
-<strong>Email:</strong>
+            localStorage.setItem("theme", "light");
 
-{{ profile.user.email }}
+        }
 
-</div>
-
-
-<div class="info-box">
-
-<strong>Assigned Counter:</strong>
-
-{{ profile.assigned_counter }}
-
-</div>
+    }
 
 
-<div class="info-box">
+    window.onload = function() {
 
-<strong>Shift:</strong>
+        const savedTheme = localStorage.getItem("theme");
 
-{{ profile.get_shift_display }}
+        const icon = document.getElementById("themeIcon");
 
-</div>
+        if (savedTheme === "dark") {
 
+            document.body.classList.add("dark-mode");
 
-<div class="info-box">
+            icon.className = "bi bi-sun-fill";
 
-<strong>Desk Extension:</strong>
+        } else {
 
-{{ profile.desk_extension }}
+            icon.className = "bi bi-moon-stars-fill";
 
-</div>
+        }
 
+    };
 
-<a href="{% url 'users_nusrat:logout' %}" class="btn btn-danger w-100 logout-btn">Logout</a>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
+</script>
 
 </body>
-
 </html>

@@ -1,136 +1,586 @@
-<!DOCTYPE html>
-<html lang="en">
+{% load static %}
 
+<!DOCTYPE html>
+
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Eye Hospital Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+>
 
-    <style>
+<title>Login | IIEIH iPortal</title>
 
-        body {
-            background: linear-gradient(
-                135deg,
-                #e3f2fd,
-                #f8f9fa
-            );
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef6f8;
+        transition: 0.3s ease;
+    }
+
+    .login-container {
+        width: 900px;
+        max-width: 92%;
+        min-height: 520px;
+        display: flex;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        transition: 0.3s ease;
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 45px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 5px;
+        font-size: 18px;
+    }
+
+    .password-toggle:hover {
+        color: #0d6efd;
+    }
+
+    .hospital-section {
+        width: 50%;
+        background: linear-gradient(135deg, #0f766e, #0e7490);
+        color: white;
+        padding: 50px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+    }
+
+    .hospital-icon {
+        font-size: 55px;
+        margin-bottom: 20px;
+    }
+
+    .hospital-section h1 {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .hospital-section p {
+        font-size: 15px;
+        line-height: 1.7;
+        opacity: 0.92;
+    }
+
+    .hospital-info {
+        margin-top: 35px;
+    }
+
+    .hospital-info div {
+        margin-bottom: 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .hospital-info i {
+        font-size: 17px;
+        width: 20px;
+    }
+
+    .login-section {
+        width: 50%;
+        padding: 45px 45px;
+        position: relative;
+    }
+
+    .top-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .theme-btn {
+        border: none;
+        background: #e8f3f5;
+        color: #0f766e;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        transition: 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .theme-btn:hover {
+        transform: scale(1.08);
+    }
+
+    .login-section h2 {
+        color: #164e63;
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 28px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        outline: none;
+        font-size: 14px;
+        transition: 0.2s ease;
+    }
+
+    .form-group input:focus {
+        border-color: #0f766e;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 9px;
+        background: #0f766e;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s ease;
+        margin-top: 5px;
+    }
+
+    .login-btn:hover {
+        background: #115e59;
+    }
+
+    .login-btn i {
+        margin-right: 7px;
+    }
+
+    .extra-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .extra-btn {
+        flex: 1;
+        padding: 11px 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .extra-btn i {
+        margin-right: 5px;
+    }
+
+    .register-btn {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .register-btn:hover {
+        background: #bae6fd;
+    }
+
+    .report-btn {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .report-btn:hover {
+        background: #bbf7d0;
+    }
+
+    .error-message {
+        background: #fee2e2;
+        color: #b91c1c;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-bottom: 18px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .footer-text {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    /* Dark Mode */
+
+    body.dark-mode {
+        background: #0f172a;
+    }
+
+    body.dark-mode .login-container {
+        background: #1e293b;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    body.dark-mode .login-section h2 {
+        color: #e2e8f0;
+    }
+
+    body.dark-mode .login-subtitle {
+        color: #94a3b8;
+    }
+
+    body.dark-mode .form-group label {
+        color: #cbd5e1;
+    }
+
+    body.dark-mode .form-group input {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-color: #475569;
+    }
+
+    body.dark-mode .form-group input::placeholder {
+        color: #64748b;
+    }
+
+    body.dark-mode .theme-btn {
+        background: #334155;
+        color: #facc15;
+    }
+
+    body.dark-mode .register-btn {
+        background: #0c4a6e;
+        color: #bae6fd;
+    }
+
+    body.dark-mode .report-btn {
+        background: #14532d;
+        color: #bbf7d0;
+    }
+
+    body.dark-mode .footer-text {
+        color: #64748b;
+    }
+
+    body.dark-mode .error-message {
+        background: #450a0a;
+        color: #fecaca;
+    }
+
+    @media (max-width: 750px) {
+
+        .login-container {
+            flex-direction: column;
         }
 
-
-        .login-card {
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: none;
+        .hospital-section,
+        .login-section {
+            width: 100%;
         }
 
-
-        .hospital-logo {
-            font-size: 45px;
+        .hospital-section {
+            padding: 35px;
         }
 
-
-        .btn-login {
-
-            background-color: #0077b6;
-            color: white;
-            border-radius: 10px;
-
+        .login-section {
+            padding: 35px;
         }
+    }
 
+    @media (max-width: 450px) {
 
-        .btn-login:hover {
-
-            background-color: #005f8f;
-            color: white;
-
+        .extra-buttons {
+            flex-direction: column;
         }
-
-
-        .form-control {
-
-            border-radius: 10px;
-
-        }
-
-
-    </style>
+    }
+</style>
 
 </head>
 
-
 <body>
 
+<div class="login-container">
 
-<div class="container">
+<!-- Hospital Information -->
 
+<div class="hospital-section">
 
-<div class="row justify-content-center">
+    <div class="hospital-icon">
+        👁️
+    </div>
 
+    <h1>IIEIH iPortal</h1>
 
-<div class="col-md-5">
+    <p>
+        Welcome to the Eye Hospital Management Portal.
+        Access your account to manage patient-care operations,
+        registration services, and hospital reports.
+    </p>
 
+    <div class="hospital-info">
 
-<div class="card login-card p-4">
+        <div>
+            <i class="bi bi-hospital-fill"></i>
+            <span>Patient Care Management</span>
+        </div>
 
+        <div>
+            <i class="bi bi-person-badge-fill"></i>
+            <span>OPD & IPD Operations</span>
+        </div>
 
-<div class="text-center">
+        <div>
+            <i class="bi bi-clipboard2-data-fill"></i>
+            <span>Hospital Reporting System</span>
+        </div>
 
-
-<div class="hospital-logo">👁️</div>
-
-
-<h2 class="mt-2">Eye Hospital Portal</h2>
-
-
-<p class="text-muted">OPD & IPD Management System</p>
-
-</div>
-
-
-{% if error %}
-
-<div class="alert alert-danger">
-{{error}}
-</div>
-
-{% endif %}
-
-
-<form method="POST">
-
-{% csrf_token %}
-
-<div class="mb-3">
-    <label class="form-label">Username</label>
-    <input type="text" name="username" class="form-control" placeholder="Enter username" required>
-</div>
-
-<div class="mb-3">
-    <label class="form-label">Password</label>
-    <input type="password" name="password" class="form-control" placeholder="Enter password" required>
-</div>
-
-<button class="btn btn-login w-100 py-2">Login</button>
-
-</form>
-
-<div class="text-center mt-4">
-    <small class="text-muted">Providing better vision care management</small>
-</div>
+    </div>
 
 </div>
 
-</div>
+
+<!-- Login Section -->
+
+<div class="login-section">
+
+    <div class="top-actions">
+
+        <button
+            type="button"
+            class="theme-btn"
+            id="themeToggle"
+            onclick="toggleTheme()"
+            title="Change day/night mode">
+
+            <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+
+        </button>
+
+    </div>
+
+
+    <h2>Welcome Back</h2>
+
+    <p class="login-subtitle">
+        Login to access your hospital account
+    </p>
+
+
+    {% if error %}
+
+        <div class="error-message">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>{{ error }}</span>
+        </div>
+
+    {% endif %}
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label for="username">
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                required>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <div class="password-wrapper">
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    class="form-control"
+                    placeholder="Enter your password"
+                    required>
+
+                <button
+                    type="button"
+                    class="password-toggle"
+                    onclick="togglePassword()"
+                    aria-label="Show password">
+
+                    <i class="bi bi-eye-fill" id="passwordIcon"></i>
+                </button>
+            </div>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="login-btn">
+
+            <i class="bi bi-box-arrow-in-right"></i>
+            Login
+
+        </button>
+
+    </form>
+
+
+    <div class="extra-buttons">
+
+        <a
+            href="{% url 'users_nusrat:register' %}"
+            class="extra-btn register-btn">
+
+            <i class="bi bi-person-plus-fill"></i>
+            Register
+
+        </a>
+
+        <a
+            href="{% url 'opd_ipd_reports:index' %}"
+            class="extra-btn report-btn">
+
+            <i class="bi bi-bar-chart-line-fill"></i>
+            OPD & IPD Reports
+
+        </a>
+
+    </div>
+
+
+    <div class="footer-text">
+        Eye Hospital Management Reporting System
+    </div>
 
 </div>
 
 </div>
+
+<script>
+
+    function togglePassword() { 
+        const passwordInput = document.getElementById("password"); 
+        const passwordIcon = document.getElementById("passwordIcon"); 
+        const toggleButton = document.querySelector(".password-toggle"); 
+        
+        if (passwordInput.type === "password") { 
+
+            passwordInput.type = "text"; 
+            passwordIcon.className = "bi bi-eye-slash-fill"; 
+            toggleButton.setAttribute("aria-label", "Hide password"); 
+
+        } else { 
+            
+            passwordInput.type = "password"; 
+            passwordIcon.className = "bi bi-eye-fill"; 
+            toggleButton.setAttribute("aria-label", "Show password"); 
+        } 
+    }
+
+    function toggleTheme() {
+
+        document.body.classList.toggle("dark-mode");
+
+        const icon = document.getElementById("themeIcon");
+
+        if (document.body.classList.contains("dark-mode")) {
+
+            icon.className = "bi bi-sun-fill";
+
+            localStorage.setItem("theme", "dark");
+
+        } else {
+
+            icon.className = "bi bi-moon-stars-fill";
+
+            localStorage.setItem("theme", "light");
+
+        }
+    }
+
+
+    window.onload = function () {
+
+        const savedTheme = localStorage.getItem("theme");
+
+        const icon = document.getElementById("themeIcon");
+
+        if (savedTheme === "dark") {
+
+            document.body.classList.add("dark-mode");
+
+            icon.className = "bi bi-sun-fill";
+
+        } else {
+
+            icon.className = "bi bi-moon-stars-fill";
+
+        }
+
+    };
+
+</script>
 
 </body>
-
 </html>
