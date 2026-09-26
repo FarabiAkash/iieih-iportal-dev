@@ -195,29 +195,6 @@
                 </div>
 
 
-                <!-- Approved By -->
-                <div class="mb-4">
-
-                    <label
-                        for="{{ form_data.approved_by.id_for_label }}"
-                        class="form-label fw-semibold">
-
-                        Approved By
-
-                    </label>
-
-                    {{ form_data.approved_by }}
-
-                    {% if form_data.approved_by.errors %}
-
-                        <div class="text-danger small mt-1">
-                            {{ form_data.approved_by.errors }}
-                        </div>
-
-                    {% endif %}
-
-                </div>
-
 
                 <!-- Non Field Errors -->
                 {% if form_data.non_field_errors %}

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # ==========================================
 # Developer: Ruhul
@@ -18,40 +19,57 @@ class DailyCollection(models.Model):
         ('DIAGNOSTICS', 'Diagnostics Counter'),
     ]
 
-    date = models.DateField()
+    date = models.DateField(null=True)
 
     hospital_branch = models.CharField(
-        max_length=100
+        max_length=100 ,null=True
     )
 
     counter_name = models.CharField(
         max_length=30,
-        choices=COUNTER_CHOICES
+        choices=COUNTER_CHOICES ,null=True
     )
 
     cash_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0
+        default=0 ,null=True
     )
 
     card_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0
+        default=0 ,null=True
     )
 
     mfs_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0
+        default=0 ,null=True
     )
 
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0
+        default=0 ,null=True
     )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='daily_collections'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True ,null=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True ,null=True
+    )
+
 
     def __str__(self):
         return f"{self.date} - {self.hospital_branch} - {self.counter_name}"
@@ -94,8 +112,24 @@ class ConcessionRecord(models.Model):
     )
 
 
-    approved_by = models.CharField(
-        max_length=100
+    approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_concessions' 
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_concessions'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True ,null=True
     )
 
 
