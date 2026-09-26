@@ -9,14 +9,14 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='dr_test',
+            username='naimul',
             password='pass@123',
             first_name='Naimul',
             last_name='Islam'
         )
         self.profile = NaimulProfile.objects.create(
             user=self.user,
-            role='Consultant',
+            role='Surgeon',
             specialty='Retina',
             department='Department of Ophthalmology & Microsurgery',
             license_number='BMDC-SURG-TEST'
@@ -36,7 +36,7 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         self.assertNotIn('</style>', content)
 
     def test_profile_template_uses_separated_static_files(self):
-        self.client.login(username='dr_test', password='pass@123')
+        self.client.login(username='naimul', password='pass@123')
         response = self.client.get(reverse('users_naimul:profile'))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
