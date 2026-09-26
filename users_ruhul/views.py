@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from .models import RuhulProfile
+
+
 
 from .models import *
 
@@ -85,11 +88,6 @@ def logout_view(request):
     )
 
     return redirect('ruhul_login')
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import RuhulProfile
 
 
 @login_required

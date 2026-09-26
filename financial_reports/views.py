@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 
 from .models import (
     DailyCollection,
@@ -12,30 +13,187 @@ from .forms import (
     ConcessionRecordForm
 )
 
+
 # ==========================================
 # Developer: Ruhul
 # App: financial_reports
-# Task: Create your financial & collection reporting views here.
+# Task: Finance & Billing Reports
 # ==========================================
 
 
 # =========================================================
-# DAILY COLLECTION
+# GET USER ROLE
 # =========================================================
 
+def get_user_role(request):
 
-# Daily Collection List
+    try:
+        return request.user.ruhul_profile.finance_role
 
+    except:
+        return None
+
+
+# =========================================================
+# FINANCIAL DASHBOARD
+# =========================================================
+
+@login_required
+def financial_dashboard_view(request):
+
+    role = get_user_role(request)
+
+    context = {
+        'role': role,
+        'page_title': 'Financial Dashboard',
+    }
+
+    return render(
+        request,
+        'financial_reports/financial_dashboard.html',
+        context
+    )
+
+
+# =========================================================
+# DAILY COLLECTION LIST
+# =========================================================
 
 @login_required
 def daily_collection_list_view(request):
 
-    collections = DailyCollection.objects.all().order_by('-date')
+    role = get_user_role(request)
+
+    # =========================================
+    # Allowed Roles
+    # =========================================
+
+    allowed_roles = [
+        'Cashier',
+        'Pharmacy Cashier',
+        'Accounts Supervisor',
+    ]
+
+    # =========================================
+    # Role Permission Check
+    # =========================================
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to access daily collections.'
+        )
+
+        return redirect('ruhul_profile')
+
+    # =========================================
+    # Base Queryset According to Role
+    # =========================================
+
+    if role == 'Accounts Supervisor':
+
+        # Accounts Supervisor can see ALL collections
+        collections = DailyCollection.objects.all()
+
+    else:
+
+        # Cashier / Pharmacy Cashier can see
+        # ONLY their own collections
+        collections = DailyCollection.objects.filter(
+            created_by=request.user
+        )
+
+    # =========================================
+    # Search Values
+    # =========================================
+
+    search_date = request.GET.get(
+        'date',
+        ''
+    ).strip()
+
+    hospital_branch = request.GET.get(
+        'hospital_branch',
+        ''
+    ).strip()
+
+    counter_name = request.GET.get(
+        'counter_name',
+        ''
+    ).strip()
+
+    created_by = request.GET.get(
+        'created_by',
+        ''
+    ).strip()
+
+    # =========================================
+    # Search Query using Q
+    # =========================================
+
+    search_query = Q()
+
+    # Date
+    if search_date:
+
+        search_query &= Q(
+            date=search_date
+        )
+
+    # Hospital Branch
+    if hospital_branch:
+
+        search_query &= Q(
+            hospital_branch__icontains=hospital_branch
+        )
+
+    # Counter Name
+    if counter_name:
+
+        search_query &= Q(
+            counter_name=counter_name
+        )
+
+    # Created By
+    if created_by:
+
+        search_query &= Q(
+            created_by__username__icontains=created_by
+        )
+
+    # =========================================
+    # Apply Search
+    # =========================================
+
+    collections = collections.filter(
+        search_query
+    ).order_by('-date')
+
+    # =========================================
+    # Context
+    # =========================================
 
     context = {
         'collections': collections,
-        'page_title': 'Daily Collections'
+        'page_title': 'Daily Collections',
+        'role': role,
+
+        # Search values
+        'search_date': search_date,
+        'hospital_branch': hospital_branch,
+        'counter_name': counter_name,
+        'created_by': created_by,
+
+        # Counter choices
+        'counter_choices': (
+            DailyCollection.COUNTER_CHOICES
+        ),
     }
+
+    # =========================================
+    # Render Template
+    # =========================================
 
     return render(
         request,
@@ -43,13 +201,30 @@ def daily_collection_list_view(request):
         context
     )
 
-
-
-# Create Daily Collection
-
+# =========================================================
+# DAILY COLLECTION CREATE
+# =========================================================
 
 @login_required
 def daily_collection_create_view(request):
+
+    role = get_user_role(request)
+
+    allowed_roles = [
+        'Cashier',
+        'Pharmacy Cashier',
+        'Accounts Supervisor',
+    ]
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to add daily collections.'
+        )
+
+        return redirect('ruhul_profile')
+
 
     if request.method == 'POST':
 
@@ -57,26 +232,42 @@ def daily_collection_create_view(request):
 
         if form.is_valid():
 
-            data=form.save(commit=False)
-            data.total_amount=data.cash_amount + data.card_amount+data.mfs_amount
+            data = form.save(commit=False)
+
+            # =========================================
+            # Calculate Total Amount
+            # =========================================
+
+            data.total_amount = (
+                data.cash_amount
+                + data.card_amount
+                + data.mfs_amount
+            )
+
+            # =========================================
+            # Store Created User
+            # =========================================
+
+            data.created_by = request.user
+
             data.save()
+
             messages.success(
                 request,
                 'Daily collection added successfully.'
             )
 
-            return redirect(
-                'daily_collection_list'
-            )
+            return redirect('daily_collection_list')
 
     else:
 
         form = DailyCollectionForm()
 
+
     context = {
         'form_data': form,
         'form_title': 'Add Daily Collection',
-        'form_btn': 'Save Collection'
+        'form_btn': 'Save Collection',
     }
 
     return render(
@@ -86,17 +277,52 @@ def daily_collection_create_view(request):
     )
 
 
-
-# Update Daily Collection
-
+# =========================================================
+# DAILY COLLECTION UPDATE
+# =========================================================
 
 @login_required
 def daily_collection_update_view(request, pk):
+
+    role = get_user_role(request)
+
+    allowed_roles = [
+        'Cashier',
+        'Pharmacy Cashier',
+        'Accounts Supervisor',
+    ]
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to update daily collections.'
+        )
+
+        return redirect('ruhul_profile')
+
 
     collection = get_object_or_404(
         DailyCollection,
         pk=pk
     )
+
+
+    # =========================================
+    # Non Supervisor নিজের collection update করবে
+    # =========================================
+
+    if role != 'Accounts Supervisor':
+
+        if collection.created_by != request.user:
+
+            messages.error(
+                request,
+                'You are not authorized to update this collection.'
+            )
+
+            return redirect('ruhul_profile')
+
 
     if request.method == 'POST':
 
@@ -107,8 +333,24 @@ def daily_collection_update_view(request, pk):
 
         if form.is_valid():
 
-            data=form.save(commit=False)
-            data.total_amount=data.cash_amount + data.card_amount+data.mfs_amount
+            data = form.save(commit=False)
+
+            # =========================================
+            # Calculate Total Amount
+            # =========================================
+
+            data.total_amount = (
+                data.cash_amount
+                + data.card_amount
+                + data.mfs_amount
+            )
+
+            # =========================================
+            # Keep Original Creator
+            # =========================================
+
+            data.created_by = collection.created_by
+
             data.save()
 
             messages.success(
@@ -116,9 +358,7 @@ def daily_collection_update_view(request, pk):
                 'Daily collection updated successfully.'
             )
 
-            return redirect(
-                'daily_collection_list'
-            )
+            return redirect('daily_collection_list')
 
     else:
 
@@ -126,11 +366,12 @@ def daily_collection_update_view(request, pk):
             instance=collection
         )
 
+
     context = {
         'form_data': form,
         'form_title': 'Update Daily Collection',
         'form_btn': 'Update Collection',
-        'collection': collection
+        'collection': collection,
     }
 
     return render(
@@ -140,16 +381,52 @@ def daily_collection_update_view(request, pk):
     )
 
 
-
-# Delete Daily Collection
+# =========================================================
+# DAILY COLLECTION DELETE
+# =========================================================
 
 @login_required
 def daily_collection_delete_view(request, pk):
+
+    role = get_user_role(request)
+
+    allowed_roles = [
+        'Cashier',
+        'Pharmacy Cashier',
+        'Accounts Supervisor',
+    ]
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to delete daily collections.'
+        )
+
+        return redirect('ruhul_profile')
+
 
     collection = get_object_or_404(
         DailyCollection,
         pk=pk
     )
+
+
+    # =========================================
+    # Non Supervisor নিজের collection delete করবে
+    # =========================================
+
+    if role != 'Accounts Supervisor':
+
+        if collection.created_by != request.user:
+
+            messages.error(
+                request,
+                'You are not authorized to delete this collection.'
+            )
+
+            return redirect('ruhul_profile')
+
 
     if request.method == 'POST':
 
@@ -160,12 +437,11 @@ def daily_collection_delete_view(request, pk):
             'Daily collection deleted successfully.'
         )
 
-        return redirect(
-            'daily_collection_list'
-        )
+        return redirect('daily_collection_list')
+
 
     context = {
-        'collection': collection
+        'collection': collection,
     }
 
     return render(
@@ -176,23 +452,127 @@ def daily_collection_delete_view(request, pk):
 
 
 # =========================================================
-# CONCESSION RECORD
+# CONCESSION RECORD LIST
 # =========================================================
-
-
-
-# Concession Record List
-
 
 @login_required
 def concession_record_list_view(request):
 
-    concessions = ConcessionRecord.objects.all().order_by('-date')
+    role = get_user_role(request)
+
+    # =========================================
+    # Allowed Roles
+    # =========================================
+
+    allowed_roles = [
+        'Zakat Relief Officer',
+        'Accounts Supervisor',
+    ]
+
+    # =========================================
+    # Role Permission Check
+    # =========================================
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to access concession records.'
+        )
+
+        return redirect('ruhul_profile')
+
+    # =========================================
+    # Base Queryset According to Role
+    # =========================================
+
+    if role == 'Accounts Supervisor':
+
+        # Accounts Supervisor can see ALL records
+        concessions = ConcessionRecord.objects.all()
+
+    else:
+
+        # Zakat Relief Officer can see
+        # ONLY his own created records
+        concessions = ConcessionRecord.objects.filter(
+            created_by=request.user
+        )
+
+    # =========================================
+    # Search Values
+    # =========================================
+
+    patient_mrn = request.GET.get(
+        'patient_mrn',
+        ''
+    ).strip()
+
+    search_date = request.GET.get(
+        'date',
+        ''
+    ).strip()
+
+    concession_type = request.GET.get(
+        'concession_type',
+        ''
+    ).strip()
+
+    # =========================================
+    # Search / Filter using Q
+    # =========================================
+
+    search_query = Q()
+
+    # Patient MRN
+    if patient_mrn:
+
+        search_query &= Q(
+            patient_mrn__icontains=patient_mrn
+        )
+
+    # Date
+    if search_date:
+
+        search_query &= Q(
+            date=search_date
+        )
+
+    # Concession Type
+    if concession_type:
+
+        search_query &= Q(
+            concession_type=concession_type
+        )
+
+    # Apply Search
+    concessions = concessions.filter(
+        search_query
+    ).order_by('-date')
+
+    # =========================================
+    # Context
+    # =========================================
 
     context = {
         'concessions': concessions,
-        'page_title': 'Concession Records'
+        'page_title': 'Concession Records',
+        'role': role,
+
+        # Search values
+        'patient_mrn': patient_mrn,
+        'search_date': search_date,
+        'concession_type': concession_type,
+
+        # Dropdown choices
+        'concession_choices': (
+            ConcessionRecord.CONCESSION_CHOICES
+        ),
     }
+
+    # =========================================
+    # Render Template
+    # =========================================
 
     return render(
         request,
@@ -200,41 +580,174 @@ def concession_record_list_view(request):
         context
     )
 
+@login_required
+def concession_approve_view(request, pk):
+
+    role = get_user_role(request)
+
+    # Only Accounts Supervisor can approve
+    if role != 'Accounts Supervisor':
+
+        messages.error(
+            request,
+            'You are not authorized to approve concessions.'
+        )
+
+        return redirect('ruhul_profile')
+
+    concession = get_object_or_404(
+        ConcessionRecord,
+        pk=pk
+    )
+
+    # Approve the concession
+    concession.approved_by = request.user
+    concession.save()
+
+    messages.success(
+        request,
+        'Concession approved successfully.'
+    )
+
+    return redirect('concession_record_list')
 
 
-# Create Concession Record
-
+# =========================================================
+# CONCESSION RECORD CREATE
+# =========================================================
 
 @login_required
 def concession_record_create_view(request):
+
+    role = get_user_role(request)
+
+    # =========================================
+    # Allowed Roles
+    # =========================================
+
+    allowed_roles = [
+        'Zakat Relief Officer',
+        'Accounts Supervisor',
+    ]
+
+    # =========================================
+    # Role Permission Check
+    # =========================================
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to add concession records.'
+        )
+
+        return redirect('ruhul_profile')
+
+    # =========================================
+    # POST Request
+    # =========================================
 
     if request.method == 'POST':
 
         form = ConcessionRecordForm(request.POST)
 
-        if form.is_valid():            
+        if form.is_valid():
 
-            data=form.save(commit=False)
-            data.payable_amount=data.bill_total - data.discount_amount
-            data.save()
-            messages.success(
-                request,
-                'Concession record added successfully.'
-            )
+            # =========================================
+            # Create Object Without Saving
+            # =========================================
 
-            return redirect(
-                'concession_record_list'
-            )
+            data = form.save(commit=False)
+
+            # =========================================
+            # DISCOUNT APPROVAL LIMIT CHECK
+            # =========================================
+
+            profile = request.user.ruhul_profile
+
+            if data.discount_amount > profile.discount_approval_limit:
+
+                form.add_error(
+                    'discount_amount',
+                    f'Your discount approval limit is '
+                    f'{profile.discount_approval_limit}. '
+                    f'You cannot approve this discount amount.'
+                )
+
+            else:
+
+                # =========================================
+                # Calculate Payable Amount
+                # =========================================
+
+                data.payable_amount = (
+                    data.bill_total
+                    - data.discount_amount
+                )
+
+                # =========================================
+                # Store Record Creator
+                # =========================================
+
+                data.created_by = request.user
+
+                # =========================================
+                # Accounts Supervisor Approval
+                # =========================================
+
+                if role == 'Accounts Supervisor':
+
+                    data.approved_by = request.user
+
+                # =========================================
+                # Zakat Relief Officer
+                # approved_by remains None
+                # =========================================
+
+                else:
+
+                    data.approved_by = None
+
+                # =========================================
+                # Save Data
+                # =========================================
+
+                data.save()
+
+                # =========================================
+                # Success Message
+                # =========================================
+
+                messages.success(
+                    request,
+                    'Concession record added successfully.'
+                )
+
+                return redirect(
+                    'concession_record_list'
+                )
+
+    # =========================================
+    # GET Request
+    # =========================================
 
     else:
 
         form = ConcessionRecordForm()
 
+    # =========================================
+    # Context
+    # =========================================
+
     context = {
         'form_data': form,
         'form_title': 'Add Concession Record',
-        'form_btn': 'Save Concession'
+        'form_btn': 'Save Concession',
     }
+
+    # =========================================
+    # Render Template
+    # =========================================
 
     return render(
         request,
@@ -243,16 +756,49 @@ def concession_record_create_view(request):
     )
 
 
-# Update Concession Record
-
+# =========================================================
+# CONCESSION RECORD UPDATE
+# =========================================================
 
 @login_required
 def concession_record_update_view(request, pk):
+
+    role = get_user_role(request)
+
+    # =========================================
+    # Allowed Roles
+    # =========================================
+
+    allowed_roles = [
+        'Zakat Relief Officer',
+        'Accounts Supervisor',
+    ]
+
+    # =========================================
+    # Role Permission Check
+    # =========================================
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to update concession records.'
+        )
+
+        return redirect('ruhul_profile')
+
+    # =========================================
+    # Get Existing Concession Record
+    # =========================================
 
     concession = get_object_or_404(
         ConcessionRecord,
         pk=pk
     )
+
+    # =========================================
+    # POST Request
+    # =========================================
 
     if request.method == 'POST':
 
@@ -263,18 +809,74 @@ def concession_record_update_view(request, pk):
 
         if form.is_valid():
 
-            data=form.save(commit=False)
-            data.payable_amount=data.bill_total - data.discount_amount
-            data.save()
+            # =========================================
+            # Create Object Without Saving
+            # =========================================
 
-            messages.success(
-                request,
-                'Concession record updated successfully.'
-            )
+            data = form.save(commit=False)
 
-            return redirect(
-                'concession_record_list'
-            )
+            # =========================================
+            # DISCOUNT APPROVAL LIMIT CHECK
+            # =========================================
+
+            profile = request.user.ruhul_profile
+
+            if data.discount_amount > profile.discount_approval_limit:
+
+                form.add_error(
+                    'discount_amount',
+                    f'Your discount approval limit is '
+                    f'{profile.discount_approval_limit}. '
+                    f'You cannot approve this discount amount.'
+                )
+
+            else:
+
+                # =========================================
+                # Calculate Payable Amount
+                # =========================================
+
+                data.payable_amount = (
+                    data.bill_total
+                    - data.discount_amount
+                )
+
+                # =========================================
+                # Store Record Creator
+                # =========================================
+                
+                data.created_by = request.user
+
+                # =========================================
+                # Accounts Supervisor Approval
+                # =========================================
+
+                if role == 'Accounts Supervisor':
+
+                    data.approved_by = request.user
+
+                # =========================================
+                # Save Updated Data
+                # =========================================
+
+                data.save()
+
+                # =========================================
+                # Success Message
+                # =========================================
+
+                messages.success(
+                    request,
+                    'Concession record updated successfully.'
+                )
+
+                return redirect(
+                    'concession_record_list'
+                )
+
+    # =========================================
+    # GET Request
+    # =========================================
 
     else:
 
@@ -282,12 +884,20 @@ def concession_record_update_view(request, pk):
             instance=concession
         )
 
+    # =========================================
+    # Context
+    # =========================================
+
     context = {
         'form_data': form,
         'form_title': 'Update Concession Record',
         'form_btn': 'Update Concession',
-        'concession': concession
+        'concession': concession,
     }
+
+    # =========================================
+    # Render Form
+    # =========================================
 
     return render(
         request,
@@ -296,17 +906,35 @@ def concession_record_update_view(request, pk):
     )
 
 
-
-# Delete Concession Record
-
+# =========================================================
+# CONCESSION RECORD DELETE
+# =========================================================
 
 @login_required
 def concession_record_delete_view(request, pk):
+
+    role = get_user_role(request)
+
+    allowed_roles = [
+        'Zakat Relief Officer',
+        'Accounts Supervisor',
+    ]
+
+    if role not in allowed_roles:
+
+        messages.error(
+            request,
+            'You are not authorized to delete concession records.'
+        )
+
+        return redirect('ruhul_profile')
+
 
     concession = get_object_or_404(
         ConcessionRecord,
         pk=pk
     )
+
 
     if request.method == 'POST':
 
@@ -317,12 +945,11 @@ def concession_record_delete_view(request, pk):
             'Concession record deleted successfully.'
         )
 
-        return redirect(
-            'concession_record_list'
-        )
+        return redirect('concession_record_list')
+
 
     context = {
-        'concession': concession
+        'concession': concession,
     }
 
     return render(

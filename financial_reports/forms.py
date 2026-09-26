@@ -25,7 +25,7 @@ class DailyCollectionForm(forms.ModelForm):
             'mfs_amount',
         ]
 
-        exclude=['total_amount']
+        exclude=['total_amount','created_by','created_at','updated_at']
 
         widgets = {
 
@@ -76,14 +76,6 @@ class DailyCollectionForm(forms.ModelForm):
                 }
             ),
 
-            # 'total_amount': forms.NumberInput(
-            #     attrs={
-            #         'class': 'form-control',
-            #         'placeholder': 'Enter total amount',
-            #         'step': '0.01',
-            #         'min': '0'
-            #     }
-            # ),
         }
 
         labels = {
@@ -119,11 +111,10 @@ class ConcessionRecordForm(forms.ModelForm):
             'concession_type',
             'bill_total',
             'discount_amount',
-            'approved_by',
             
         ]
 
-        exclude=['payable_amount']
+        exclude=['payable_amount','approved_by','created_by','created_at']
 
         widgets = {
 
@@ -165,12 +156,6 @@ class ConcessionRecordForm(forms.ModelForm):
                 }
             ),
 
-            'approved_by': forms.TextInput(
-                attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Enter approver name'
-                }
-            ),
         }
 
         labels = {
@@ -185,5 +170,4 @@ class ConcessionRecordForm(forms.ModelForm):
 
             'discount_amount': 'Discount Amount',
 
-            'approved_by': 'Approved By',
         }
