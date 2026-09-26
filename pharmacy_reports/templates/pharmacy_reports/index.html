@@ -1,14 +1,376 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy & Consumables Reports</title>
-</head>
-<body>
-    <h1>Hospital Eye Pharmacy & Surgical Consumables Reports</h1>
-    <p>Assigned Developer: <strong>Adnan</strong></p>
-    <p>App: <code>pharmacy_reports</code></p>
-</body>
-</html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IIEH — Eye Pharmacy Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #eaf4fb;
+      }
+      .navbar {
+        background-color: #0077b6;
+      }
+      .stat-card {
+        border-radius: 16px;
+        border: none;
+      }
+      .table thead th {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .badge-expired {
+        background-color: #c1121f;
+      }
+      .badge-low {
+        background-color: #f4a261;
+      }
+      .badge-ok {
+        background-color: #2d6a4f;
+      }
+      .badge-out {
+        background-color: #000000;
+      }
+      .page-link {
+        color: #0077b6;
+      }
+      .page-item.active .page-link {
+        background-color: #0077b6;
+        border-color: #0077b6;
+      }
+      .search-box {
+        max-width: 400px;
+      }
+      .card {
+        border-radius: 16px;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark px-4 py-3">
+      <span class="navbar-brand fw-bold">
+        <i class="bi bi-hospital me-2"></i>IIEH — Eye Pharmacy & Consumables
+      </span>
+      <a href="/adnan/logout/" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </a>
+    </nav>
 
+    <div class="container-fluid px-4 py-4">
+      <!-- Stat Cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+          <div
+            class="card stat-card shadow-sm p-3"
+            style="border-left: 5px solid #0077b6 !important"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 small">Total Dispensed Today</p>
+                <h3 class="fw-bold" style="color: #0077b6">
+                  {{ total_dispensed }}
+                </h3>
+              </div>
+              <i class="bi bi-capsule fs-1 text-primary opacity-25"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div
+            class="card stat-card shadow-sm p-3"
+            style="border-left: 5px solid #f4a261 !important"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 small">Low Stock Alerts</p>
+                <h3 class="fw-bold" style="color: #f4a261">
+                  {{ low_stock_count }}
+                </h3>
+              </div>
+              <i
+                class="bi bi-exclamation-triangle fs-1 opacity-25"
+                style="color: #f4a261"
+              ></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div
+            class="card stat-card shadow-sm p-3"
+            style="border-left: 5px solid #c1121f !important"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 small">Near-Expiry Items</p>
+                <h3 class="fw-bold" style="color: #c1121f">
+                  {{ near_expiry_count }}
+                </h3>
+              </div>
+              <i
+                class="bi bi-clock-history fs-1 opacity-25"
+                style="color: #c1121f"
+              ></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div
+            class="card stat-card shadow-sm p-3"
+            style="border-left: 5px solid #000 !important"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 small">Expired Items</p>
+                <h3 class="fw-bold" style="color: #000">{{ expired_count }}</h3>
+              </div>
+              <i class="bi bi-x-circle fs-1 opacity-25" style="color: #000"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="mb-4">
+        <form method="GET" action="">
+          <div class="input-group search-box shadow-sm">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              name="search"
+              class="form-control border-start-0"
+              placeholder="Search medicine, branch, category, patient MRN, item..."
+              value="{{ search_query }}"
+            />
+            {% if search_query %}
+            <a href="/pharmacy/" class="btn btn-outline-secondary">
+              <i class="bi bi-x"></i> Clear
+            </a>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">Search</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Medicine Dispensing Log -->
+      <div class="card shadow-sm mb-4">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center py-3"
+        >
+          <h5 class="mb-0">
+            <i class="bi bi-journal-medical me-2 text-primary"></i>Medicine
+            Dispensing Log
+          </h5>
+          <span class="badge bg-primary rounded-pill"
+            >{{ dispensing_logs.paginator.count }} records</span
+          >
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-primary">
+                <tr>
+                  <th>Date</th>
+                  <th>Patient MRN</th>
+                  <th>Medicine</th>
+                  <th>Category</th>
+                  <th>Branch</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Batch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in dispensing_logs %}
+                <tr>
+                  <td>{{ log.date }}</td>
+                  <td>
+                    <span class="badge bg-secondary"
+                      >{{ log.patient_mrn }}</span
+                    >
+                  </td>
+                  <td class="fw-semibold">{{ log.medicine_name }}</td>
+                  <td>{{ log.get_category_display }}</td>
+                  <td>{{ log.hospital_branch }}</td>
+                  <td>
+                    <span class="badge bg-primary"
+                      >{{ log.quantity_dispensed }}</span
+                    >
+                  </td>
+                  <td>৳ {{ log.unit_price }}</td>
+                  <td>
+                    <small class="text-muted">{{ log.batch_number }}</small>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>No records
+                    found.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pagination - Dispensing Log -->
+        {% if dispensing_logs.paginator.num_pages > 1 %}
+        <div class="card-footer bg-white">
+          <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+              {% if dispensing_logs.has_previous %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?log_page={{ dispensing_logs.previous_page_number }}&stock_page={{ stock_items.number }}&search={{ search_query }}"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %} {% for num in dispensing_logs.paginator.page_range %}
+              <li
+                class="page-item {% if dispensing_logs.number == num %}active{% endif %}"
+              >
+                <a
+                  class="page-link"
+                  href="?log_page={{ num }}&stock_page={{ stock_items.number }}&search={{ search_query }}"
+                  >{{ num }}</a
+                >
+              </li>
+              {% endfor %} {% if dispensing_logs.has_next %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?log_page={{ dispensing_logs.next_page_number }}&stock_page={{ stock_items.number }}&search={{ search_query }}"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Surgical Consumable Stock -->
+      <div class="card shadow-sm mb-4">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center py-3"
+        >
+          <h5 class="mb-0">
+            <i class="bi bi-eyedropper me-2 text-warning"></i>Surgical
+            Consumable Stock
+          </h5>
+          <span class="badge bg-warning text-dark rounded-pill"
+            >{{ stock_items.paginator.count }} items</span
+          >
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-warning">
+                <tr>
+                  <th>Item</th>
+                  <th>Subspecialty</th>
+                  <th>Current Qty</th>
+                  <th>Reorder At</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in stock_items %}
+                <tr>
+                  <td class="fw-semibold">{{ item.item_name }}</td>
+                  <td>{{ item.get_subspecialty_display }}</td>
+                  <td>
+                    {% if item.current_quantity == 0 %}
+                    <span class="fw-bold text-danger">0</span>
+                    {% else %} {{ item.current_quantity }} {% endif %}
+                  </td>
+                  <td>{{ item.reorder_threshold }}</td>
+                  <td>{{ item.expiry_date }}</td>
+                  <td>
+                    {% if item.current_quantity == 0 %}
+                    <span class="badge badge-out">Out of Stock</span>
+                    {% elif item.expiry_date < today %}
+                    <span class="badge badge-expired">Expired</span>
+                    {% elif item.current_quantity <= item.reorder_threshold %}
+                    <span class="badge badge-low">Low Stock</span>
+                    {% else %}
+                    <span class="badge badge-ok">OK</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>No stock
+                    records found.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pagination - Stock -->
+        {% if stock_items.paginator.num_pages > 1 %}
+        <div class="card-footer bg-white">
+          <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+              {% if stock_items.has_previous %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?stock_page={{ stock_items.previous_page_number }}&log_page={{ dispensing_logs.number }}&search={{ search_query }}"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+              {% endif %} {% for num in stock_items.paginator.page_range %}
+              <li
+                class="page-item {% if stock_items.number == num %}active{% endif %}"
+              >
+                <a
+                  class="page-link"
+                  href="?stock_page={{ num }}&log_page={{ dispensing_logs.number }}&search={{ search_query }}"
+                  >{{ num }}</a
+                >
+              </li>
+              {% endfor %} {% if stock_items.has_next %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?stock_page={{ stock_items.next_page_number }}&log_page={{ dispensing_logs.number }}&search={{ search_query }}"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

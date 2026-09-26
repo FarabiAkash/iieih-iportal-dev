@@ -16,6 +16,7 @@ from .views import (
     login_view,
     logout_view,
     profile_view,
+    profile_update_view,
 )
 
 
@@ -43,6 +44,12 @@ urlpatterns = [
         'profile/',
         profile_view,
         name='ruhul_profile'
+    ),
+
+    path(
+        'profile/update/',
+        profile_update_view,
+        name='ruhul_profile_update'
     ),
 
 ]
