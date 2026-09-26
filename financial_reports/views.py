@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 
 from .models import (
     DailyCollection,
@@ -63,11 +64,19 @@ def daily_collection_list_view(request):
 
     role = get_user_role(request)
 
+    # =========================================
+    # Allowed Roles
+    # =========================================
+
     allowed_roles = [
         'Cashier',
         'Pharmacy Cashier',
         'Accounts Supervisor',
     ]
+
+    # =========================================
+    # Role Permission Check
+    # =========================================
 
     if role not in allowed_roles:
 
@@ -78,32 +87,119 @@ def daily_collection_list_view(request):
 
         return redirect('ruhul_profile')
 
+    # =========================================
+    # Base Queryset According to Role
+    # =========================================
 
-    # Accounts Supervisor can see all collection 
     if role == 'Accounts Supervisor':
 
-        collections = DailyCollection.objects.all().order_by('-date')
+        # Accounts Supervisor can see ALL collections
+        collections = DailyCollection.objects.all()
 
     else:
 
-        # Cashier / Pharmacy Cashier শুধু নিজের collection দেখতে পারবে
+        # Cashier / Pharmacy Cashier can see
+        # ONLY their own collections
         collections = DailyCollection.objects.filter(
             created_by=request.user
-        ).order_by('-date')
+        )
 
+    # =========================================
+    # Search Values
+    # =========================================
+
+    search_date = request.GET.get(
+        'date',
+        ''
+    ).strip()
+
+    hospital_branch = request.GET.get(
+        'hospital_branch',
+        ''
+    ).strip()
+
+    counter_name = request.GET.get(
+        'counter_name',
+        ''
+    ).strip()
+
+    created_by = request.GET.get(
+        'created_by',
+        ''
+    ).strip()
+
+    # =========================================
+    # Search Query using Q
+    # =========================================
+
+    search_query = Q()
+
+    # Date
+    if search_date:
+
+        search_query &= Q(
+            date=search_date
+        )
+
+    # Hospital Branch
+    if hospital_branch:
+
+        search_query &= Q(
+            hospital_branch__icontains=hospital_branch
+        )
+
+    # Counter Name
+    if counter_name:
+
+        search_query &= Q(
+            counter_name=counter_name
+        )
+
+    # Created By
+    if created_by:
+
+        search_query &= Q(
+            created_by__username__icontains=created_by
+        )
+
+    # =========================================
+    # Apply Search
+    # =========================================
+
+    collections = collections.filter(
+        search_query
+    ).order_by('-date')
+
+    # =========================================
+    # Context
+    # =========================================
 
     context = {
         'collections': collections,
         'page_title': 'Daily Collections',
         'role': role,
+
+        # Search values
+        'search_date': search_date,
+        'hospital_branch': hospital_branch,
+        'counter_name': counter_name,
+        'created_by': created_by,
+
+        # Counter choices
+        'counter_choices': (
+            DailyCollection.COUNTER_CHOICES
+        ),
     }
+
+    # =========================================
+    # Render Template
+    # =========================================
 
     return render(
         request,
         'financial_reports/daily_collection_list.html',
         context
     )
-
 
 # =========================================================
 # DAILY COLLECTION CREATE
@@ -387,24 +483,72 @@ def concession_record_list_view(request):
         return redirect('ruhul_profile')
 
     # =========================================
-    # Accounts Supervisor
-    # Can see ALL concessions
+    # Base Queryset According to Role
     # =========================================
 
     if role == 'Accounts Supervisor':
 
-        concessions = ConcessionRecord.objects.all().order_by('-date')
-
-    # =========================================
-    # Zakat Relief Officer
-    # Can see ONLY own created concessions
-    # =========================================
+        # Accounts Supervisor can see ALL records
+        concessions = ConcessionRecord.objects.all()
 
     else:
 
+        # Zakat Relief Officer can see
+        # ONLY his own created records
         concessions = ConcessionRecord.objects.filter(
             created_by=request.user
-        ).order_by('-date')
+        )
+
+    # =========================================
+    # Search Values
+    # =========================================
+
+    patient_mrn = request.GET.get(
+        'patient_mrn',
+        ''
+    ).strip()
+
+    search_date = request.GET.get(
+        'date',
+        ''
+    ).strip()
+
+    concession_type = request.GET.get(
+        'concession_type',
+        ''
+    ).strip()
+
+    # =========================================
+    # Search / Filter using Q
+    # =========================================
+
+    search_query = Q()
+
+    # Patient MRN
+    if patient_mrn:
+
+        search_query &= Q(
+            patient_mrn__icontains=patient_mrn
+        )
+
+    # Date
+    if search_date:
+
+        search_query &= Q(
+            date=search_date
+        )
+
+    # Concession Type
+    if concession_type:
+
+        search_query &= Q(
+            concession_type=concession_type
+        )
+
+    # Apply Search
+    concessions = concessions.filter(
+        search_query
+    ).order_by('-date')
 
     # =========================================
     # Context
@@ -414,6 +558,16 @@ def concession_record_list_view(request):
         'concessions': concessions,
         'page_title': 'Concession Records',
         'role': role,
+
+        # Search values
+        'patient_mrn': patient_mrn,
+        'search_date': search_date,
+        'concession_type': concession_type,
+
+        # Dropdown choices
+        'concession_choices': (
+            ConcessionRecord.CONCESSION_CHOICES
+        ),
     }
 
     # =========================================

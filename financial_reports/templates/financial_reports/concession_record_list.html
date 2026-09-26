@@ -52,8 +52,145 @@
 
 
     <!-- =========================================
+         Search / Filter Section
+         ========================================= -->
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-header bg-light">
+
+            <h5 class="mb-0">
+                <i class="bi bi-search"></i>
+                Search Concession Records
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <form method="GET">
+
+                <div class="row g-3 align-items-end">
+
+                    <!-- Patient MRN -->
+                    <div class="col-md-4">
+
+                        <label class="form-label fw-semibold">
+                            Patient MRN
+                        </label>
+
+                        <input
+                            type="text"
+                            name="patient_mrn"
+                            value="{{ patient_mrn }}"
+                            class="form-control"
+                            placeholder="Enter Patient MRN"
+                        >
+
+                    </div>
+
+
+                    <!-- Date -->
+                    <div class="col-md-3">
+
+                        <label class="form-label fw-semibold">
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ search_date }}"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <!-- Concession Type -->
+                    <div class="col-md-3">
+
+                        <label class="form-label fw-semibold">
+                            Concession Type
+                        </label>
+
+                        <select
+                            name="concession_type"
+                            class="form-select"
+                        >
+
+                            <option value="">
+                                All Types
+                            </option>
+
+                            {% for value, label in concession_choices %}
+
+                                <option
+                                    value="{{ value }}"
+                                    {% if concession_type == value %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Search Button -->
+                    <div class="col-md-2">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100"
+                        >
+
+                            <i class="bi bi-search"></i>
+                            Search
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Reset Button -->
+
+                {% if patient_mrn or search_date or concession_type %}
+
+                    <div class="mt-3">
+
+                        <a
+                            href="{% url 'concession_record_list' %}"
+                            class="btn btn-outline-secondary btn-sm"
+                        >
+
+                            <i class="bi bi-x-circle"></i>
+                            Reset Search
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
          Records Card
          ========================================= -->
+
     <div class="card shadow-sm border-0">
 
         <div class="card-header bg-primary text-white py-3">
@@ -76,6 +213,7 @@
                     <!-- =========================================
                          Table Header
                          ========================================= -->
+
                     <thead class="table-light">
 
                         <tr>
@@ -98,6 +236,7 @@
                     <!-- =========================================
                          Table Body
                          ========================================= -->
+
                     <tbody>
 
                         {% for concession in concessions %}
@@ -118,9 +257,11 @@
 
                             <!-- Patient MRN -->
                             <td>
+
                                 <span class="fw-semibold">
                                     {{ concession.patient_mrn }}
                                 </span>
+
                             </td>
 
 
@@ -144,19 +285,24 @@
 
                             <!-- Discount -->
                             <td class="text-danger fw-semibold">
+
                                 {{ concession.discount_amount }}
+
                             </td>
 
 
                             <!-- Payable Amount -->
                             <td class="fw-bold text-success">
+
                                 {{ concession.payable_amount }}
+
                             </td>
 
 
                             <!-- =========================================
                                  Approved By
                                  ========================================= -->
+
                             <td>
 
                                 {% if concession.approved_by %}
@@ -187,6 +333,7 @@
                             <!-- =========================================
                                  Actions
                                  ========================================= -->
+
                             <td>
 
                                 <div class="btn-group" role="group">
@@ -196,18 +343,23 @@
                                          Approve Button
                                          ONLY Accounts Supervisor
                                          ================================= -->
+
                                     {% if role == 'Accounts Supervisor' %}
 
                                         {% if not concession.approved_by %}
 
-                                            <form method="POST"
-                                                  action="{% url 'concession_record_approve' concession.pk %}"
-                                                  style="display: inline;">
+                                            <form
+                                                method="POST"
+                                                action="{% url 'concession_record_approve' concession.pk %}"
+                                                style="display: inline;"
+                                            >
 
                                                 {% csrf_token %}
 
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-success">
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-success"
+                                                >
 
                                                     <i class="bi bi-check-circle"></i>
                                                     Approve
@@ -218,7 +370,9 @@
 
                                         {% else %}
 
-                                            <span class="btn btn-sm btn-success disabled">
+                                            <span
+                                                class="btn btn-sm btn-success disabled"
+                                            >
 
                                                 <i class="bi bi-check-circle"></i>
                                                 Approved
@@ -233,8 +387,11 @@
                                     <!-- =================================
                                          Edit Button
                                          ================================= -->
-                                    <a href="{% url 'concession_record_update' concession.pk %}"
-                                       class="btn btn-sm btn-outline-primary">
+
+                                    <a
+                                        href="{% url 'concession_record_update' concession.pk %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
 
                                         <i class="bi bi-pencil"></i>
                                         Edit
@@ -245,8 +402,11 @@
                                     <!-- =================================
                                          Delete Button
                                          ================================= -->
-                                    <a href="{% url 'concession_record_delete' concession.pk %}"
-                                       class="btn btn-sm btn-outline-danger">
+
+                                    <a
+                                        href="{% url 'concession_record_delete' concession.pk %}"
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
 
                                         <i class="bi bi-trash"></i>
                                         Delete
@@ -273,6 +433,7 @@
                 <!-- =========================================
                      Empty State
                      ========================================= -->
+
                 <div class="text-center py-5">
 
                     <i class="bi bi-file-earmark-text fs-1 text-muted"></i>
@@ -281,18 +442,43 @@
                         No concession records found.
                     </h5>
 
-                    <p class="text-muted">
-                        Add your first concession record.
-                    </p>
+                    {% if patient_mrn or search_date or concession_type %}
 
+                        <p class="text-muted">
+                            No records match your search criteria.
+                        </p>
 
-                    <a href="{% url 'concession_record_create' %}"
-                       class="btn btn-primary">
+                        <a
+                            href="{% url 'concession_record_list' %}"
+                            class="btn btn-outline-secondary"
+                        >
 
-                        <i class="bi bi-plus-circle"></i>
-                        Add Concession
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            Clear Search
 
-                    </a>
+                        </a>
+
+                    {% else %}
+
+                        <p class="text-muted">
+                            Add your first concession record.
+                        </p>
+
+                        {% if role == 'Zakat Relief Officer' or role == 'Accounts Supervisor' %}
+
+                            <a
+                                href="{% url 'concession_record_create' %}"
+                                class="btn btn-primary"
+                            >
+
+                                <i class="bi bi-plus-circle"></i>
+                                Add Concession
+
+                            </a>
+
+                        {% endif %}
+
+                    {% endif %}
 
                 </div>
 

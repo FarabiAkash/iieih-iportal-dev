@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # ==========================================
 # Developer: Ruhul
@@ -19,10 +20,10 @@ class DailyCollection(models.Model):
         ('DIAGNOSTICS', 'Diagnostics Counter'),
     ]
 
-    date = models.DateField(null=True)
+    date = models.DateTimeField(default=timezone.now)
 
     hospital_branch = models.CharField(
-        max_length=100 ,null=True
+        max_length=100 ,default='Ispahani Islamia Eye Institute and Hospital', null=True
     )
 
     counter_name = models.CharField(
@@ -84,7 +85,7 @@ class ConcessionRecord(models.Model):
         ('EXECUTIVE', 'Executive Exemption'),
     ]
 
-    date = models.DateField()
+    date = models.DateTimeField(default=timezone.now)
 
     patient_mrn = models.CharField(
         max_length=50
