@@ -90,7 +90,7 @@ def profile_view(request):
         gender = request.POST.get('patient_gender', 'Male')
         eye = request.POST.get('eye', 'RE')
         surgery_type = request.POST.get('surgery_type', 'Cataract')
-        surgeon_name = request.POST.get('surgeon_name', '').strip() or 'Dr. Naimul Hasan'
+        surgeon_name = request.POST.get('surgeon_name', '').strip() or 'Dr. Naimul Islam'
         ot_room = request.POST.get('ot_room', 'OT-1')
         ot_slot = request.POST.get('ot_slot', 'Slot 1 (08:30 - 10:00 AM)')
         outcome = request.POST.get('outcome', 'Successful')
@@ -210,7 +210,7 @@ def profile_view(request):
     # All hospital surgery records
     all_surgeries = SurgeryRecord.objects.all().order_by('-date', '-id')
 
-    # Logged-in doctor identification (e.g. Dr. Naimul Hasan)
+    # Logged-in doctor identification (e.g. Dr. Naimul Islam)
     doctor_kw = request.user.first_name or 'Naimul'
 
     # STRICT PATIENT ISOLATION:
