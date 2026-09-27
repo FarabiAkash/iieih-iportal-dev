@@ -7,11 +7,8 @@ from users_naimul.models import NaimulProfile
 
 # Register your models here.
 # admin.site.register(SurgeryRecord)
-
 # admin.site.register(DiagnosisProcedure)
-
 # admin.site.register(Appointment)
-
 # admin.site.register(NaimulProfile)
 
 @admin.register(NaimulProfile)
@@ -28,7 +25,7 @@ class SurgeryRecordAdmin(admin.ModelAdmin):
 
 @admin.register(DiagnosisProcedure)
 class DiagnosisProcedureAdmin(admin.ModelAdmin):
-    list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name')
+    list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name', 'patient_age', 'patient_gender', 'findings_summary', 'created_by')
     search_fields = ('patient_mrn', 'patient_name', 'technician_name')
     list_filter = ('procedure_name', 'eye', 'date')
 

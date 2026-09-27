@@ -24,7 +24,7 @@ function quickFillDoctor() {
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     if (usernameInput) usernameInput.value = 'naimul';
-    if (passwordInput) passwordInput.value = 'doctor123';
+    if (passwordInput) passwordInput.value = 'pass@123';
 
     // Highlight feedback
     const card = document.querySelector('.login-card');

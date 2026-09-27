@@ -112,7 +112,7 @@
                     </div>
                     <div class="credential-item">
                         <span class="credential-label"><i class="fa-solid fa-phone"></i> Emergency Ext:</span>
-                        <span class="credential-value">{{ profile.phone|default:"+880 1711-000000" }}</span>
+                        <span class="credential-value">{{ profile.phone|default:"+880 1308-320991" }}</span>
                     </div>
                 </div>
 
@@ -173,10 +173,10 @@
                         onclick="switchClinicalTab('surgery-history')">
                         <i class="fa-solid fa-clipboard-list"></i> <span>Surgery Records</span>
                     </button>
-                    <button type="button" class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
+                    {% comment %} <button type="button" class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
                         onclick="switchClinicalTab('profile-settings')">
                         <i class="fa-solid fa-user-gear"></i> <span>Settings</span>
-                    </button>
+                    </button> {% endcomment %}
                     {% else %}
                     <!-- DOCTOR TABS -->
                     <button type="button"
@@ -202,7 +202,7 @@
                     </button>
                     <button type="button" class="tab-btn {% if active_tab == 'ocular-reports' %}active{% endif %}"
                         onclick="switchClinicalTab('ocular-reports')">
-                        <i class="fa-solid fa-eye"></i> <span>Ocular Reports</span>
+                        <i class="fa-solid fa-eye"></i> <!-- <span>Ocular Reports</span> --> <span>Ocular Reports ({{ ocular_procedures.count }})</span>
                     </button>
                     <button type="button" class="tab-btn {% if active_tab == 'surgery-history' %}active{% endif %}"
                         onclick="switchClinicalTab('surgery-history')">
@@ -398,7 +398,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="surg_surgeon">Operating Surgeon</label>
                                     <input type="text" id="surg_surgeon" name="surgeon_name" class="form-control"
-                                        value="Dr. Naimul Hasan">
+                                        value="Dr. Naimul Islam">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_room">OT Suite Room</label>
