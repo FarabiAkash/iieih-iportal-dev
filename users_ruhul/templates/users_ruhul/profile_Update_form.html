@@ -1,0 +1,778 @@
+{% extends 'users_ruhul/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="profile-update-page">
+
+    <div class="profile-update-container">
+
+        <!-- ================= HEADER ================= -->
+
+        <div class="profile-header">
+
+            <div class="profile-icon">
+                <i class="bi bi-person-gear"></i>
+            </div>
+
+            <div>
+                <h2>Update Profile</h2>
+
+                <p>
+                    Update your personal and finance profile information.
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- ================= MESSAGE ================= -->
+
+        {% include 'users_ruhul/message.html' %}
+
+
+        <!-- ================= FORM ================= -->
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <!-- ================= PERSONAL INFORMATION ================= -->
+
+            <div class="form-section">
+
+                <div class="section-title">
+
+                    <i class="bi bi-person"></i>
+
+                    <span>Personal Information</span>
+
+                </div>
+
+
+                <div class="row g-4">
+
+                    <!-- First Name -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.first_name.id_for_label }}"
+                            class="form-label"
+                        >
+                            First Name
+                        </label>
+
+                        {{ form_data.first_name }}
+
+                        {% if form_data.first_name.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.first_name.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Last Name -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.last_name.id_for_label }}"
+                            class="form-label"
+                        >
+                            Last Name
+                        </label>
+
+                        {{ form_data.last_name }}
+
+                        {% if form_data.last_name.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.last_name.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Username -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.username.id_for_label }}"
+                            class="form-label"
+                        >
+                            Username
+                        </label>
+
+                        {{ form_data.username }}
+
+                        {% if form_data.username.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.username.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Email -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.email.id_for_label }}"
+                            class="form-label"
+                        >
+                            Email Address
+                        </label>
+
+                        {{ form_data.email }}
+
+                        {% if form_data.email.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.email.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= FINANCE INFORMATION ================= -->
+
+            <div class="form-section">
+
+                <div class="section-title">
+
+                    <i class="bi bi-cash-stack"></i>
+
+                    <span>Finance Information</span>
+
+                </div>
+
+
+                <div class="row g-4">
+
+                    <!-- Finance Role -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.finance_role.id_for_label }}"
+                            class="form-label"
+                        >
+                            Finance Role
+                        </label>
+
+                        {{ form_data.finance_role }}
+
+                        {% if form_data.finance_role.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.finance_role.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Assigned Counter -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.assigned_counter.id_for_label }}"
+                            class="form-label"
+                        >
+                            Assigned Counter
+                        </label>
+
+                        {{ form_data.assigned_counter }}
+
+                        {% if form_data.assigned_counter.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.assigned_counter.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Discount Approval Limit -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ form_data.discount_approval_limit.id_for_label }}"
+                            class="form-label"
+                        >
+                            Discount Approval Limit
+                        </label>
+
+                        <div class="input-group">
+
+                            {{ form_data.discount_approval_limit }}
+
+                            <span class="input-group-text">
+                                TK
+                            </span>
+
+                        </div>
+
+                        {% if form_data.discount_approval_limit.errors %}
+
+                            <div class="field-error">
+                                {{ form_data.discount_approval_limit.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= BUTTONS ================= -->
+
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'ruhul_profile' %}"
+                    class="btn btn-outline-secondary"
+                >
+
+                    <i class="bi bi-arrow-left me-1"></i>
+
+                    Cancel
+
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+
+                    <i class="bi bi-check-circle me-1"></i>
+
+                    Update Profile
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ================= CUSTOM CSS ================= -->
+
+<style>
+
+/* =========================================
+   MAIN PAGE
+========================================= */
+
+.profile-update-page {
+
+    min-height: calc(100vh - 70px);
+
+    background: #f5f7fa;
+
+    padding: 45px 20px;
+
+}
+
+
+/* =========================================
+   MAIN CONTAINER
+========================================= */
+
+.profile-update-container {
+
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    background: #ffffff;
+
+    border-radius: 14px;
+
+    padding: 35px 40px;
+
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.profile-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    margin-bottom: 25px;
+
+    padding-bottom: 25px;
+
+    border-bottom: 1px solid #e9ecef;
+
+}
+
+
+.profile-icon {
+
+    width: 58px;
+
+    height: 58px;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background: #087ea4;
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 26px;
+
+}
+
+
+.profile-header h2 {
+
+    margin: 0;
+
+    font-size: 26px;
+
+    font-weight: 700;
+
+    color: #202b33;
+
+}
+
+
+.profile-header p {
+
+    margin: 5px 0 0;
+
+    color: #6c757d;
+
+    font-size: 14px;
+
+}
+
+
+/* =========================================
+   FORM SECTION
+========================================= */
+
+.form-section {
+
+    padding: 25px 0;
+
+    border-bottom: 1px solid #eeeeee;
+
+}
+
+
+.form-section:last-of-type {
+
+    border-bottom: none;
+
+}
+
+
+/* =========================================
+   SECTION TITLE
+========================================= */
+
+.section-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    margin-bottom: 24px;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    color: #202b33;
+
+}
+
+
+.section-title i {
+
+    color: #087ea4;
+
+    font-size: 20px;
+
+}
+
+
+/* =========================================
+   FORM LABEL
+========================================= */
+
+.form-label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #39444c;
+
+}
+
+
+.form-label::after {
+
+    content: "";
+
+}
+
+
+/* =========================================
+   FORM INPUT
+========================================= */
+
+.form-control,
+
+.form-select {
+
+    width: 100%;
+
+    min-height: 46px;
+
+    border: 1px solid #d6dce1;
+
+    border-radius: 8px;
+
+    padding: 10px 13px;
+
+    font-size: 14px;
+
+    color: #212529;
+
+    background-color: #ffffff;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+.form-control:hover,
+
+.form-select:hover {
+
+    border-color: #b8c1c8;
+
+}
+
+
+.form-control:focus,
+
+.form-select:focus {
+
+    border-color: #087ea4;
+
+    box-shadow:
+        0 0 0 0.2rem rgba(8, 126, 164, 0.12);
+
+    outline: none;
+
+}
+
+
+/* =========================================
+   INPUT GROUP
+========================================= */
+
+.input-group .form-control {
+
+    border-top-right-radius: 0;
+
+    border-bottom-right-radius: 0;
+
+}
+
+
+.input-group-text {
+
+    min-height: 46px;
+
+    background: #f8f9fa;
+
+    border: 1px solid #d6dce1;
+
+    color: #6c757d;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================
+   ERROR MESSAGE
+========================================= */
+
+.field-error {
+
+    margin-top: 6px;
+
+    font-size: 13px;
+
+    color: #dc3545;
+
+}
+
+
+.field-error ul {
+
+    margin: 0;
+
+    padding-left: 18px;
+
+}
+
+
+.field-error li {
+
+    margin-bottom: 2px;
+
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.form-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding-top: 28px;
+
+}
+
+
+.form-actions .btn {
+
+    min-height: 44px;
+
+    padding: 9px 20px;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+}
+
+
+.form-actions .btn-primary {
+
+    background: #087ea4;
+
+    border-color: #087ea4;
+
+}
+
+
+.form-actions .btn-primary:hover {
+
+    background: #056b8c;
+
+    border-color: #056b8c;
+
+}
+
+
+.form-actions .btn-outline-secondary {
+
+    border-color: #adb5bd;
+
+    color: #495057;
+
+}
+
+
+.form-actions .btn-outline-secondary:hover {
+
+    background: #6c757d;
+
+    border-color: #6c757d;
+
+    color: #ffffff;
+
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 767px) {
+
+    .profile-update-page {
+
+        padding: 25px 12px;
+
+    }
+
+
+    .profile-update-container {
+
+        padding: 25px 20px;
+
+        border-radius: 12px;
+
+    }
+
+
+    .profile-header {
+
+        align-items: flex-start;
+
+    }
+
+
+    .profile-header h2 {
+
+        font-size: 22px;
+
+    }
+
+
+    .form-section {
+
+        padding: 22px 0;
+
+    }
+
+}
+
+
+@media (max-width: 576px) {
+
+    .profile-update-page {
+
+        padding: 15px 8px;
+
+    }
+
+
+    .profile-update-container {
+
+        padding: 22px 16px;
+
+    }
+
+
+    .profile-header {
+
+        gap: 12px;
+
+    }
+
+
+    .profile-icon {
+
+        width: 50px;
+
+        height: 50px;
+
+        font-size: 22px;
+
+    }
+
+
+    .profile-header h2 {
+
+        font-size: 20px;
+
+    }
+
+
+    .profile-header p {
+
+        font-size: 13px;
+
+    }
+
+
+    .form-actions {
+
+        flex-direction: column-reverse;
+
+        width: 100%;
+
+    }
+
+
+    .form-actions .btn {
+
+        width: 100%;
+
+    }
+
+}
+
+</style>
+
+{% endblock content %}

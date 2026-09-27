@@ -1,0 +1,1638 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Clinical Console & OT Roster | Dr. {{ user.get_full_name|default:user.username }}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Pre-render theme check to prevent flash -->
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('iieih_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="{% static 'users_naimul/profile.css' %}">
+</head>
+
+<body>
+
+    <!-- Hospital Header Navigation -->
+    <nav class="portal-nav">
+        <a href="/naimul/login/" class="nav-brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+            <div class="brand-text">
+                <h1>IIEI&H</h1>
+                <p>Doctor & Clinical OT Console</p>
+            </div>
+        </a>
+
+        <!-- Hamburger toggle for mobile -->
+        <button type="button" class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()"
+            aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="nav-links" id="navLinks">
+            <!-- Day & Night Theme Bar -->
+            <div class="theme-switch-bar" role="group" aria-label="Day and Night Theme Switcher">
+                <button type="button" class="theme-switch-btn" data-theme-val="light" onclick="setAppTheme('light')"
+                    title="Switch to Day Mode">
+                    <i class="fa-solid fa-sun" style="color: #f59e0b;"></i> <span>Day</span>
+                </button>
+                <button type="button" class="theme-switch-btn" data-theme-val="dark" onclick="setAppTheme('dark')"
+                    title="Switch to Night Mode">
+                    <i class="fa-solid fa-moon" style="color: #38bdf8;"></i> <span>Night</span>
+                </button>
+            </div>
+
+            <a href="/surgeries/" class="nav-btn nav-btn-primary">
+                <i class="fa-solid fa-chart-line"></i> <span>Full OT Surgery Log</span>
+            </a>
+            <a href="{% url 'users_naimul:logout' %}" class="nav-btn nav-btn-danger">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Sign Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Alerts -->
+        {% if messages %}
+        {% for message in messages %}
+        <div
+            style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 18px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="profile-grid">
+
+            <!-- Left: Clinical ID Card & Role Privileges -->
+            <div class="card doctor-badge-card">
+                <div class="avatar-box">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <div class="status-dot" title="Doctor On Duty"></div>
+                </div>
+
+                <h2 class="doctor-name">Dr. {{ user.get_full_name|default:user.username }}</h2>
+                <div class="doctor-role-tag">{{ profile.get_role_display }}</div>
+                <div class="specialty-pill">
+                    <i class="fa-solid fa-microscope"></i> {{ profile.get_specialty_display }}
+                </div>
+
+                <div class="credentials-list">
+                    <div class="credential-item">
+                        <span class="credential-label"><i class="fa-solid fa-id-card"></i> Surgeon Code:</span>
+                        <span class="credential-value">{{ profile.surgeon_code|default:"SURG-101" }}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label"><i class="fa-solid fa-certificate"></i> BMDC Reg:</span>
+                        <span class="credential-value">{{ profile.license_number|default:"BMDC-A-48291" }}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label"><i class="fa-solid fa-door-open"></i> Assigned OT:</span>
+                        <span class="credential-value" style="color: var(--primary-light);">{{ profile.assigned_ot_room }}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label"><i class="fa-solid fa-phone"></i> Emergency Ext:</span>
+                        <span class="credential-value">{{ profile.phone|default:"+880 1711-000000" }}</span>
+                    </div>
+                </div>
+
+                <!-- Doctor Role Clinical Privileges -->
+                <div class="doctor-access-box">
+                    <div class="doctor-access-title">
+                        <i class="fa-solid fa-shield-halved"></i> Doctor Role Privileges:
+                    </div>
+                    <div class="doctor-access-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>View Patient Demographics & Records</span>
+                    </div>
+                    <div class="doctor-access-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Access Medical History & Scans</span>
+                    </div>
+                    <div class="doctor-access-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Manage OT Suite Slot Schedules</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <a href="/surgeries/" class="nav-btn nav-btn-primary" style="justify-content: center; width: 100%;">
+                        <i class="fa-solid fa-table-list"></i> Open Full OT Register
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Doctor Clinical Management Center -->
+            <div class="clinical-main-content">
+                <!-- Role-Aware Navigation Tabs -->
+                <div class="clinical-tabs">
+                    {% if profile.is_staff_role %}
+                    <!-- STAFF TABS -->
+                    <button type="button"
+                        class="tab-btn {% if active_tab == 'ot-matrix' or not active_tab %}active{% endif %}"
+                        onclick="switchClinicalTab('ot-matrix')">
+                        <i class="fa-solid fa-table-cells"></i> <span>OT Slot Details</span>
+                    </button>
+                    {% if profile.can_apply_surgery %}
+                    <button type="button" class="tab-btn {% if active_tab == 'apply-surgery' %}active{% endif %}"
+                        onclick="switchClinicalTab('apply-surgery')">
+                        <i class="fa-solid fa-syringe"></i> <span>Apply for Surgery</span>
+                    </button>
+                    {% endif %}
+                    {% if profile.can_make_appointments %}
+                    <button type="button" class="tab-btn {% if active_tab == 'appointments' %}active{% endif %}"
+                        onclick="switchClinicalTab('appointments')">
+                        <i class="fa-solid fa-calendar-plus"></i> <span>Appointments ({{ appointments.count }})</span>
+                    </button>
+                    {% endif %}
+                    <button type="button" class="tab-btn {% if active_tab == 'patients' %}active{% endif %}"
+                        onclick="switchClinicalTab('patients')">
+                        <i class="fa-solid fa-hospital-user"></i> <span>Patient Roster ({{ all_surgeries.count }})</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'surgery-history' %}active{% endif %}"
+                        onclick="switchClinicalTab('surgery-history')">
+                        <i class="fa-solid fa-clipboard-list"></i> <span>Surgery Records</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
+                        onclick="switchClinicalTab('profile-settings')">
+                        <i class="fa-solid fa-user-gear"></i> <span>Settings</span>
+                    </button>
+                    {% else %}
+                    <!-- DOCTOR TABS -->
+                    <button type="button"
+                        class="tab-btn {% if active_tab == 'patients' or not active_tab %}active{% endif %}"
+                        onclick="switchClinicalTab('patients')">
+                        <i class="fa-solid fa-hospital-user"></i> <span>Patient Details ({{ displayed_patients.count }})</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'ot-slots' %}active{% endif %}"
+                        onclick="switchClinicalTab('ot-slots')">
+                        <i class="fa-solid fa-door-open"></i> <span>OT Slot Schedule</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'medical-history' %}active{% endif %}"
+                        onclick="switchClinicalTab('medical-history')">
+                        <i class="fa-solid fa-notes-medical"></i> <span>Medical History</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'diagnostic-history' %}active{% endif %}"
+                        onclick="switchClinicalTab('diagnostic-history')">
+                        <i class="fa-solid fa-file-waveform"></i> <span>Diagnostic History ({{ diagnostic_records.count }})</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'ot-utilization' %}active{% endif %}"
+                        onclick="switchClinicalTab('ot-utilization')">
+                        <i class="fa-solid fa-chart-pie"></i> <span>OT Utilization ({{ overall_ot_utilization }}%)</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'ocular-reports' %}active{% endif %}"
+                        onclick="switchClinicalTab('ocular-reports')">
+                        <i class="fa-solid fa-eye"></i> <span>Ocular Reports</span>
+                    </button>
+                    <button type="button" class="tab-btn {% if active_tab == 'surgery-history' %}active{% endif %}"
+                        onclick="switchClinicalTab('surgery-history')">
+                        <i class="fa-solid fa-pen-to-square"></i> <span>Surgery History (View &amp; Edit)</span>
+                    </button>
+                    <!-- <button type="button" class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
+                        onclick="switchClinicalTab('profile-settings')">
+                        <i class="fa-solid fa-user-gear"></i> <span>Roster Settings</span>
+                    </button> -->
+                    {% endif %}
+                </div>
+
+                <!-- TAB: OT MATRIX (Staff) -->
+                <div class="tab-pane {% if active_tab == 'ot-matrix' or not active_tab and profile.is_staff_role %}active{% endif %}"
+                    id="pane-ot-matrix">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-table-cells"></i> Full OT Complex — Slot Availability Matrix
+                            </h2>
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-shield-heart"
+                                    style="color: var(--success); margin-right: 4px;"></i> Live Suite Status
+                            </span>
+                        </div>
+
+                        {% for suite in ot_suite_matrix %}
+                        <div class="ot-matrix-suite">
+                            <div class="ot-matrix-suite-header">
+                                <div class="ot-matrix-suite-title">
+                                    <i class="fa-solid fa-door-open"></i> {{ suite.room }} &mdash; {{ suite.room_label }}
+                                </div>
+                                <span class="badge-pill badge-slot">{{ suite.total_booked }} Booked</span>
+                            </div>
+                            <div class="ot-slots-mini-grid">
+                                {% for slot in suite.slots %}
+                                <div
+                                    class="slot-mini-card {% if slot.is_booked %}is-booked{% else %}is-available{% endif %}">
+                                    <div class="slot-mini-time"><i class="fa-regular fa-clock"></i> {{ slot.slot_name }}
+                                    </div>
+                                    {% if slot.is_booked %}
+                                    <div class="slot-mini-patient">{{ slot.case.patient_name }}</div>
+                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>Dr. {{ slot.case.surgeon_name }}</div>
+                                    <div style="margin-top: 8px;">
+                                        <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i>
+                                            Booked</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="slot-mini-patient" style="color: var(--text-muted); font-weight: 400;">
+                                        Available</div>
+                                    <div class="slot-mini-type">No case assigned</div>
+                                    <div class="slot-mini-apply">
+                                        <span class="slot-status-badge status-available"><i
+                                                class="fa-solid fa-hourglass-start"></i> Free</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- TAB: OT SLOT DETAILS (Doctor) -->
+                <div class="tab-pane {% if active_tab == 'ot-slots' %}active{% endif %}" id="pane-ot-slots">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-door-open"></i> {{ profile.assigned_ot_room }} &bull; Today's OT
+                                Slot Schedule
+                            </h2>
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-shield-heart"
+                                    style="color: var(--success); margin-right: 4px;"></i> Active Sterilized Suite
+                            </span>
+                        </div>
+
+                        <div class="ot-slots-grid">
+                            {% for slot in ot_slots_schedule %}
+                            <div class="slot-card">
+                                <div class="slot-header">
+                                    <div class="slot-time">
+                                        <i class="fa-regular fa-clock"></i> {{ slot.slot_name }}
+                                    </div>
+                                    {% if slot.is_booked %}
+                                    <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i>
+                                        Booked</span>
+                                    {% else %}
+                                    <span class="slot-status-badge status-available"><i
+                                            class="fa-solid fa-hourglass-start"></i> Available</span>
+                                    {% endif %}
+                                </div>
+
+                                {% if slot.is_booked %}
+                                <div class="slot-patient-info">
+                                    <strong>{{ slot.case.patient_name }}</strong>
+                                    <span class="badge-mrn" style="font-size: 0.74rem; margin-left: 6px;">{{ slot.case.patient_mrn }}</span>
+                                </div>
+                                <div class="slot-procedure">
+                                    <i class="fa-solid fa-eye" style="color: var(--primary-light);"></i> {{ slot.case.surgery_type }} ({{ slot.case.eye }}) &bull; Dr. {{ slot.case.surgeon_name }}
+                                </div>
+                                <div class="slot-history-preview">
+                                    <strong>Medical History:</strong> {{ slot.case.medical_history|truncatechars:75 }}
+                                </div>
+                                <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+                                    <button type="button" class="btn-action-view"
+                                        onclick="viewPatientDossier('{{ slot.case.patient_mrn }}', '{{ slot.case.patient_name }}', '{{ slot.case.patient_age }}', '{{ slot.case.patient_gender }}', '{{ slot.case.eye }}', '{{ slot.case.surgery_type }}', '{{ slot.case.ot_room }}', '{{ slot.case.ot_slot }}', '{{ slot.case.outcome }}', '{{ slot.case.medical_history|escapejs }}', '{{ slot.case.notes|escapejs }}')">
+                                        <i class="fa-solid fa-eye"></i> View Full Details
+                                    </button>
+                                </div>
+                                {% else %}
+                                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 12px;">Slot open for
+                                    elective cataract or emergency add-on surgical procedure.</p>
+                                <div style="margin-top: 16px;">
+                                    <a href="/surgeries/" class="btn-action-view">
+                                        <i class="fa-solid fa-plus"></i> Schedule Patient
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: APPLY FOR SURGERY (Staff) -->
+                <div class="tab-pane {% if active_tab == 'apply-surgery' %}active{% endif %}" id="pane-apply-surgery">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-syringe"></i> Apply for Surgery &amp; Book OT Slot
+                            </h2>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-lock"
+                                    style="margin-right: 4px;"></i> Staff Authorized</span>
+                        </div>
+
+                        <form method="post" action="{% url 'users_naimul:profile' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="apply_surgery" value="1">
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_mrn">Patient MRN <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <input type="text" id="surg_mrn" name="patient_mrn" class="form-control"
+                                        placeholder="e.g. MRN-2048" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_name">Patient Full Name <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <input type="text" id="surg_name" name="patient_name" class="form-control"
+                                        placeholder="e.g. Rafiqul Islam" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_age">Patient Age</label>
+                                    <input type="number" id="surg_age" name="patient_age" class="form-control"
+                                        value="50" min="1" max="120">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_gender">Gender</label>
+                                    <select id="surg_gender" name="patient_gender" class="form-control">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_eye">Eye Operative Side</label>
+                                    <select id="surg_eye" name="eye" class="form-control">
+                                        <option value="RE">Right Eye (OD)</option>
+                                        <option value="LE">Left Eye (OS)</option>
+                                        <option value="BE">Both Eyes (OU)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_type">Surgery Type</label>
+                                    <select id="surg_type" name="surgery_type" class="form-control">
+                                        {% for val, label in surgery_type_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_surgeon">Operating Surgeon</label>
+                                    <input type="text" id="surg_surgeon" name="surgeon_name" class="form-control"
+                                        value="Dr. Naimul Hasan">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_ot_room">OT Suite Room</label>
+                                    <select id="surg_ot_room" name="ot_room" class="form-control">
+                                        {% for val, label in ot_room_choices_surgery %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_ot_slot">OT Slot <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <select id="surg_ot_slot" name="ot_slot" class="form-control">
+                                        {% for val, label in ot_slot_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="surg_outcome">Planned Outcome Status</label>
+                                    <select id="surg_outcome" name="outcome" class="form-control">
+                                        {% for val, label in outcome_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="surg_med_hist">Patient Medical History &amp; Pre-Op
+                                    Notes</label>
+                                <textarea id="surg_med_hist" name="medical_history" class="form-control" rows="3"
+                                    placeholder="e.g. Type-2 Diabetes on insulin, Hypertension controlled, no known drug allergies. Pre-op IOP normal."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="surg_notes">Operative Notes / IOL Details /
+                                    Remarks</label>
+                                <textarea id="surg_notes" name="notes" class="form-control" rows="2"
+                                    placeholder="e.g. Phacoemulsification with Foldable IOL. Clear cornea incision."></textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <button type="submit" class="btn-teal">
+                                    <i class="fa-solid fa-file-medical"></i> Submit Surgery Application
+                                </button>
+                                <a href="/surgeries/" class="nav-btn">
+                                    <i class="fa-solid fa-external-link"></i> Full OT Register
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB: APPOINTMENTS (Staff) -->
+                <div class="tab-pane {% if active_tab == 'appointments' %}active{% endif %}" id="pane-appointments">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-calendar-plus"></i> Schedule Patient Appointment
+                            </h2>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ upcoming_appointments.count }}
+                                Upcoming</span>
+                        </div>
+
+                        <form method="post" action="{% url 'users_naimul:profile' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="make_appointment" value="1">
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_mrn">Patient MRN <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <input type="text" id="appt_mrn" name="patient_mrn" class="form-control"
+                                        placeholder="e.g. MRN-1028" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_name">Patient Full Name <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <input type="text" id="appt_name" name="patient_name" class="form-control"
+                                        placeholder="e.g. Karimul Haq" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_age">Patient Age</label>
+                                    <input type="number" id="appt_age" name="patient_age" class="form-control"
+                                        value="40" min="1" max="120">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_phone">Contact Number</label>
+                                    <input type="text" id="appt_phone" name="patient_phone" class="form-control"
+                                        placeholder="+880 17XX-XXXXXX">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_gender">Gender</label>
+                                    <select id="appt_gender" name="patient_gender" class="form-control">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_type">Appointment Type</label>
+                                    <select id="appt_type" name="appointment_type" class="form-control">
+                                        {% for val, label in appointment_type_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_doctor">Assigned Consultant / Doctor</label>
+                                    <input type="text" id="appt_doctor" name="doctor_name" class="form-control"
+                                        value="Dr. Naimul Hasan">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_date">Appointment Date <span
+                                            style="color: var(--danger);">*</span></label>
+                                    <input type="date" id="appt_date" name="appointment_date" class="form-control"
+                                        required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_time">Time Slot</label>
+                                    <select id="appt_time" name="appointment_time_slot" class="form-control">
+                                        {% for val, label in appointment_time_slot_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="appt_status">Appointment Status</label>
+                                    <select id="appt_status" name="status" class="form-control">
+                                        {% for val, label in appointment_status_choices %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="appt_notes">Clinical Notes / Referral Details</label>
+                                <textarea id="appt_notes" name="notes" class="form-control" rows="2"
+                                    placeholder="e.g. Referred by Dr. Khan for pre-LASIK corneal topography. Patient reports photophobia."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-teal">
+                                <i class="fa-solid fa-calendar-check"></i> Book Appointment
+                            </button>
+                        </form>
+
+                        <hr class="section-separator">
+
+                        <!-- Appointments List -->
+                        <div class="card-header" style="margin-top: 0; padding-top: 0;">
+                            <h2 class="card-title" style="font-size: 1rem;">
+                                <i class="fa-solid fa-list-check"></i> Scheduled Appointments Register
+                            </h2>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ appointments.count }}
+                                total</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date &amp; Time</th>
+                                        <th>Patient MRN</th>
+                                        <th>Patient Name</th>
+                                        <th>Appointment Type</th>
+                                        <th>Doctor</th>
+                                        <th>Status</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appt in appointments %}
+                                    <tr>
+                                        <td style="white-space: nowrap;">
+                                            <div
+                                                style="font-weight: 600; color: var(--primary-light); font-size: 0.82rem;">
+                                                {{ appt.appointment_date|date:"d M Y" }}</div>
+                                            <div style="font-size: 0.76rem; color: var(--text-muted);">{{ appt.appointment_time_slot }}</div>
+
+                                        </td>
+                                        <td><span class="badge-mrn">{{ appt.patient_mrn }}</span></td>
+                                        <td>
+                                            <strong>{{ appt.patient_name }}</strong>
+                                            <div style="font-size: 0.76rem; color: var(--text-muted);">{{ appt.patient_age }} yrs &bull; {{ appt.patient_gender }}</div>
+
+                                        </td>
+                                        <td style="font-size: 0.82rem;">{{ appt.appointment_type }}</td>
+                                        <td style="font-size: 0.82rem;">{{ appt.doctor_name }}</td>
+                                        <td>
+                                            {% if appt.status == 'Scheduled' %}
+                                            <span class="badge-pill badge-appt-scheduled"><i
+                                                    class="fa-solid fa-clock"></i> Scheduled</span>
+                                            {% elif appt.status == 'Confirmed' %}
+                                            <span class="badge-pill badge-appt-confirmed"><i
+                                                    class="fa-solid fa-check"></i> Confirmed</span>
+                                            {% elif appt.status == 'Completed' %}
+                                            <span class="badge-pill badge-appt-completed"><i
+                                                    class="fa-solid fa-circle-check"></i> Completed</span>
+                                            {% elif appt.status == 'Cancelled' %}
+                                            <span class="badge-pill badge-appt-cancelled"><i
+                                                    class="fa-solid fa-xmark"></i> Cancelled</span>
+                                            {% else %}
+                                            <span class="badge-pill badge-appt-noshow"><i
+                                                    class="fa-solid fa-user-slash"></i> No-Show</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="font-size: 0.78rem; color: var(--text-muted); max-width: 200px;">{{ appt.notes|default:"-"|truncatechars:60 }}</td>
+
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7"
+                                            style="text-align: center; color: var(--text-muted); padding: 32px;">
+                                            <i class="fa-solid fa-calendar-xmark"
+                                                style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                                            No appointments scheduled yet. Use the form above to book the first one.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: PATIENT DETAILS VIEW (Isolated with Cross-Doctor MRN Lookup) -->
+                <div class="tab-pane {% if active_tab == 'patients' or not active_tab and not profile.is_staff_role %}active{% endif %}"
+                    id="pane-patients">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-hospital-user"></i> Patient Clinical Details &amp; Operative
+                                    Roster
+                                </h2>
+                                <!-- <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Clinical patient directory with surgeon privacy protection and cross-doctor MRN
+                                    search
+                                </p> -->
+                            </div>
+                            <span class="badge-pill badge-slot" style="font-size: 0.82rem;">
+                                Showing {{ displayed_patients.count }} Patient Case{% if displayed_patients.count != 1 %}s{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Surgeon Patient Isolation Scope Banner -->
+                        <div class="doctor-scope-banner">
+                            <div class="doctor-scope-text">
+                                <i class="fa-solid fa-shield-halved"
+                                    style="color: var(--primary-light); font-size: 1.15rem;"></i>
+                                <span>
+                                    <strong>Surgeon Isolation Active:</strong> By default, this roster displays
+                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:"Naimul Hasan" }}</strong>. Other doctors' patients remain protected.
+                                </span>
+                            </div>
+                            <span
+                                style="font-size: 0.78rem; color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-lock"></i> Isolated Ledger
+                            </span>
+                        </div>
+
+                        <!-- Special Cross-Doctor Patient MRN Search -->
+                        <form method="get" action="{% url 'users_naimul:profile' %}" class="mrn-search-form">
+                            <input type="hidden" name="tab" value="patients">
+                            <label
+                                style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                                <i class="fa-solid fa-magnifying-glass"
+                                    style="color: var(--primary-light); margin-right: 6px;"></i>
+                                Search Another Doctor's Patient via Patient_MRN:
+                            </label>
+                            <div class="mrn-search-container">
+                                <input type="text" name="patient_mrn" value="{{ search_mrn }}" class="mrn-search-input"
+                                    placeholder="Enter Patient_MRN (e.g. MRN-1022, MRN-1024, MRN-1027) to access external patient...">
+                                <button type="submit" class="mrn-search-btn">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Search via MRN
+                                </button>
+                                {% if search_mrn %}
+                                <a href="{% url 'users_naimul:profile' %}?tab=patients" class="mrn-clear-btn">
+                                    <i class="fa-solid fa-xmark"></i> Reset to My Patients
+                                </a>
+                                {% endif %}
+                            </div>
+                            <!-- <div class="mrn-hint-chips">
+                                <span style="font-size: 0.76rem; color: var(--text-muted);"><i
+                                        class="fa-solid fa-arrow-turn-down-right"></i> External doctor patient
+                                    shortcuts:</span>
+                                <a href="?tab=patients&patient_mrn=MRN-1022" class="mrn-quick-chip">MRN-1022 &bull;
+                                    Prof. Dr. M. Rahman</a>
+                                <a href="?tab=patients&patient_mrn=MRN-1024" class="mrn-quick-chip">MRN-1024 &bull; Dr.
+                                    Sabrina Jahan</a>
+                                <a href="?tab=patients&patient_mrn=MRN-1027" class="mrn-quick-chip">MRN-1027 &bull; Dr.
+                                    Sabrina Jahan</a>
+                            </div> -->
+                        </form>
+
+                        <!-- Cross-Doctor Alert Notice -->
+                        {% if is_cross_doctor_lookup %}
+                        <div class="cross-doctor-alert">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.3rem;"></i>
+                            <div>
+                                <strong>Cross-Doctor Patient Lookup Active:</strong> Patient <strong>{{ searched_patient_found.patient_name }}</strong> (MRN:
+                                <code>{{ searched_patient_found.patient_mrn }}</code>) is officially assigned to
+                                <strong>{{ searched_doctor_name }}</strong>. You are viewing this record via privileged
+                                MRN search.
+                            </div>
+                            <a href="{% url 'users_naimul:profile' %}?tab=patients" class="btn-action-view"
+                                style="margin-left: auto; text-decoration: none;">
+                                Return to My Patients
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient MRN</th>
+                                        <th>Patient Name &amp; Demographics</th>
+                                        <th>Eye</th>
+                                        <th>Surgical Procedure</th>
+                                        <th>Primary Surgeon</th>
+                                        <th>OT Room &amp; Slot</th>
+                                        <th>Outcome</th>
+                                        <th>Clinical Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in displayed_patients %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge-mrn">{{ s.patient_mrn }}</span>
+                                            {% if 'naimul' not in s.surgeon_name.lower %}
+                                            <div style="margin-top: 4px;">
+                                                <span class="badge-cross-doctor"><i class="fa-solid fa-user-doctor"></i>
+                                                    External Doctor</span>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ s.patient_name }}</strong>
+                                            <div style="font-size: 0.76rem; color: var(--text-muted);">{{ s.patient_age }} yrs &bull; {{ s.patient_gender }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge-pill badge-slot">{{ s.eye }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ s.surgery_type }}</strong>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <i class="fa-solid fa-user-doctor"
+                                                    style="color: {% if 'naimul' in s.surgeon_name.lower %}var(--primary-light){% else %}#f59e0b{% endif %}; font-size: 0.82rem;"></i>
+                                                <span style="font-size: 0.84rem; font-weight: 600;">{{ s.surgeon_name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: var(--primary-light);">{{ s.ot_room }}</span>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.ot_slot }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge-pill badge-outcome">{{ s.outcome }}</span>
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <!-- <button type="button" class="btn-action-view"
+                                                onclick="viewPatientDossier('{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}')"
+                                                title="Patient Clinical Dossier">
+                                                <i class="fa-solid fa-clipboard-user"></i> View
+                                            </button> -->
+                                            <button type="button" class="btn-action-report"
+                                                onclick="viewOcularReportByMRN('{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}')"
+                                                title="Ocular Diagnostic Report">
+                                                <i class="fa-solid fa-eye"></i> Report
+                                            </button>
+                                            <button type="button" class="btn-action-edit"
+                                                onclick="openEditSurgeryModal('{{ s.id }}', '{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.surgeon_name }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}', 'patients')"
+                                                title="Edit Surgery Record">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8"
+                                            style="text-align: center; color: var(--text-muted); padding: 40px;">
+                                            <i class="fa-solid fa-hospital-user"
+                                                style="font-size: 2.2rem; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                                            <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">No
+                                                patient records found matching your query.</p>
+                                            <p style="font-size: 0.82rem; margin-top: 4px;">If searching for another
+                                                doctor's patient, enter their full MRN (e.g. <code>MRN-1022</code>) in
+                                                the search box above.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: MEDICAL HISTORY DETAILS -->
+                <div class="tab-pane {% if active_tab == 'medical-history' %}active{% endif %}"
+                    id="pane-medical-history">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-notes-medical"></i> Patient Medical History &amp; Comorbidity
+                                    Ledger
+                                </h2>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Comprehensive systemic pre-operative histories, allergy alerts, and clinical medical
+                                    backgrounds
+                                </p>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">
+                                Sourced from SurgeryRecord ({{ displayed_patients.count }} Cases)
+                            </span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Patient MRN</th>
+                                        <th>Patient Demographics</th>
+                                        <th>Eye &amp; Surgery</th>
+                                        <th>Systemic Comorbidities &amp; Medical History</th>
+                                        <th>Operative Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in displayed_patients %}
+                                    <tr>
+                                        <td style="white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">{{ s.date|date:"d M Y" }}</td>
+                                        <td><span class="badge-mrn">{{ s.patient_mrn }}</span></td>
+                                        <td>
+                                            <strong>{{ s.patient_name }}</strong>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.patient_age }} yrs &bull; {{ s.patient_gender }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge-pill badge-slot">{{ s.eye }}</span>
+                                            <div style="font-size: 0.76rem; font-weight: 600; margin-top: 2px;">{{ s.surgery_type }}</div>
+                                        </td>
+                                        <td style="max-width: 320px; font-size: 0.82rem; line-height: 1.45;">
+                                            <i class="fa-solid fa-heart-pulse"
+                                                style="color: var(--primary-light); margin-right: 4px;"></i>
+                                            {{ s.medical_history|default:"No systemic comorbidities reported. Pre-op IOP within normal limits." }}
+                                        </td>
+                                        <td
+                                            style="max-width: 220px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                            {{ s.notes|default:"Uneventful surgical course." }}
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <button type="button" class="btn-action-view"
+                                                onclick="viewPatientDossier('{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}')">
+                                                <i class="fa-solid fa-clipboard-user"></i> view
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7"
+                                            style="text-align: center; color: var(--text-muted); padding: 32px;">No
+                                            medical history entries found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: DIAGNOSTIC PROCEDURE HISTORY -->
+                <div class="tab-pane {% if active_tab == 'diagnostic-history' %}active{% endif %}"
+                    id="pane-diagnostic-history">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-file-waveform"></i> Diagnostic Procedure History Log
+                                </h2>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Chronological timeline of ophthalmic diagnostic tests (OCT, HVF, B-Scan, FFA,
+                                    Topography)
+                                </p>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">
+                                Sourced from DiagnosisRecord ({{ diagnostic_records.count }} total)
+                            </span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Patient MRN</th>
+                                        <th>Patient Demographics</th>
+                                        <th>Eye</th>
+                                        <th>Diagnostic Procedure</th>
+                                        <th>Clinical Findings &amp; Observations</th>
+                                        <th>Technician</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for diag in diagnostic_records %}
+                                    <tr>
+                                        <td style="white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">{{ diag.date|date:"d M Y" }}</td>
+                                        <td><span class="badge-mrn">{{ diag.patient_mrn }}</span></td>
+                                        <td>
+                                            <strong>{{ diag.patient_name }}</strong>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ diag.patient_age }} yrs &bull; {{ diag.patient_gender }}</div>
+                                        </td>
+                                        <td><span class="badge-pill badge-slot">{{ diag.eye }}</span></td>
+                                        <td>
+                                            <strong style="color: var(--primary-light);">{{ diag.procedure_name }}</strong>
+                                        </td>
+                                        <td style="max-width: 320px; font-size: 0.82rem; line-height: 1.45;">
+                                            {{ diag.findings }}
+                                        </td>
+                                        <td style="font-size: 0.78rem; color: var(--text-muted);">
+                                            {{ diag.technician_name|default:"Diagnostic Dept" }}
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <button type="button" class="btn-action-report"
+                                                onclick="viewOcularReport('{{ diag.patient_mrn }}', '{{ diag.patient_name }}', '{{ diag.patient_age }}', '{{ diag.patient_gender }}', '{{ diag.eye }}', '{{ diag.procedure_name }}', '{{ diag.findings|escapejs }}', '{{ diag.technician_name|default:'Diagnostic Tech'|escapejs }}', '{{ diag.date|date:'d M Y' }}')">
+                                                <i class="fa-solid fa-eye"></i> View Report
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8"
+                                            style="text-align: center; color: var(--text-muted); padding: 32px;">No
+                                            diagnostic history records recorded.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: OT UTILIZATION & SUITE SCHEDULES -->
+                <div class="tab-pane {% if active_tab == 'ot-utilization' %}active{% endif %}" id="pane-ot-utilization">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-chart-pie"></i> Operation Theatre Utilization
+                                </h2>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Live operational capacity, sterilization roster, and slot occupancy across all 4 OT
+                                    suites
+                                </p>
+                            </div>
+                            <span class="badge-pill badge-slot">Overall: {{ overall_ot_utilization }}% Occupancy</span>
+                        </div>
+
+                        <!-- OT Utilization KPI Cards -->
+                        <div class="ot-kpi-summary-grid">
+                            <div class="ot-kpi-box">
+                                <div class="ot-kpi-title"><i class="fa-solid fa-gauge-high"></i> Complex Utilization
+                                </div>
+                                <div class="ot-kpi-value" style="color: var(--primary-light);">{{ overall_ot_utilization }}%</div>
+                                <div class="ot-progress-bar-bg">
+                                    <div class="ot-progress-bar-fill" style="width: {{ overall_ot_utilization }}%;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ot-kpi-box">
+                                <div class="ot-kpi-title"><i class="fa-solid fa-bed-pulse"></i> Total Cases Booked</div>
+                                <div class="ot-kpi-value" style="color: var(--success);">{{ total_booked_cases }}</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Active cases
+                                    across 4 suites</div>
+                            </div>
+                            <div class="ot-kpi-box">
+                                <div class="ot-kpi-title"><i class="fa-solid fa-door-closed"></i> Total Daily Capacity
+                                </div>
+                                <div class="ot-kpi-value">{{ total_ot_capacity }}</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">4 Suites
+                                    &bull; 5 Slots Each</div>
+                            </div>
+                            <div class="ot-kpi-box">
+                                <div class="ot-kpi-title"><i class="fa-solid fa-shield-virus"></i> Sterilized Suites
+                                </div>
+                                <div class="ot-kpi-value" style="color: var(--teal-light);">4 / 4</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">100%
+                                    Bio-Safety Cleared</div>
+                            </div>
+                        </div>
+
+                        <!-- Per Suite Occupancy Progress Bars -->
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px;">
+                            {% for suite in ot_suite_stats %}
+                            <div
+                                style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px;">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                    <strong
+                                        style="font-size: 0.88rem; color: {{ suite.color }}; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fa-solid {{ suite.icon }}"></i> {{ suite.room }}
+                                    </strong>
+                                    <span style="font-size: 0.8rem; font-weight: 700;">{{ suite.count }}/{{ suite.capacity }} Slots ({{ suite.utilization }}%)</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">{{ suite.name }}</div>
+                                <div class="ot-progress-bar-bg">
+                                    <div class="ot-progress-bar-fill"
+                                        style="width: {{ suite.utilization }}%; background: {{ suite.color }};"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Full 4-Suite Slot Matrix -->
+                        <h3
+                            style="font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-table-cells" style="color: var(--primary-light);"></i> 4-Suite
+                            Operational Slot Roster:
+                        </h3>
+
+                        {% for suite in ot_suite_matrix %}
+                        <div class="ot-matrix-suite" style="margin-bottom: 18px;">
+                            <div class="ot-matrix-suite-header">
+                                <div class="ot-matrix-suite-title">
+                                    <i class="fa-solid fa-door-open"></i> {{ suite.room }} &mdash; {{ suite.room_label }}
+                                </div>
+                                <span class="badge-pill badge-slot">{{ suite.total_booked }} of 5 Booked ({{ suite.utilization }}%)</span>
+                            </div>
+                            <div class="ot-slots-mini-grid">
+                                {% for slot in suite.slots %}
+                                <div
+                                    class="slot-mini-card {% if slot.is_booked %}is-booked{% else %}is-available{% endif %}">
+                                    <div class="slot-mini-time"><i class="fa-regular fa-clock"></i> {{ slot.slot_name }}
+                                    </div>
+                                    {% if slot.is_booked %}
+                                    <div class="slot-mini-patient">{{ slot.case.patient_name }}</div>
+                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>Dr. {{ slot.case.surgeon_name }}</div>
+                                    <div style="margin-top: 8px; display: flex; gap: 6px;">
+                                        <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i>
+                                            Booked</span>
+                                        <button type="button" class="btn-action-view"
+                                            style="padding: 2px 8px; font-size: 0.72rem;"
+                                            onclick="viewPatientDossier('{{ slot.case.patient_mrn }}', '{{ slot.case.patient_name }}', '{{ slot.case.patient_age }}', '{{ slot.case.patient_gender }}', '{{ slot.case.eye }}', '{{ slot.case.surgery_type }}', '{{ slot.case.ot_room }}', '{{ slot.case.ot_slot }}', '{{ slot.case.outcome }}', '{{ slot.case.medical_history|escapejs }}', '{{ slot.case.notes|escapejs }}')">
+                                            View Details
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <div class="slot-mini-patient" style="color: var(--text-muted); font-weight: 400;">
+                                        Available Slot</div>
+                                    <div class="slot-mini-type">Suite sterilized and open</div>
+                                    <div class="slot-mini-apply">
+                                        <span class="slot-status-badge status-available"><i
+                                                class="fa-solid fa-hourglass-start"></i> Free</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- TAB 6: OCULAR DIAGNOSTIC REPORTS -->
+                <div class="tab-pane {% if active_tab == 'ocular-reports' %}active{% endif %}" id="pane-ocular-reports">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-eye"></i> Ocular Diagnostic Reports &amp; Clinical Scans
+                                </h2>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    High-resolution findings, quantitative macular parameters, visual field indexes, and
+                                    echography reports
+                                </p>
+                            </div>
+                            <span class="badge-pill badge-slot">{{ diagnostic_records.count }} Ocular Scans</span>
+                        </div>
+
+                        <!-- Ocular Diagnostic Reports Grid -->
+                        <div class="ocular-grid">
+                            {% for diag in diagnostic_records %}
+                            <div class="ocular-card">
+                                <div class="ocular-header">
+                                    <div>
+                                        <span class="badge-mrn">{{ diag.patient_mrn }}</span>
+                                        <div class="ocular-title" style="margin-top: 6px;">
+                                            <i class="fa-solid fa-microscope" style="color: var(--primary-light);"></i>
+                                            {{ diag.procedure_name }}
+                                        </div>
+                                    </div>
+                                    <span class="badge-pill badge-slot">{{ diag.eye }}</span>
+                                </div>
+
+                                <div
+                                    style="font-size: 0.84rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px;">
+                                    Patient: {{ diag.patient_name }}
+                                </div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px;">
+                                    {{ diag.patient_age }} yrs &bull; {{ diag.patient_gender }} &bull; Scan Date: {{ diag.date|date:"d M Y" }}
+                                </div>
+
+                                <!-- Clinical findings block -->
+                                <div class="ocular-findings-box">
+                                    <strong>Diagnostic Impression:</strong><br>
+                                    {{ diag.findings }}
+                                </div>
+
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-glass);">
+                                    <span style="font-size: 0.74rem; color: var(--text-muted);">
+                                        <i class="fa-solid fa-user-check"></i> {{ diag.technician_name|default:"Diagnostic Dept" }}
+                                    </span>
+                                    <button type="button" class="btn-action-report"
+                                        onclick="viewOcularReport('{{ diag.patient_mrn }}', '{{ diag.patient_name }}', '{{ diag.patient_age }}', '{{ diag.patient_gender }}', '{{ diag.eye }}', '{{ diag.procedure_name }}', '{{ diag.findings|escapejs }}', '{{ diag.technician_name|default:'Diagnostic Tech'|escapejs }}', '{{ diag.date|date:'d M Y' }}')">
+                                        <i class="fa-solid fa-file-lines"></i> Examine Report
+                                    </button>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div
+                                style="grid-column: 1 / -1; text-align: center; padding: 36px; color: var(--text-muted);">
+                                No ocular diagnostic reports on file.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 7: SURGERY RECORD HISTORY (VIEW & EDIT) -->
+                <div class="tab-pane {% if active_tab == 'surgery-history' %}active{% endif %}"
+                    id="pane-surgery-history">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-pen-to-square"></i> Surgery Record History &mdash; View &amp;
+                                    Edit
+                                </h2>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Complete chronological surgical register with in-line clinical editing capabilities
+                                </p>
+                            </div>
+                            <span class="badge-pill badge-slot">{{ all_surgeries.count }} Total Hospital
+                                Surgeries</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="clinical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Patient MRN</th>
+                                        <th>Patient Name</th>
+                                        <th>Eye</th>
+                                        <th>Surgery Type</th>
+                                        <th>Surgeon</th>
+                                        <th>OT Room &amp; Slot</th>
+                                        <th>Outcome</th>
+                                        <th>Operative Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in all_surgeries %}
+                                    <tr>
+                                        <td style="white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">{{ s.date|date:"d M Y" }}</td>
+                                        <td><span class="badge-mrn">{{ s.patient_mrn }}</span></td>
+                                        <td>
+                                            <strong>{{ s.patient_name }}</strong>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.patient_age }} yrs &bull; {{ s.patient_gender }}</div>
+                                        </td>
+                                        <td><span class="badge-pill badge-slot">{{ s.eye }}</span></td>
+                                        <td><strong>{{ s.surgery_type }}</strong></td>
+                                        <td>
+                                            <span style="font-size: 0.84rem; font-weight: 600;">{{ s.surgeon_name }}</span>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: var(--primary-light);">{{ s.ot_room }}</span>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.ot_slot }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge-pill badge-outcome">{{ s.outcome }}</span>
+                                        </td>
+                                        <td
+                                            style="max-width: 220px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                            {{ s.notes|default:"Uneventful surgical course." }}
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <button type="button" class="btn-action-view"
+                                                onclick="viewPatientDossier('{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}')"
+                                                title="View Details">
+                                                <i class="fa-solid fa-clipboard-user"></i> View Details
+                                            </button>
+                                            <button type="button" class="btn-action-edit"
+                                                onclick="openEditSurgeryModal('{{ s.id }}', '{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.surgeon_name }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}', 'surgery-history')"
+                                                title="Edit Surgery Record">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="10"
+                                            style="text-align: center; color: var(--text-muted); padding: 32px;">No
+                                            surgery records recorded yet.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: PROFILE & ROSTER SETTINGS -->
+                <!-- <div class="tab-pane {% if active_tab == 'profile-settings' %}active{% endif %}" id="pane-profile-settings">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fa-solid fa-user-pen"></i> Surgical Roster & Doctor Duty Profile
+                            </h2>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);"><i
+                                    class="fa-solid fa-clock-rotate-left"></i> Verified Roster</span>
+                        </div>
+
+                        <form method="post" action="{% url 'users_naimul:profile' %}">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="first_name">Doctor First Name</label>
+                                    <input type="text" id="first_name" name="first_name" class="form-control"
+                                        value="{{ user.first_name }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="last_name">Doctor Last Name</label>
+                                    <input type="text" id="last_name" name="last_name" class="form-control"
+                                        value="{{ user.last_name }}">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="role">Role Assignment</label>
+                                    <select id="role" name="role" class="form-control">
+                                        {% for val, label in role_choices %}
+                                        <option value="{{ val }}" {% if profile.role == val %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="assigned_ot_room">Assigned OT Suite</label>
+                                    <select id="assigned_ot_room" name="assigned_ot_room" class="form-control">
+                                        {% for val, label in ot_room_choices %}
+                                        <option value="{{ val }}" {% if profile.assigned_ot_room == val %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            {% if not profile.is_staff_role %}
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="specialty">Clinical Specialty</label>
+                                    <select id="specialty" name="specialty" class="form-control">
+                                        {% for val, label in specialty_choices %}
+                                        <option value="{{ val }}" {% if profile.specialty == val %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="license_number">BMDC Registration / License #</label>
+                                    <input type="text" id="license_number" name="license_number" class="form-control"
+                                        value="{{ profile.license_number }}">
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="surgeon_code">Surgeon Identification Code</label>
+                                    <input type="text" id="surgeon_code" name="surgeon_code" class="form-control"
+                                        value="{{ profile.surgeon_code }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="license_number">BMDC Registration / License #</label>
+                                    <input type="text" id="license_number" name="license_number" class="form-control"
+                                        value="{{ profile.license_number }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Emergency Contact Phone</label>
+                                <input type="text" id="phone" name="phone" class="form-control"
+                                    value="{{ profile.phone }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="bio">Surgical Specializations & Clinical Focus</label>
+                                <textarea id="bio" name="bio" class="form-control">{{ profile.bio }}</textarea>
+                            </div>
+
+                            <button type="submit" class="btn-save">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Doctor Roster & OT Duty Settings
+                            </button>
+                        </form>
+                    </div>
+                </div> -->
+
+
+                <!-- Patient Dossier Modal -->
+                <div class="modal-overlay" id="dossierModal">
+                    <div class="modal-card">
+                        <div class="modal-header">
+                            <h2
+                                style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-notes-medical" style="color: var(--primary-light);"></i> Patient
+                                Clinical
+                                Dossier
+                            </h2>
+                            <button type="button" onclick="closePatientDossier()"
+                                style="background:none; border:none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="dossier-grid">
+                                <div class="dossier-field">
+                                    <label>Patient MRN</label>
+                                    <p id="m_mrn" class="badge-mrn">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Full Patient Name</label>
+                                    <p id="m_name">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Age & Gender</label>
+                                    <p id="m_demo">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Eye Operative Side</label>
+                                    <p id="m_eye">--</p>
+                                </div>
+                            </div>
+
+                            <div class="dossier-section-title">
+                                <i class="fa-solid fa-calendar-day"></i> Operation Theatre Slot & Suite Details
+                            </div>
+                            <div class="dossier-grid">
+                                <div class="dossier-field">
+                                    <label>Assigned OT Room</label>
+                                    <p id="m_ot_room" style="color: var(--primary-light);">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Scheduled Slot</label>
+                                    <p id="m_ot_slot" style="color: var(--success);">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Planned Surgery</label>
+                                    <p id="m_surgery">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Outcome Status</label>
+                                    <p id="m_outcome">--</p>
+                                </div>
+                            </div>
+
+                            <div class="dossier-section-title">
+                                <i class="fa-solid fa-heart-pulse"></i> Medical History Details (from models.py)
+                            </div>
+                            <div class="dossier-field" style="margin-bottom: 14px;">
+                                <label>Systemic Comorbidities & Pre-Op Notes</label>
+                                <p id="m_med_history" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5;">--
+                                </p>
+                            </div>
+
+                            <div class="dossier-section-title">
+                                <i class="fa-solid fa-clipboard"></i> Operative Clinical Notes
+                            </div>
+                            <div class="dossier-field">
+                                <p id="m_notes" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5;">--</p>
+                            </div>
+                        </div>
+                        <div
+                            style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end;">
+                            <button type="button" class="nav-btn nav-btn-primary" onclick="closePatientDossier()">Close
+                                View</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ocular Diagnostic Report Viewer Modal -->
+                <div class="modal-overlay" id="ocularReportModal">
+                    <div class="modal-card" style="max-width: 680px;">
+                        <div class="modal-header">
+                            <h2
+                                style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-eye" style="color: var(--primary-light);"></i> Ocular Diagnostic
+                                Scan Report
+                            </h2>
+                            <button type="button" onclick="closeOcularReport()"
+                                style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="dossier-grid">
+                                <div class="dossier-field">
+                                    <label>Patient MRN</label>
+                                    <p id="oc_mrn" class="badge-mrn">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Patient Name</label>
+                                    <p id="oc_name" style="font-weight: 700;">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Age &amp; Gender</label>
+                                    <p id="oc_demo">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Scanned Eye</label>
+                                    <p id="oc_eye" class="badge-pill badge-slot">--</p>
+                                </div>
+                            </div>
+
+                            <div class="dossier-section-title" style="margin-top: 16px;">
+                                <i class="fa-solid fa-microscope"></i> Diagnostic Modality &amp; Test Telemetry
+                            </div>
+                            <div class="dossier-grid">
+                                <div class="dossier-field">
+                                    <label>Diagnostic Modality</label>
+                                    <p id="oc_proc" style="font-weight: 700; color: var(--primary-light);">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Procedure Date</label>
+                                    <p id="oc_date">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Attending Technician</label>
+                                    <p id="oc_tech">--</p>
+                                </div>
+                                <div class="dossier-field">
+                                    <label>Quality / Confidence</label>
+                                    <p style="color: var(--success); font-weight: 700;"><i
+                                            class="fa-solid fa-circle-check"></i>
+                                        Verified Clinical Quality</p>
+                                </div>
+                            </div>
+
+                            <div class="dossier-section-title" style="margin-top: 16px;">
+                                <i class="fa-solid fa-chart-line"></i> Clinical Findings &amp; Scan Interpretation
+                            </div>
+                            <div
+                                style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+                                <p id="oc_findings"
+                                    style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">--</p>
+                            </div>
+                        </div>
+                        <div
+                            style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" class="nav-btn" onclick="window.print()"><i
+                                    class="fa-solid fa-print"></i> Print
+                                Report</button>
+                            <button type="button" class="nav-btn nav-btn-primary"
+                                onclick="closeOcularReport()">Close</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Surgery Record Modal -->
+                <div class="modal-overlay" id="editSurgeryModal">
+                    <div class="modal-card" style="max-width: 680px;">
+                        <div class="modal-header">
+                            <h2
+                                style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Edit Surgery
+                                Record History
+                            </h2>
+                            <button type="button" onclick="closeEditSurgeryModal()"
+                                style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">&times;</button>
+                        </div>
+                        <form method="post" action="{% url 'users_naimul:profile' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="edit_surgery" value="1">
+                            <input type="hidden" name="surgery_id" id="edit_surgery_id">
+                            <input type="hidden" name="active_tab" id="edit_active_tab" value="patients">
+
+                            <div class="modal-body">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_patient_mrn">Patient MRN *</label>
+                                        <input type="text" id="edit_patient_mrn" name="patient_mrn" class="form-control"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_patient_name">Patient Full Name *</label>
+                                        <input type="text" id="edit_patient_name" name="patient_name"
+                                            class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_patient_age">Age</label>
+                                        <input type="number" id="edit_patient_age" name="patient_age"
+                                            class="form-control" min="1" max="120" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_patient_gender">Gender</label>
+                                        <select id="edit_patient_gender" name="patient_gender" class="form-control">
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_eye">Operative Eye</label>
+                                        <select id="edit_eye" name="eye" class="form-control">
+                                            <option value="RE">Right Eye (OD)</option>
+                                            <option value="LE">Left Eye (OS)</option>
+                                            <option value="BE">Both Eyes (OU)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_surgery_type">Surgery Category</label>
+                                        <select id="edit_surgery_type" name="surgery_type" class="form-control">
+                                            {% for val, label in surgery_type_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_surgeon_name">Operating Surgeon</label>
+                                        <input type="text" id="edit_surgeon_name" name="surgeon_name"
+                                            class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_ot_room">OT Suite</label>
+                                        <select id="edit_ot_room" name="ot_room" class="form-control">
+                                            {% for val, label in ot_room_choices_surgery %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_ot_slot">Scheduled Slot</label>
+                                        <select id="edit_ot_slot" name="ot_slot" class="form-control">
+                                            {% for val, label in ot_slot_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="edit_outcome">Outcome Status</label>
+                                        <select id="edit_outcome" name="outcome" class="form-control">
+                                            {% for val, label in outcome_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="edit_medical_history">Patient Medical History (as in
+                                        models.py)</label>
+                                    <textarea id="edit_medical_history" name="medical_history" class="form-control"
+                                        rows="2"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="edit_notes">Operative Notes / Observations</label>
+                                    <textarea id="edit_notes" name="notes" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer"
+                                style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" class="nav-btn" onclick="closeEditSurgeryModal()">Cancel</button>
+                                <button type="submit" class="btn-save" style="margin-top: 0; padding: 10px 22px;">
+                                    <i class="fa-solid fa-check"></i> Save Changes to Surgery Record
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Django data injection (must stay inline — uses template tags) -->
+                <script>
+                    const diagnosticRecordsData = {
+            {% for d in diagnostic_records %}
+                    "{{ d.patient_mrn }}": {
+                        proc: "{{ d.procedure_name|escapejs }}",
+                            findings: "{{ d.findings|escapejs }}",
+                                tech: "{{ d.technician_name|default:'Diagnostic Specialist'|escapejs }}",
+                                    date: "{{ d.date|date:'d M Y' }}"
+                    },
+                    {% endfor %}
+        };
+                </script>
+                <!-- External JavaScript -->
+                <script src="{% static 'users_naimul/profile.js' %}"></script>
+
+            </div> <!-- /.clinical-main-content -->
+
+        </div> <!-- /.profile-grid -->
+
+    </div> <!-- /.container -->
+
+</body>
+
+</html>
