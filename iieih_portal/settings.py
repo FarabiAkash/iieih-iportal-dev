@@ -147,9 +147,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-LOGIN_URL = '/ruhul/login/'
-LOGIN_REDIRECT_URL = '/finance/'
-LOGOUT_REDIRECT_URL = '/ruhul/login/'
+# LOGIN_URL = '/ruhul/login/'
+# LOGIN_REDIRECT_URL = '/finance/'
+# LOGOUT_REDIRECT_URL = '/ruhul/login/'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
