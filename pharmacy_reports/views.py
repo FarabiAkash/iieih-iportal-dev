@@ -1,17 +1,17 @@
 from django.shortcuts import render
 from django.db.models import Sum, F
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from .models import MedicineDispensingLog, SurgicalConsumableStock
 import datetime
 
+@login_required(login_url='/adnan/login/')
 def index(request):
     today = datetime.date.today()
     near_expiry_date = today + datetime.timedelta(days=90)
 
-    # Search
     search_query = request.GET.get('search', '')
 
-    # Dispensing logs
     dispensing_logs = MedicineDispensingLog.objects.all().order_by('-date')
     if search_query:
         dispensing_logs = dispensing_logs.filter(
@@ -24,7 +24,6 @@ def index(request):
             patient_mrn__icontains=search_query
         )
 
-    # Surgical stock
     stock_items = SurgicalConsumableStock.objects.all().order_by('expiry_date')
     if search_query:
         stock_items = stock_items.filter(
@@ -33,7 +32,6 @@ def index(request):
             subspecialty__icontains=search_query
         )
 
-    # Stat cards
     total_dispensed = MedicineDispensingLog.objects.filter(
         date=today
     ).aggregate(Sum('quantity_dispensed'))['quantity_dispensed__sum'] or 0
@@ -51,12 +49,10 @@ def index(request):
         expiry_date__lt=today
     ).count()
 
-    # Pagination — dispensing logs
     log_paginator = Paginator(dispensing_logs, 10)
     log_page_number = request.GET.get('log_page', 1)
     log_page = log_paginator.get_page(log_page_number)
 
-    # Pagination — stock items
     stock_paginator = Paginator(stock_items, 10)
     stock_page_number = request.GET.get('stock_page', 1)
     stock_page = stock_paginator.get_page(stock_page_number)
