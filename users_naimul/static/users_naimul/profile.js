@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeTabBtn = document.querySelector('.clinical-tabs .tab-btn.active');
         if (activeTabBtn) {
             try {
-                activeTabBtn.scrollIntoView({ block: 'nearest', inline: 'center' });
+                activeTabBtn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
             } catch (e) {}
         }
     }
