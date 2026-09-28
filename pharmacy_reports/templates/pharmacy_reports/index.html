@@ -101,20 +101,45 @@
         </div>
       </div>
 
-      <!-- Search Bar -->
-      <div class="mb-4">
-        <form method="GET" action="">
-          <input type="hidden" name="log_per_page" value="{{log_per_page}}" />
-          <input type="hidden" name="stock_per_page" value="{{stock_per_page}}" />
-          <div class="input-group search-box shadow-sm">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-            <input type="text" name="search" class="form-control border-start-0" placeholder="Search medicine, branch, category, patient MRN, item..." value="{{search_query}}" />
-            {% if search_query %}
-              <a href="/pharmacy/" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Clear</a>
-            {% endif %}
-            <button class="btn btn-primary" type="submit">Search</button>
-          </div>
-        </form>
+      <!-- Filters -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+          <form method="GET" action="" class="row g-3 align-items-end">
+            <input type="hidden" name="log_per_page" value="{{log_per_page}}" />
+            <input type="hidden" name="stock_per_page" value="{{stock_per_page}}" />
+            <div class="col-12 col-lg-4">
+              <label class="form-label small text-muted mb-1">Search</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Medicine, branch, category, MRN, item..." value="{{search_query}}" />
+              </div>
+            </div>
+            <div class="col-6 col-lg-2">
+              <label class="form-label small text-muted mb-1">Dispensed from</label>
+              <input type="date" name="date_from" class="form-control" value="{{date_from}}" />
+            </div>
+            <div class="col-6 col-lg-2">
+              <label class="form-label small text-muted mb-1">Dispensed to</label>
+              <input type="date" name="date_to" class="form-control" value="{{date_to}}" />
+            </div>
+            <div class="col-12 col-lg-2">
+              <label class="form-label small text-muted mb-1">Stock status</label>
+              <select name="stock_status" class="form-select">
+                <option value="">All statuses</option>
+                <option value="out_of_stock" {% if stock_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                <option value="expired" {% if stock_status == 'expired' %}selected{% endif %}>Expired</option>
+                <option value="low_stock" {% if stock_status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                <option value="ok" {% if stock_status == 'ok' %}selected{% endif %}>OK</option>
+              </select>
+            </div>
+            <div class="col-12 col-lg-2 d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Apply</button>
+              {% if has_filters %}
+                <a href="/pharmacy/" class="btn btn-outline-secondary">Reset</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
       </div>
 
       <!-- Medicine Dispensing Log -->
@@ -175,7 +200,7 @@
                 <nav aria-label="Dispensing log pages">
                   <ul class="pager">
                     {% if dispensing_logs.has_previous %}
-                      <li><a class="pg" aria-label="Previous" href="?log_page={{dispensing_logs.previous_page_number}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&search={{search_query|urlencode}}#log-section"><i class="bi bi-chevron-left"></i></a></li>
+                      <li><a class="pg" aria-label="Previous" href="?log_page={{dispensing_logs.previous_page_number}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&{{filters_qs}}#log-section"><i class="bi bi-chevron-left"></i></a></li>
                     {% else %}
                       <li><span class="pg disabled"><i class="bi bi-chevron-left"></i></span></li>
                     {% endif %}
@@ -184,12 +209,12 @@
                       {% if num == ellipsis %}
                         <li><span class="pg dots">···</span></li>
                       {% else %}
-                        <li><a class="pg {% if dispensing_logs.number == num %}active{% endif %}" href="?log_page={{num}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&search={{search_query|urlencode}}#log-section">{{num}}</a></li>
+                        <li><a class="pg {% if dispensing_logs.number == num %}active{% endif %}" href="?log_page={{num}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&{{filters_qs}}#log-section">{{num}}</a></li>
                       {% endif %}
                     {% endfor %}
 
                     {% if dispensing_logs.has_next %}
-                      <li><a class="pg" aria-label="Next" href="?log_page={{dispensing_logs.next_page_number}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&search={{search_query|urlencode}}#log-section"><i class="bi bi-chevron-right"></i></a></li>
+                      <li><a class="pg" aria-label="Next" href="?log_page={{dispensing_logs.next_page_number}}&log_per_page={{log_per_page}}&stock_page={{stock_items.number}}&stock_per_page={{stock_per_page}}&{{filters_qs}}#log-section"><i class="bi bi-chevron-right"></i></a></li>
                     {% else %}
                       <li><span class="pg disabled"><i class="bi bi-chevron-right"></i></span></li>
                     {% endif %}
@@ -197,6 +222,9 @@
                 </nav>
                 <form method="get" action="#log-section" class="m-0">
                   <input type="hidden" name="search" value="{{search_query}}" />
+                  <input type="hidden" name="date_from" value="{{date_from}}" />
+                  <input type="hidden" name="date_to" value="{{date_to}}" />
+                  <input type="hidden" name="stock_status" value="{{stock_status}}" />
                   <input type="hidden" name="stock_page" value="{{stock_items.number}}" />
                   <input type="hidden" name="stock_per_page" value="{{stock_per_page}}" />
                   <select name="log_per_page" class="form-select form-select-sm per-page" onchange="this.form.submit()">
@@ -281,7 +309,7 @@
                 <nav aria-label="Stock pages">
                   <ul class="pager">
                     {% if stock_items.has_previous %}
-                      <li><a class="pg" aria-label="Previous" href="?stock_page={{stock_items.previous_page_number}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&search={{search_query|urlencode}}#stock-section"><i class="bi bi-chevron-left"></i></a></li>
+                      <li><a class="pg" aria-label="Previous" href="?stock_page={{stock_items.previous_page_number}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&{{filters_qs}}#stock-section"><i class="bi bi-chevron-left"></i></a></li>
                     {% else %}
                       <li><span class="pg disabled"><i class="bi bi-chevron-left"></i></span></li>
                     {% endif %}
@@ -290,12 +318,12 @@
                       {% if num == ellipsis %}
                         <li><span class="pg dots">···</span></li>
                       {% else %}
-                        <li><a class="pg {% if stock_items.number == num %}active{% endif %}" href="?stock_page={{num}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&search={{search_query|urlencode}}#stock-section">{{num}}</a></li>
+                        <li><a class="pg {% if stock_items.number == num %}active{% endif %}" href="?stock_page={{num}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&{{filters_qs}}#stock-section">{{num}}</a></li>
                       {% endif %}
                     {% endfor %}
 
                     {% if stock_items.has_next %}
-                      <li><a class="pg" aria-label="Next" href="?stock_page={{stock_items.next_page_number}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&search={{search_query|urlencode}}#stock-section"><i class="bi bi-chevron-right"></i></a></li>
+                      <li><a class="pg" aria-label="Next" href="?stock_page={{stock_items.next_page_number}}&stock_per_page={{stock_per_page}}&log_page={{dispensing_logs.number}}&log_per_page={{log_per_page}}&{{filters_qs}}#stock-section"><i class="bi bi-chevron-right"></i></a></li>
                     {% else %}
                       <li><span class="pg disabled"><i class="bi bi-chevron-right"></i></span></li>
                     {% endif %}
@@ -303,6 +331,9 @@
                 </nav>
                 <form method="get" action="#stock-section" class="m-0">
                   <input type="hidden" name="search" value="{{search_query}}" />
+                  <input type="hidden" name="date_from" value="{{date_from}}" />
+                  <input type="hidden" name="date_to" value="{{date_to}}" />
+                  <input type="hidden" name="stock_status" value="{{stock_status}}" />
                   <input type="hidden" name="log_page" value="{{dispensing_logs.number}}" />
                   <input type="hidden" name="log_per_page" value="{{log_per_page}}" />
                   <select name="stock_per_page" class="form-select form-select-sm per-page" onchange="this.form.submit()">

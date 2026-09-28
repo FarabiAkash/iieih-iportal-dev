@@ -3,9 +3,11 @@ from django.db.models import Sum, F, Q
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from .models import MedicineDispensingLog, SurgicalConsumableStock
+from urllib.parse import urlencode
 import datetime
 
 ALLOWED_PER_PAGE = (10, 20, 50)
+STOCK_STATUSES = ('out_of_stock', 'expired', 'low_stock', 'ok')
 
 
 def get_per_page(request, key):
@@ -17,12 +19,47 @@ def get_per_page(request, key):
     return value if value in ALLOWED_PER_PAGE else 10
 
 
+def parse_date(value):
+    """Turn 'YYYY-MM-DD' into a date, or None if missing/invalid."""
+    try:
+        return datetime.date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def stock_status_filter(status, today):
+    """Q object matching the same rules as the status badges in the template.
+
+    Precedence: Out of Stock -> Expired -> Low Stock -> OK
+    """
+    in_stock = Q(current_quantity__gt=0)
+    not_expired = Q(expiry_date__gte=today)
+    if status == 'out_of_stock':
+        return Q(current_quantity=0)
+    if status == 'expired':
+        return in_stock & Q(expiry_date__lt=today)
+    if status == 'low_stock':
+        return in_stock & not_expired & Q(current_quantity__lte=F('reorder_threshold'))
+    if status == 'ok':
+        return in_stock & not_expired & Q(current_quantity__gt=F('reorder_threshold'))
+    return Q()
+
+
 @login_required(login_url='/adnan/login/')
 def index(request):
     today = datetime.date.today()
     near_expiry_date = today + datetime.timedelta(days=90)
 
     search_query = request.GET.get('search', '')
+
+    # Date range (dispensing log) and status (stock table)
+    date_from = parse_date(request.GET.get('date_from'))
+    date_to = parse_date(request.GET.get('date_to'))
+    if date_from and date_to and date_from > date_to:
+        date_from, date_to = date_to, date_from
+    stock_status = request.GET.get('stock_status', '')
+    if stock_status not in STOCK_STATUSES:
+        stock_status = ''
 
     # Each table has its own page size
     log_per_page = get_per_page(request, 'log_per_page')
@@ -38,6 +75,11 @@ def index(request):
             | Q(patient_mrn__icontains=search_query)
         )
 
+    if date_from:
+        dispensing_logs = dispensing_logs.filter(date__gte=date_from)
+    if date_to:
+        dispensing_logs = dispensing_logs.filter(date__lte=date_to)
+
     # Surgical stock
     stock_items = SurgicalConsumableStock.objects.all().order_by('expiry_date', 'id')
     if search_query:
@@ -45,6 +87,9 @@ def index(request):
             Q(item_name__icontains=search_query)
             | Q(subspecialty__icontains=search_query)
         )
+
+    if stock_status:
+        stock_items = stock_items.filter(stock_status_filter(stock_status, today))
 
     # Stat cards
     total_dispensed = MedicineDispensingLog.objects.filter(
@@ -79,9 +124,25 @@ def index(request):
         stock_paginator.get_elided_page_range(stock_page.number, on_each_side=2, on_ends=1)
     )
 
+    # Shared filters, appended to every pager link so nothing is lost
+    date_from_str = date_from.isoformat() if date_from else ''
+    date_to_str = date_to.isoformat() if date_to else ''
+    filters_qs = urlencode({
+        'search': search_query,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'stock_status': stock_status,
+    })
+    has_filters = bool(search_query or date_from or date_to or stock_status)
+
     context = {
         'today': today,
         'search_query': search_query,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'stock_status': stock_status,
+        'filters_qs': filters_qs,
+        'has_filters': has_filters,
         'log_per_page': log_per_page,
         'stock_per_page': stock_per_page,
         'dispensing_logs': log_page,
