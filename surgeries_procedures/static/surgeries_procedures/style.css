@@ -201,9 +201,9 @@ body {
 
 /* Container Layout */
 .main-container {
-    max-width: 1440px;
-    margin: 28px auto;
-    padding: 0 24px;
+    max-width: 1680px;
+    margin: 24px auto;
+    padding: 0 16px;
     width: 100%;
     flex: 1;
 }
@@ -480,10 +480,11 @@ body {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5);
+    width: 100%;
 }
 
 .table-header-bar {
-    padding: 18px 24px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -491,7 +492,7 @@ body {
 }
 
 .table-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -504,29 +505,59 @@ body {
 }
 
 .table-wrapper {
+    width: 100%;
     overflow-x: auto;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+.table-wrapper::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.4);
+}
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.3);
+    border-radius: 3px;
+}
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.5);
 }
 
 .surgical-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: 0.80rem;
     text-align: left;
+    table-layout: fixed;
 }
 
+/* Header & Column Width Allocations (Total = 100%) */
+.col-date       { width: 7.5%; }
+.col-patient    { width: 15.5%; }
+.col-procedure  { width: 13.5%; }
+.col-surgeon    { width: 11%; }
+.col-ot         { width: 9%; }
+.col-history    { width: 16%; }
+.col-outcome    { width: 9%; }
+.col-notes      { width: 12.5%; }
+.col-action     { width: 6%; text-align: center; }
+
 .surgical-table th {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--table-header-bg);
     color: #94a3b8;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    padding: 14px 20px;
+    font-size: 0.69rem;
+    letter-spacing: 0.03em;
+    padding: 10px 8px;
     border-bottom: 1px solid var(--border-glass);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .surgical-table td {
-    padding: 16px 20px;
+    padding: 9px 8px;
     border-bottom: 1px solid var(--border-glass);
     color: var(--text-main);
     vertical-align: middle;
@@ -537,7 +568,175 @@ body {
 }
 
 .surgical-table tbody tr:hover {
-    background: rgba(2, 132, 199, 0.08);
+    background: var(--table-hover);
+}
+
+/* Dedicated Column / Cell Classes */
+.cell-date {
+    color: #94a3b8;
+    overflow: hidden;
+}
+
+.date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.date-day {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 0.77rem;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.date-year {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.cell-patient {
+    overflow: hidden;
+}
+
+.patient-title-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+}
+
+.patient-name {
+    color: var(--text-main);
+    font-size: 0.81rem;
+    font-weight: 700;
+    line-height: 1.22;
+    word-break: break-word;
+}
+
+.patient-subtext {
+    font-size: 0.70rem;
+    color: #94a3b8;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.cell-procedure {
+    overflow: hidden;
+}
+
+.procedure-name {
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 0.79rem;
+    margin-bottom: 3px;
+    line-height: 1.22;
+    word-break: break-word;
+}
+
+.procedure-eye {
+    display: flex;
+    align-items: center;
+}
+
+.cell-surgeon {
+    overflow: hidden;
+}
+
+.surgeon-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.surgeon-box i {
+    margin-top: 2px;
+    flex-shrink: 0;
+    font-size: 0.76rem;
+}
+
+.cell-ot {
+    overflow: hidden;
+}
+
+.ot-slot-sub {
+    font-size: 0.68rem;
+    color: var(--primary-light);
+    margin-top: 2px;
+    font-weight: 500;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.cell-med-history {
+    overflow: hidden;
+}
+
+.cell-notes {
+    overflow: hidden;
+}
+
+.note-content {
+    font-size: 0.73rem;
+    line-height: 1.32;
+    word-break: break-word;
+    color: var(--text-main);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+.note-muted {
+    color: var(--text-muted);
+}
+
+.cell-outcome {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.cell-action {
+    white-space: nowrap;
+    text-align: center;
+}
+
+.btn-table-edit {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    color: #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-table-edit i {
+    color: #f59e0b;
+}
+
+.btn-table-edit:hover {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fef3c7;
 }
 
 .mrn-badge {
@@ -545,20 +744,22 @@ body {
     font-weight: 700;
     color: #38bdf8;
     background: rgba(2, 132, 199, 0.15);
-    padding: 3px 8px;
-    border-radius: 6px;
+    padding: 2px 6px;
+    border-radius: 5px;
     border: 1px solid rgba(56, 189, 248, 0.25);
     display: inline-block;
+    font-size: 0.71rem;
+    letter-spacing: 0.02em;
 }
 
 .eye-badge {
     font-weight: 700;
-    padding: 4px 9px;
-    border-radius: 6px;
-    font-size: 0.78rem;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.72rem;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 .eye-re {
@@ -581,12 +782,12 @@ body {
 
 .status-badge {
     font-weight: 600;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 20px;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .status-success {
@@ -612,9 +813,10 @@ body {
     color: #93c5fd;
     background: rgba(30, 58, 138, 0.3);
     border: 1px solid rgba(59, 130, 246, 0.25);
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.78rem;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 0.74rem;
+    display: inline-block;
 }
 
 /* Modal styling */
@@ -731,6 +933,23 @@ body {
    RESPONSIVE MEDIA QUERIES — Surgery & OT Procedures Console
    ============================================================ */
 
+/* ── Compact Laptop / Large Tablet (≤1200px) ── */
+@media (max-width: 1200px) {
+    .surgical-table th,
+    .surgical-table td {
+        padding: 8px 6px;
+    }
+    .col-date       { width: 7.5%; }
+    .col-patient    { width: 16%; }
+    .col-procedure  { width: 13.5%; }
+    .col-surgeon    { width: 11%; }
+    .col-ot         { width: 9%; }
+    .col-history    { width: 15%; }
+    .col-outcome    { width: 9%; }
+    .col-notes      { width: 12.5%; }
+    .col-action     { width: 6.5%; }
+}
+
 /* ── Tablet (≤1024px) ── */
 @media (max-width: 1024px) {
     .header-nav {
@@ -763,8 +982,28 @@ body {
 
     .surgical-table th,
     .surgical-table td {
-        padding: 12px 14px;
-        font-size: 0.82rem;
+        padding: 7px 5px;
+        font-size: 0.76rem;
+    }
+
+    .surgical-table th {
+        font-size: 0.67rem;
+        letter-spacing: 0.02em;
+    }
+
+    .col-date       { width: 7%; }
+    .col-patient    { width: 16%; }
+    .col-procedure  { width: 13.5%; }
+    .col-surgeon    { width: 11%; }
+    .col-ot         { width: 9%; }
+    .col-history    { width: 15%; }
+    .col-outcome    { width: 9%; }
+    .col-notes      { width: 12%; }
+    .col-action     { width: 7.5%; }
+
+    .btn-table-edit {
+        padding: 2px 6px;
+        font-size: 0.69rem;
     }
 }
 
@@ -868,8 +1107,60 @@ body {
     /* Table cells compact */
     .surgical-table th,
     .surgical-table td {
-        padding: 10px 12px;
-        font-size: 0.78rem;
+        padding: 6px 4px;
+        font-size: 0.73rem;
+    }
+
+    .surgical-table th {
+        font-size: 0.64rem;
+        letter-spacing: 0.01em;
+    }
+
+    .col-date       { width: 7%; }
+    .col-patient    { width: 16.5%; }
+    .col-procedure  { width: 13.5%; }
+    .col-surgeon    { width: 10.5%; }
+    .col-ot         { width: 9%; }
+    .col-history    { width: 14.5%; }
+    .col-outcome    { width: 9%; }
+    .col-notes      { width: 12%; }
+    .col-action     { width: 8%; }
+
+    .btn-table-edit {
+        padding: 2px 5px;
+        font-size: 0.68rem;
+    }
+
+    .patient-name {
+        font-size: 0.77rem;
+    }
+
+    .mrn-badge {
+        font-size: 0.65rem;
+        padding: 1px 3px;
+    }
+
+    .procedure-name {
+        font-size: 0.75rem;
+    }
+
+    .eye-badge {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+    }
+
+    .status-badge {
+        font-size: 0.66rem;
+        padding: 2px 5px;
+    }
+
+    .ot-badge {
+        font-size: 0.66rem;
+        padding: 1px 4px;
+    }
+
+    .note-content {
+        font-size: 0.70rem;
     }
 
     /* Modal full-screen on mobile */
@@ -902,6 +1193,122 @@ body {
     .form-grid-2 {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+}
+
+/* ── Mobile Responsive Ledger Cards (≤680px) ── */
+@media (max-width: 680px) {
+    .table-wrapper {
+        overflow-x: visible;
+    }
+
+    .surgical-table,
+    .surgical-table thead,
+    .surgical-table tbody,
+    .surgical-table th,
+    .surgical-table td,
+    .surgical-table tr {
+        display: block;
+        width: 100% !important;
+    }
+
+    .surgical-table thead {
+        display: none;
+    }
+
+    .surgical-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .surgical-table tbody tr {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-glass);
+        border-radius: 14px;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        transition: border-color 0.2s;
+    }
+
+    .surgical-table tbody tr:hover {
+        border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .surgical-table td {
+        padding: 0;
+        border-bottom: none;
+    }
+
+    .cell-date {
+        grid-column: 1 / 2;
+    }
+
+    .date-group {
+        flex-direction: row;
+        gap: 6px;
+        align-items: baseline;
+    }
+
+    .cell-outcome {
+        grid-column: 2 / 3;
+        justify-self: end;
+    }
+
+    .cell-patient {
+        grid-column: 1 / 3;
+        padding-top: 4px;
+    }
+
+    .cell-procedure {
+        grid-column: 1 / 3;
+        padding: 6px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .cell-surgeon {
+        grid-column: 1 / 2;
+    }
+
+    .cell-ot {
+        grid-column: 2 / 3;
+        justify-self: end;
+        text-align: right;
+    }
+
+    .cell-med-history {
+        grid-column: 1 / 3;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 8px 10px;
+        border-radius: 8px;
+        border-left: 3px solid #38bdf8;
+    }
+
+    .cell-notes {
+        grid-column: 1 / 3;
+        background: rgba(255, 255, 255, 0.015);
+        padding: 8px 10px;
+        border-radius: 8px;
+        border-left: 3px solid #94a3b8;
+    }
+
+    .cell-action {
+        grid-column: 1 / 3;
+        padding-top: 6px;
+    }
+
+    .btn-table-edit {
+        width: 100%;
+        padding: 8px 14px;
+        font-size: 0.80rem;
+        border-radius: 8px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #fef3c7;
     }
 }
 
@@ -949,16 +1356,6 @@ body {
 
     .table-card {
         border-radius: 12px;
-    }
-
-    .surgical-table th {
-        font-size: 0.68rem;
-        padding: 8px 10px;
-    }
-
-    .surgical-table td {
-        font-size: 0.75rem;
-        padding: 9px 10px;
     }
 
     .theme-switch-bar span {

@@ -38,7 +38,7 @@ def get_user_role(request):
 # FINANCIAL DASHBOARD
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def financial_dashboard_view(request):
 
     role = get_user_role(request)
@@ -59,7 +59,7 @@ def financial_dashboard_view(request):
 # DAILY COLLECTION LIST
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def daily_collection_list_view(request):
 
     role = get_user_role(request)
@@ -205,7 +205,7 @@ def daily_collection_list_view(request):
 # DAILY COLLECTION CREATE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def daily_collection_create_view(request):
 
     role = get_user_role(request)
@@ -281,7 +281,7 @@ def daily_collection_create_view(request):
 # DAILY COLLECTION UPDATE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def daily_collection_update_view(request, pk):
 
     role = get_user_role(request)
@@ -385,7 +385,7 @@ def daily_collection_update_view(request, pk):
 # DAILY COLLECTION DELETE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def daily_collection_delete_view(request, pk):
 
     role = get_user_role(request)
@@ -455,7 +455,7 @@ def daily_collection_delete_view(request, pk):
 # CONCESSION RECORD LIST
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def concession_record_list_view(request):
 
     role = get_user_role(request)
@@ -580,7 +580,7 @@ def concession_record_list_view(request):
         context
     )
 
-@login_required
+@login_required(login_url='ruhul_login')
 def concession_approve_view(request, pk):
 
     role = get_user_role(request)
@@ -616,7 +616,7 @@ def concession_approve_view(request, pk):
 # CONCESSION RECORD CREATE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def concession_record_create_view(request):
 
     role = get_user_role(request)
@@ -760,7 +760,7 @@ def concession_record_create_view(request):
 # CONCESSION RECORD UPDATE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def concession_record_update_view(request, pk):
 
     role = get_user_role(request)
@@ -910,7 +910,7 @@ def concession_record_update_view(request, pk):
 # CONCESSION RECORD DELETE
 # =========================================================
 
-@login_required
+@login_required(login_url='ruhul_login')
 def concession_record_delete_view(request, pk):
 
     role = get_user_role(request)

@@ -77,7 +77,7 @@ def login_view(request):
     )
 
 
-@login_required
+@login_required(login_url='ruhul_login')
 def logout_view(request):
 
     logout(request)
@@ -90,7 +90,7 @@ def logout_view(request):
     return redirect('ruhul_login')
 
 
-@login_required
+@login_required(login_url='ruhul_login')
 def profile_view(request):
 
     user = request.user
@@ -110,7 +110,7 @@ def profile_view(request):
         context
     )
 
-@login_required
+@login_required(login_url='ruhul_login')
 def profile_update_view(request):
 
     user = request.user

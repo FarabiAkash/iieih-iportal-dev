@@ -323,6 +323,7 @@ def profile_view(request):
         'profile': profile,
         'user_surgeries': my_surgeries,
         'all_surgeries': all_surgeries,
+        'diagnostic_records': displayed_diagnostics,
         'displayed_patients': displayed_patients,
         'search_mrn': search_mrn,
         'general_query': general_query,
