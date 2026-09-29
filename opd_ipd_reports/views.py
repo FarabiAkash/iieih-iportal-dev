@@ -1,69 +1,168 @@
 from django.shortcuts import render
-from django.db.models import Sum
-
-from .models import DailyOPDCensus, IPDBedOccupancy
 
 
 def index(request):
-    # Get filter values from the URL
     selected_branch = request.GET.get('branch', '')
     selected_clinic = request.GET.get('clinic', '')
+    selected_ward = request.GET.get('ward', '')
+    selected_report = request.GET.get('report', 'opd')
 
-    # Get all OPD records
-    opd_records = DailyOPDCensus.objects.all()
+    # Temporary demo OPD data
+    opd_records = [
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Main Branch (Dhaka)',
+            'clinic_name': 'General Eye OPD',
+            'total_visits': 120,
+            'new_patients': 45,
+            'followup_patients': 75,
+            'refractions_done': 38,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Main Branch (Dhaka)',
+            'clinic_name': 'Glaucoma Clinic',
+            'total_visits': 42,
+            'new_patients': 15,
+            'followup_patients': 27,
+            'refractions_done': 12,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Chittagong Branch',
+            'clinic_name': 'Cornea Clinic',
+            'total_visits': 35,
+            'new_patients': 18,
+            'followup_patients': 17,
+            'refractions_done': 10,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Chittagong Branch',
+            'clinic_name': 'Pediatric Clinic',
+            'total_visits': 28,
+            'new_patients': 20,
+            'followup_patients': 8,
+            'refractions_done': 7,
+        },
+    ]
 
-    # Filter by branch if selected
+    # Temporary demo IPD data
+    ipd_records = [
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Main Branch (Dhaka)',
+            'ward_type': 'Male Surgical Ward',
+            'total_beds': 30,
+            'occupied_beds': 24,
+            'available_beds': 6,
+            'new_admissions': 5,
+            'discharges_today': 3,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Main Branch (Dhaka)',
+            'ward_type': 'Female Surgical Ward',
+            'total_beds': 25,
+            'occupied_beds': 20,
+            'available_beds': 5,
+            'new_admissions': 4,
+            'discharges_today': 2,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Chittagong Branch',
+            'ward_type': 'VIP Cabin',
+            'total_beds': 10,
+            'occupied_beds': 7,
+            'available_beds': 3,
+            'new_admissions': 2,
+            'discharges_today': 1,
+        },
+        {
+            'date': '2026-09-23',
+            'hospital_branch': 'Chittagong Branch',
+            'ward_type': 'Daycare Cataract Recovery',
+            'total_beds': 20,
+            'occupied_beds': 12,
+            'available_beds': 8,
+            'new_admissions': 6,
+            'discharges_today': 5,
+        },
+    ]
+
+
+    filtered_opd_records = opd_records
+
     if selected_branch:
-        opd_records = opd_records.filter(
-            hospital_branch=selected_branch
-        )
+        filtered_opd_records = [
+            record for record in filtered_opd_records
+            if record['hospital_branch'] == selected_branch
+        ]
 
-    # Filter by clinic if selected
     if selected_clinic:
-        opd_records = opd_records.filter(
-            clinic_name=selected_clinic
-        )
+        filtered_opd_records = [
+            record for record in filtered_opd_records
+            if record['clinic_name'] == selected_clinic
+        ]
 
-    # Calculate OPD statistics
-    opd_stats = opd_records.aggregate(
-        total_visits=Sum('total_visits'),
-        new_patients=Sum('new_patients'),
-        followup_patients=Sum('followup_patients'),
-        refractions_done=Sum('refractions_done'),
-    )
+    filtered_ipd_records = ipd_records
 
-    # Replace None with 0
-    total_visits = opd_stats['total_visits'] or 0
-    new_patients = opd_stats['new_patients'] or 0
-    followup_patients = opd_stats['followup_patients'] or 0
-    refractions_done = opd_stats['refractions_done'] or 0
-
-    # Get all IPD records
-    ipd_records = IPDBedOccupancy.objects.all()
-
-    # Filter IPD by branch
     if selected_branch:
-        ipd_records = ipd_records.filter(
-            hospital_branch=selected_branch
-        )
+        filtered_ipd_records = [
+            record for record in filtered_ipd_records
+            if record['hospital_branch'] == selected_branch
+        ]
 
-    # Calculate IPD statistics
-    ipd_stats = ipd_records.aggregate(
-        total_beds=Sum('total_beds'),
-        occupied_beds=Sum('occupied_beds'),
-        new_admissions=Sum('new_admissions'),
-        discharges_today=Sum('discharges_today'),
+    if selected_ward:
+        filtered_ipd_records = [
+            record for record in filtered_ipd_records
+            if record['ward_type'] == selected_ward
+        ]
+
+
+    total_visits = sum(
+        record['total_visits']
+        for record in filtered_opd_records
     )
 
-    total_beds = ipd_stats['total_beds'] or 0
-    occupied_beds = ipd_stats['occupied_beds'] or 0
-    new_admissions = ipd_stats['new_admissions'] or 0
-    discharges_today = ipd_stats['discharges_today'] or 0
+    new_patients = sum(
+        record['new_patients']
+        for record in filtered_opd_records
+    )
 
-    # Calculate available beds
+    followup_patients = sum(
+        record['followup_patients']
+        for record in filtered_opd_records
+    )
+
+    refractions_done = sum(
+        record['refractions_done']
+        for record in filtered_opd_records
+    )
+
+    total_beds = sum(
+        record['total_beds']
+        for record in filtered_ipd_records
+    )
+
+    occupied_beds = sum(
+        record['occupied_beds']
+        for record in filtered_ipd_records
+    )
+
     available_beds = total_beds - occupied_beds
 
-    # Calculate occupancy percentage
+    new_admissions = sum(
+        record['new_admissions']
+        for record in filtered_ipd_records
+    )
+
+    discharges_today = sum(
+        record['discharges_today']
+        for record in filtered_ipd_records
+    )
+
     if total_beds > 0:
         occupancy_percentage = round(
             (occupied_beds / total_beds) * 100,
@@ -72,39 +171,70 @@ def index(request):
     else:
         occupancy_percentage = 0
 
-    # Get unique branches for filter dropdown
-    branches = DailyOPDCensus.objects.values_list(
-        'hospital_branch',
-        flat=True
-    ).distinct()
 
-    # Get clinic choices from the model
-    clinics = [
-        choice[0]
-        for choice in DailyOPDCensus.CLINIC_CHOICES
+    branches = [
+        'Main Branch (Dhaka)',
+        'Chittagong Branch',
+        'Jamalpur Branch',
+        'Barisal Branch',
     ]
 
+    clinics = [
+        'General Eye OPD',
+        'Cornea Clinic',
+        'Retina Clinic',
+        'Glaucoma Clinic',
+        'Pediatric Clinic',
+        'Emergency Eye Care',
+    ]
+
+    wards = [
+        'Male Surgical Ward',
+        'Female Surgical Ward',
+        'VIP Cabin',
+        'Daycare Cataract Recovery',
+    ]
+
+
+    if request.user.is_authenticated:
+        user_name = request.user.get_full_name()
+
+        if not user_name:
+            user_name = request.user.username
+    else:
+        user_name = 'Guest User'
+
     context = {
+        # Report selection
+        'selected_report': selected_report,
+
+        # User
+        'user_name': user_name,
+
+        # OPD
         'total_visits': total_visits,
         'new_patients': new_patients,
         'followup_patients': followup_patients,
         'refractions_done': refractions_done,
+        'opd_records': filtered_opd_records,
 
+        # IPD
         'total_beds': total_beds,
         'occupied_beds': occupied_beds,
         'available_beds': available_beds,
         'new_admissions': new_admissions,
         'discharges_today': discharges_today,
         'occupancy_percentage': occupancy_percentage,
+        'ipd_records': filtered_ipd_records,
 
-        'opd_records': opd_records,
-        'ipd_records': ipd_records,
-
+        # Filters
         'branches': branches,
         'clinics': clinics,
+        'wards': wards,
 
         'selected_branch': selected_branch,
         'selected_clinic': selected_clinic,
+        'selected_ward': selected_ward,
     }
 
     return render(
