@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿{% load static %}
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
 <head>
@@ -211,32 +212,17 @@
         .brand-logo-ring {
             width: 52px;
             height: 52px;
-            border-radius: 50%;
-            background: conic-gradient(#ec4730 0 33.33%,
-                    #f0b207 33.33% 66.66%,
-                    #2c9f4a 66.66% 100%);
-            position: relative;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.3);
-            flex-shrink: 0;
         }
 
-        .brand-logo-ring::after {
-            content: "";
-            width: 32px;
-            height: 32px;
-            background: #ffffff;
-            border-radius: 50%;
-            display: block;
-        }
-
-        .brand-logo-ring i {
-            position: absolute;
-            color: #0284c7;
-            font-size: 1rem;
-            z-index: 2;
+        .brand-logo-ring img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.25));
         }
 
         .brand-titles {
@@ -843,7 +829,7 @@
             <div class="hero-content-top">
                 <div class="brand-header">
                     <div class="brand-logo-ring" aria-hidden="true">
-                        <i class="fa-solid fa-eye"></i>
+                        <img src="{% static 'users_naimul/iieih_logo.svg' %}" alt="IIEIH Logo">
                     </div>
                     <div class="brand-titles">
                         <h2 class="brand-title-main">Ispahani Islamia</h2>
