@@ -11,6 +11,8 @@
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --nav-bg: rgba(15, 23, 42, 0.92);
+    --nav-control-bg: rgba(255, 255, 255, 0.05);
+    --nav-control-text: #e2e8f0;
     --input-bg: rgba(15, 23, 42, 0.7);
     --input-border: rgba(255, 255, 255, 0.12);
     --input-text: #ffffff;
@@ -37,6 +39,8 @@
     --text-main: #0f172a;
     --text-muted: #64748b;
     --nav-bg: rgba(255, 255, 255, 0.94);
+    --nav-control-bg: rgba(15, 23, 42, 0.04);
+    --nav-control-text: #334155;
     --input-bg: #ffffff;
     --input-border: #cbd5e1;
     --input-text: #0f172a;
@@ -114,7 +118,7 @@ body {
 
 /* Top Navbar */
 .header-nav {
-    background: rgba(15, 23, 42, 0.92);
+    background: var(--nav-bg);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-glass);
     padding: 12px 32px;
@@ -131,7 +135,7 @@ body {
     align-items: center;
     gap: 14px;
     text-decoration: none;
-    color: #fff;
+    color: var(--text-main);
 }
 
 .brand-badge {
@@ -150,7 +154,7 @@ body {
 .brand-titles h1 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
 }
 
 .brand-titles span {
@@ -168,9 +172,9 @@ body {
 }
 
 .btn-nav {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--nav-control-bg);
     border: 1px solid var(--border-glass);
-    color: #e2e8f0;
+    color: var(--nav-control-text);
     padding: 8px 16px;
     border-radius: 10px;
     text-decoration: none;
@@ -312,13 +316,13 @@ body {
 .kpi-value {
     font-size: 1.8rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--text-main);
     letter-spacing: -0.02em;
 }
 
 .kpi-subtext {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-top: 2px;
 }
 
