@@ -97,7 +97,9 @@ def index(request):
     ).aggregate(Sum('quantity_dispensed'))['quantity_dispensed__sum'] or 0
 
     low_stock_count = SurgicalConsumableStock.objects.filter(
-        current_quantity__lte=F('reorder_threshold')
+    current_quantity__gt=0,
+    current_quantity__lte=F('reorder_threshold'),
+    expiry_date__gte=today
     ).count()
 
     near_expiry_count = SurgicalConsumableStock.objects.filter(
