@@ -25,13 +25,13 @@ class SurgeryRecordAdmin(admin.ModelAdmin):
 
 @admin.register(DiagnosisProcedure)
 class DiagnosisProcedureAdmin(admin.ModelAdmin):
-    list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name', 'patient_age', 'patient_gender', 'findings_summary', 'created_by')
+    list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name', 'patient_age', 'patient_gender', 'findings_summary')
     search_fields = ('patient_mrn', 'patient_name', 'technician_name')
     list_filter = ('procedure_name', 'eye', 'date')
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('appointment_date', 'appointment_time_slot', 'patient_name', 'patient_mrn', 'appointment_type', 'doctor_name', 'status', 'created_by')
+    list_display = ('appointment_date', 'appointment_time_slot', 'patient_name', 'patient_mrn', 'appointment_type', 'doctor_name', 'status')
     search_fields = ('patient_mrn', 'patient_name', 'doctor_name')
     list_filter = ('status', 'appointment_type', 'appointment_date')
     date_hierarchy = 'appointment_date'

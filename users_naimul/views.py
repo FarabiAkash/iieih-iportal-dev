@@ -112,7 +112,7 @@ def profile_view(request):
                 outcome=outcome,
                 medical_history=medical_history,
                 notes=notes,
-                created_by=request.user,
+                # created_by=request.user,
             )
             messages.success(request, f"Surgery application for {name} ({mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
         else:
@@ -147,7 +147,7 @@ def profile_view(request):
                 appointment_time_slot=time_slot,
                 status=status,
                 notes=notes,
-                created_by=request.user,
+                # created_by=request.user,
             )
             messages.success(request, f"Appointment for {name} ({mrn}) scheduled on {appt_date} at {time_slot}.")
         else:
@@ -220,8 +220,8 @@ def profile_view(request):
         Q(surgeon_name__icontains='Naimul')
     ).order_by('-date', '-id')
 
-    if not my_surgeries.exists():
-        my_surgeries = SurgeryRecord.objects.filter(created_by=request.user).order_by('-date', '-id')
+    # if not my_surgeries.exists():
+        # my_surgeries = SurgeryRecord.objects.filter(created_by=request.user).order_by('-date', '-id')
 
     # Search Query Handling
     search_mrn = request.GET.get('patient_mrn', '').strip()
@@ -331,7 +331,7 @@ def profile_view(request):
         'searched_patient_found': searched_patient_found,
         'searched_doctor_name': searched_doctor_name,
         'diagnostic_procedures': diagnostic_procedures,
-        'displayed_diagnostics': displayed_diagnostics,
+        # 'displayed_diagnostics': displayed_diagnostics,
         'overall_ot_utilization': overall_ot_utilization,
         'total_booked_cases': total_booked_cases,
         'total_ot_capacity': total_ot_capacity,

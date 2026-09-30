@@ -77,10 +77,7 @@ class SurgeryRecord(models.Model):
     
     medical_history = models.TextField(blank=True, help_text="Patient's Medical History and Previous Surgeries")
     notes = models.TextField(blank=True, help_text="Additional Notes or Comments")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, help_text="User who created this record")
-    created_at = models.DateTimeField(auto_now_add=True, help_text="Timestamp when the record was created")
     
-
 # class DiagnosisProcedure(models.Model):
     
 #     Eye_Choices = [
@@ -113,8 +110,6 @@ class SurgeryRecord(models.Model):
 #     procedure_name = models.CharField(max_length=50, choices=Procedure_Choices, help_text="Procedure Performed")
 #     technician_name = models.CharField(max_length=100, help_text="Name of the Technician")
 #     findings_summary = models.TextField(blank=True, help_text="Findings summary from the Diagnosis")
-#     created_by = models.ForeignKey(User, on_delete=models.CASCADE, help_text="User who created this record")
-#     created_at = models.DateTimeField(auto_now_add=True, help_text="Timestamp when the record was created")
     
 class DiagnosisProcedure(models.Model):
     
@@ -166,15 +161,6 @@ class DiagnosisProcedure(models.Model):
         blank=True,
         help_text="Findings summary from the Diagnosis"
     )
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        help_text="User who created this record"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        help_text="Timestamp when the record was created"
-    )
     
 class NaimulProfile(models.Model):
     
@@ -224,7 +210,6 @@ class NaimulProfile(models.Model):
     can_view_ot_slots = models.BooleanField(default=True, help_text="Doctor Role Permission: View Operation Theatre Slot Schedules")
     can_apply_surgery = models.BooleanField(default=True, help_text="Staff Role Permission: Submit Surgery Applications & Book OT Slots")
     can_make_appointments = models.BooleanField(default=True, help_text="Staff Role Permission: Schedule & Manage Patient Appointments")
-    created_at = models.DateTimeField(auto_now_add=True)
     
 class Appointment(models.Model): 
 
@@ -287,8 +272,6 @@ class Appointment(models.Model):
         help_text="Current status of the appointment"
     )
     notes = models.TextField(blank=True, help_text="Clinical notes, referral details, or special requirements")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, help_text="Staff user who created the appointment")
-    created_at = models.DateTimeField(auto_now_add=True)
 
 # role = models.CharField(
 #     max_length=30,
