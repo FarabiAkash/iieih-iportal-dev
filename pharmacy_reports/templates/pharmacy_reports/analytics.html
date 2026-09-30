@@ -1,3 +1,4 @@
+{% load static %}
 <!-- @ts-nocheck -->
 <!doctype html>
 <html lang="en">
@@ -7,15 +8,8 @@
   <title>IIEH — Pharmacy Analytics</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'pharmacy_reports/analytics.css' %}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    body { background-color: #eaf4fb; }
-    .navbar { background-color: #0077b6; }
-    .card { border-radius: 16px; border: none; }
-    .chart-container { position: relative; height: 320px; }
-    .page-title { font-size: 1.4rem; font-weight: 700; color: #0077b6; }
-    .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6c757d; font-weight: 600; }
-  </style>
 </head>
 <body>
 
@@ -90,11 +84,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const BLUE   = '#0077b6';
-  const ORANGE = '#f4a261';
-  const RED    = '#c1121f';
-  const GREEN  = '#2d6a4f';
-  const TEAL   = '#48cae4';
+  /* Colors match dashboard category badges in style.css */
+  const ANTI_GLAUCOMA = '#0077b6'; /* blue   — badge-cat-anti-glaucoma */
+  const ANTIBIOTIC    = '#2d6a4f'; /* green  — badge-cat-antibiotic    */
+  const STEROID       = '#f4a261'; /* orange — badge-cat-steroid       */
+  const LUBRICANT     = '#48cae4'; /* teal   — badge-cat-lubricant     */
+  const SURGICAL      = '#7b2d8b'; /* purple — badge-cat-surgical      */
 
   // Pie — medicines by category
   new Chart(document.getElementById('categoryPie'), {
@@ -103,7 +98,7 @@
       labels: {{ category_labels|safe }},
       datasets: [{
         data: {{ category_totals|safe }},
-        backgroundColor: [BLUE, ORANGE, RED, GREEN, TEAL],
+        backgroundColor: [ANTI_GLAUCOMA, ANTIBIOTIC, STEROID, LUBRICANT, SURGICAL],
         borderWidth: 2,
         borderColor: '#fff',
       }]
@@ -130,7 +125,7 @@
       datasets: [{
         label: 'Units in Stock',
         data: {{ subspecialty_totals|safe }},
-        backgroundColor: [BLUE, ORANGE, RED, GREEN],
+        backgroundColor: [ANTI_GLAUCOMA, STEROID, LUBRICANT, ANTIBIOTIC],
         borderRadius: 8,
         borderSkipped: false,
       }]
@@ -154,8 +149,8 @@
       datasets: [{
         label: 'Units Dispensed',
         data: {{ daily_totals|safe }},
-        backgroundColor: BLUE + 'cc',
-        borderColor: BLUE,
+        backgroundColor: ANTI_GLAUCOMA + 'cc',
+        borderColor: ANTI_GLAUCOMA,
         borderWidth: 1,
         borderRadius: 6,
         borderSkipped: false,
