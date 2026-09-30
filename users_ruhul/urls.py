@@ -1,14 +1,24 @@
 from django.urls import path
+
 from .views import (
     registration_view,
     login_view,
     logout_view,
     profile_view,
     profile_update_view,
+
+    test_password_reset_view,
+    test_password_reset_done_view,
+    test_password_reset_confirm_view,
+    test_password_reset_complete_view,
 )
 
 
 urlpatterns = [
+
+    # =====================================================
+    # AUTHENTICATION
+    # =====================================================
 
     path(
         'registration/',
@@ -28,6 +38,11 @@ urlpatterns = [
         name='ruhul_logout'
     ),
 
+
+    # =====================================================
+    # PROFILE
+    # =====================================================
+
     path(
         'profile/',
         profile_view,
@@ -40,44 +55,33 @@ urlpatterns = [
         name='ruhul_profile_update'
     ),
 
-    # =========================
-    # Password Reset
-    # =========================
 
-    # path(
-    #     'password-reset/',
-    #     auth_views.PasswordResetView.as_view(
-    #         template_name='users_ruhul/password_reset.html',
-    #         email_template_name='users_ruhul/password_reset_email.html',
-    #         subject_template_name='users_ruhul/password_reset_subject.txt',
-    #         success_url=reverse_lazy('password_reset_done')
-    #     ),
-    #     name='password_reset'
-    # ),
+    # =====================================================
+    # TEST PASSWORD RESET
+    # =====================================================
 
-    # path(
-    #     'password-reset/done/',
-    #     auth_views.PasswordResetDoneView.as_view(
-    #         template_name='users_ruhul/password_reset_done.html'
-    #     ),
-    #     name='password_reset_done'
-    # ),
+    path(
+        'password-reset/',
+        test_password_reset_view,
+        name='password_reset'
+    ),
 
-    # path(
-    #     'password-reset-confirm/<uidb64>/<token>/',
-    #     auth_views.PasswordResetConfirmView.as_view(
-    #         template_name='users_ruhul/password_reset_confirm.html',
-    #         success_url=reverse_lazy('password_reset_complete')
-    #     ),
-    #     name='password_reset_confirm'
-    # ),
+    path(
+        'password-reset/done/',
+        test_password_reset_done_view,
+        name='password_reset_done'
+    ),
 
-    # path(
-    #     'password-reset-complete/',
-    #     auth_views.PasswordResetCompleteView.as_view(
-    #         template_name='users_ruhul/password_reset_complete.html'
-    #     ),
-    #     name='password_reset_complete'
-    # ),
+    path(
+        'password-reset-confirm/',
+        test_password_reset_confirm_view,
+        name='password_reset_confirm'
+    ),
+
+    path(
+        'password-reset-complete/',
+        test_password_reset_complete_view,
+        name='password_reset_complete'
+    ),
 
 ]

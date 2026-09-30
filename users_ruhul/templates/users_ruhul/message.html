@@ -1,19 +1,32 @@
-{% if messages %}
-    {% for message in messages %}
+{% if messages %} 
+    {% for message in messages %} 
 
-        <div
-            class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show"
-            role="alert"
-        >
-            {{ message }}
+        <div 
+            class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show auto-dismiss-alert" 
+            role="alert" 
+        > 
+            {{ message }} 
 
-            <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-                aria-label="Close"
-            ></button>
-        </div>
+            <button 
+                type="button" 
+                class="btn-close" 
+                data-bs-dismiss="alert" 
+                aria-label="Close" 
+            ></button> 
+        </div> 
 
-    {% endfor %}
+    {% endfor %} 
 {% endif %}
+
+
+<script>
+    setTimeout(function () {
+        document.querySelectorAll('.auto-dismiss-alert').forEach(function (alert) {
+            alert.classList.remove('show');
+
+            setTimeout(function () {
+                alert.remove();
+            }, 150);
+        });
+    }, 3000); // 3 seconds
+</script>
