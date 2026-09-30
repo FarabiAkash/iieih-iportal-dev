@@ -153,3 +153,132 @@ git push origin adnan
 After pushing, open a Pull Request (PR) to merge `adnan` into `dev`. 
 **Subhendu (QA)** will run automated tests on `dev` and report any bugs back to you!
 
+-----------------------------------------------
+-----------------------------------------------
+-----------------------------------------------
+
+# Git Daily Workflow
+
+## 🌅 Start a New Coding Day
+
+### 1. Make sure you're on `adnan`
+
+```powershell
+git branch
+```
+
+You should see:
+
+```text
+* adnan
+```
+
+---
+
+### 2. Get latest changes from GitHub
+
+```powershell
+git fetch origin
+```
+
+---
+
+### 3. Check if `dev` has new changes
+
+```powershell
+git log --oneline adnan..origin/dev
+```
+
+* **If nothing appears:** you're already up to date.
+* **If commits appear:** continue below.
+
+---
+
+### 4. Update `adnan` with `dev`
+
+```powershell
+git merge origin/dev
+```
+
+If Git opens Vim:
+
+```text
+Esc
+:wq
+Enter
+```
+
+---
+
+### 5. Check status
+
+```powershell
+git status
+```
+
+---
+
+### 6. Push the updated `adnan`
+
+```powershell
+git push origin adnan
+```
+
+---
+
+# 💻 After Coding
+
+### 7. Check your changes
+
+```powershell
+git status
+```
+
+### 8. Add changes
+
+```powershell
+git add .
+```
+
+### 9. Commit
+
+```powershell
+git commit -m "describe your change"
+```
+
+Example:
+
+```powershell
+git commit -m "fix pharmacy dashboard"
+```
+
+### 10. Push
+
+```powershell
+git push origin adnan
+```
+
+---
+
+# 🔀 When Your Work Is Finished
+
+Create a Pull Request:
+
+```text
+adnan → dev
+```
+
+---
+
+# ⚠️ Remember
+
+```text
+Work on:        adnan
+Get updates:    origin/dev
+Push to:        origin/adnan
+Pull Request:   adnan → dev
+
+DO NOT TOUCH:   main
+```
+
+---

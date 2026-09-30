@@ -97,7 +97,9 @@ def index(request):
     ).aggregate(Sum('quantity_dispensed'))['quantity_dispensed__sum'] or 0
 
     low_stock_count = SurgicalConsumableStock.objects.filter(
-        current_quantity__lte=F('reorder_threshold')
+    current_quantity__gt=0,
+    current_quantity__lte=F('reorder_threshold'),
+    expiry_date__gte=today
     ).count()
 
     near_expiry_count = SurgicalConsumableStock.objects.filter(
@@ -157,3 +159,58 @@ def index(request):
     }
 
     return render(request, 'pharmacy_reports/index.html', context)
+
+@login_required(login_url='/adnan/login/')
+def analytics(request):
+    today = datetime.date.today()
+    last_30_days = today - datetime.timedelta(days=30)
+
+    # Pie chart — medicines by category
+    category_data = (
+        MedicineDispensingLog.objects
+        .values('category')
+        .annotate(total=Sum('quantity_dispensed'))
+        .order_by('-total')
+    )
+    category_labels = [item['category'] for item in category_data]
+    category_display = [
+        dict(MedicineDispensingLog.CATEGORY_CHOICES).get(c, c)
+        for c in category_labels
+    ]
+    category_totals = [item['total'] for item in category_data]
+
+    # Bar chart — daily dispensing last 30 days
+    daily_data = (
+        MedicineDispensingLog.objects
+        .filter(date__gte=last_30_days)
+        .values('date')
+        .annotate(total=Sum('quantity_dispensed'))
+        .order_by('date')
+    )
+    daily_labels = [str(item['date']) for item in daily_data]
+    daily_totals = [item['total'] for item in daily_data]
+
+    # Bar chart — stock by subspecialty
+    subspecialty_data = (
+        SurgicalConsumableStock.objects
+        .values('subspecialty')
+        .annotate(total=Sum('current_quantity'))
+        .order_by('-total')
+    )
+    subspecialty_labels = [
+        dict(SurgicalConsumableStock.SUBSPECIALTY_CHOICES).get(item['subspecialty'], item['subspecialty'])
+        for item in subspecialty_data
+    ]
+    subspecialty_totals = [item['total'] for item in subspecialty_data]
+
+    context = {
+        'today': today,
+        'category_labels': category_display,
+        'category_totals': category_totals,
+        'daily_labels': daily_labels,
+        'daily_totals': daily_totals,
+        'subspecialty_labels': subspecialty_labels,
+        'subspecialty_totals': subspecialty_totals,
+    }
+
+    return render(request, 'pharmacy_reports/analytics.html', context)
