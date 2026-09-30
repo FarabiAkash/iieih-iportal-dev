@@ -60,7 +60,7 @@ def index(request):
                 outcome=outcome,
                 medical_history=medical_history,
                 notes=notes,
-                created_by=user
+                # created_by=user
             )
             messages.success(request, f"Surgery record for Patient {name} ({mrn}) logged successfully in {ot_room} ({ot_slot})!")
             return redirect('surgeries_procedures:index')
