@@ -34,7 +34,7 @@
 
     .register-container {
         width: 100%;
-        max-width: 1050px;
+        max-width: 950px;
         min-height: 650px;
         background: white;
         border-radius: 22px;
@@ -104,17 +104,8 @@
     }
 
     .hospital-icon {
-        width: 70px;
-        height: 70px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.15);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 35px;
-        margin-bottom: 25px;
-        position: relative;
-        z-index: 1;
+        font-size: 55px;
+        margin-bottom: 20px;
     }
 
     .left-panel h1 {
@@ -198,7 +189,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #172554;
+        color: #facc15;
         transition: 0.2s;
     }
 
@@ -275,7 +266,7 @@
         font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: 0.2s;
+        transition: 0.2s ease;
         margin-top: 5px;
     }
 
@@ -533,13 +524,74 @@
                 Assigned Counter
             </label>
 
-            <input
-                type="text"
+            <select
                 id="assigned_counter"
                 name="assigned_counter"
-                placeholder="e.g. Registration Counter 2"
-                value="{{ assigned_counter|default:'' }}"
                 required>
+
+                <option value="">Select Registration Counter</option>
+
+                <option value="Registration Counter 1"
+                    {% if assigned_counter == "Registration Counter 1" %}selected{% endif %}>
+                    Registration Counter 1
+                </option>
+
+                <option value="Registration Counter 2"
+                    {% if assigned_counter == "Registration Counter 2" %}selected{% endif %}>
+                    Registration Counter 2
+                </option>
+
+                <option value="Registration Counter 3"
+                    {% if assigned_counter == "Registration Counter 3" %}selected{% endif %}>
+                    Registration Counter 3
+                </option>
+
+                <option value="Registration Counter 4"
+                    {% if assigned_counter == "Registration Counter 4" %}selected{% endif %}>
+                    Registration Counter 4
+                </option>
+
+                <option value="Registration Counter 5"
+                    {% if assigned_counter == "Registration Counter 5" %}selected{% endif %}>
+                    Registration Counter 5
+                </option>
+
+                <option value="Registration Counter 6"
+                    {% if assigned_counter == "Registration Counter 6" %}selected{% endif %}>
+                    Registration Counter 6
+                </option>
+
+                <option value="Registration Counter 7"
+                    {% if assigned_counter == "Registration Counter 7" %}selected{% endif %}>
+                    Registration Counter 7
+                </option>
+
+                <option value="Registration Counter 8"
+                    {% if assigned_counter == "Registration Counter 8" %}selected{% endif %}>
+                    Registration Counter 8
+                </option>
+
+                <option value="Registration Counter 9"
+                    {% if assigned_counter == "Registration Counter 9" %}selected{% endif %}>
+                    Registration Counter 9
+                </option>
+
+                <option value="Registration Counter 10"
+                    {% if assigned_counter == "Registration Counter 10" %}selected{% endif %}>
+                    Registration Counter 10
+                </option>
+
+                <option value="Registration Counter 11"
+                    {% if assigned_counter == "Registration Counter 11" %}selected{% endif %}>
+                    Registration Counter 11
+                </option>
+
+                <option value="Registration Counter 12"
+                    {% if assigned_counter == "Registration Counter 12" %}selected{% endif %}>
+                    Registration Counter 12
+                </option>
+
+            </select>
 
         </div>
 
@@ -597,6 +649,10 @@
 
 
         <div class="form-group">
+
+            <label for="password">
+                Password
+            </label>
 
             <div class="password-wrapper">
                 <input

@@ -71,13 +71,36 @@
 
     .hospital-section {
         width: 50%;
-        background: linear-gradient(135deg, #0f766e, #0e7490);
+        background: linear-gradient(145deg, #0f766e, #2563eb);
         color: white;
-        padding: 50px 40px;
+        padding: 55px 45px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         position: relative;
+        overflow: hidden;
+    }
+
+    .hospital-section::before {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        top: -90px;
+        right: -90px;
+    }
+
+    .hospital-section::after {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        bottom: -70px;
+        left: -60px;
     }
 
     .hospital-icon {
@@ -129,7 +152,7 @@
     .theme-btn {
         border: none;
         background: #e8f3f5;
-        color: #0f766e;
+        color: #facc15;
         width: 40px;
         height: 40px;
         border-radius: 50%;
@@ -146,7 +169,7 @@
     }
 
     .login-section h2 {
-        color: #164e63;
+        color: #172554;
         font-size: 28px;
         margin-bottom: 8px;
     }
@@ -186,10 +209,10 @@
 
     .login-btn {
         width: 100%;
-        padding: 13px;
+        padding: 14px;
         border: none;
         border-radius: 9px;
-        background: #0f766e;
+        background: #2563eb;
         color: white;
         font-size: 15px;
         font-weight: 600;
@@ -199,7 +222,8 @@
     }
 
     .login-btn:hover {
-        background: #115e59;
+        background: #1d4ed8;
+        transform: translateY(-1px);
     }
 
     .login-btn i {
@@ -366,9 +390,8 @@
     <h1>IIEIH iPortal</h1>
 
     <p>
-        Welcome to the Eye Hospital Management Portal.
-        Access your account to manage patient-care operations,
-        registration services, and hospital reports.
+        Welcome to the Ispahani Islamia Eye Institute & Hospital Management Portal.
+        Access your account to manage patient-care operations, registration services, and hospital reports.
     </p>
 
     <div class="hospital-info">
@@ -451,6 +474,10 @@
 
 
         <div class="form-group">
+
+            <label for="password">
+                Password
+            </label>
 
             <div class="password-wrapper">
                 <input

@@ -32,7 +32,7 @@
     <nav class="portal-nav">
         <a href="/naimul/login/" class="nav-brand">
             <div class="brand-icon">
-                <i class="fa-solid fa-hospital"></i>
+                <img src="{% static 'users_naimul/iieih_logo.svg' %}" alt="IIEIH Logo">
             </div>
             <div class="brand-text">
                 <h1>IIEI&H</h1>
@@ -1169,8 +1169,8 @@
                                 Surgeries</span>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="clinical-table">
+                        <div class="table-responsive surgery-history-table-responsive">
+                            <table class="clinical-table surgery-history-table">
                                 <thead>
                                     <tr>
                                         <th>Date</th>
@@ -1188,29 +1188,29 @@
                                 <tbody>
                                     {% for s in all_surgeries %}
                                     <tr>
-                                        <td style="white-space: nowrap; font-size: 0.8rem; color: var(--text-muted);">{{ s.date|date:"d M Y" }}</td>
-                                        <td><span class="badge-mrn">{{ s.patient_mrn }}</span></td>
-                                        <td>
+                                        <td data-label="Date" style="font-size: 0.8rem; color: var(--text-muted);">{{ s.date|date:"d M Y" }}</td>
+                                        <td data-label="Patient MRN"><span class="badge-mrn">{{ s.patient_mrn }}</span></td>
+                                        <td data-label="Patient Name">
                                             <strong>{{ s.patient_name }}</strong>
                                             <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.patient_age }} yrs &bull; {{ s.patient_gender }}</div>
                                         </td>
-                                        <td><span class="badge-pill badge-slot">{{ s.eye }}</span></td>
-                                        <td><strong>{{ s.surgery_type }}</strong></td>
-                                        <td>
+                                        <td data-label="Eye"><span class="badge-pill badge-slot">{{ s.eye }}</span></td>
+                                        <td data-label="Surgery Type"><strong>{{ s.surgery_type }}</strong></td>
+                                        <td data-label="Surgeon">
                                             <span style="font-size: 0.84rem; font-weight: 600;">{{ s.surgeon_name }}</span>
                                         </td>
-                                        <td>
+                                        <td data-label="OT Room & Slot">
                                             <span style="font-weight: 600; color: var(--primary-light);">{{ s.ot_room }}</span>
                                             <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.ot_slot }}</div>
                                         </td>
-                                        <td>
+                                        <td data-label="Outcome">
                                             <span class="badge-pill badge-outcome">{{ s.outcome }}</span>
                                         </td>
-                                        <td
+                                        <td data-label="Operative Notes"
                                             style="max-width: 220px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
                                             {{ s.notes|default:"Uneventful surgical course." }}
                                         </td>
-                                        <td style="white-space: nowrap;">
+                                        <td data-label="Actions" class="surgery-history-actions">
                                             <button type="button" class="btn-action-view"
                                                 onclick="viewPatientDossier('{{ s.patient_mrn }}', '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', '{{ s.surgery_type }}', '{{ s.ot_room }}', '{{ s.ot_slot }}', '{{ s.outcome }}', '{{ s.medical_history|escapejs }}', '{{ s.notes|escapejs }}')"
                                                 title="View Details">
