@@ -479,6 +479,13 @@
         </div>
     {% endif %}
 
+    {% if success %}
+        <div class="success-message">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ success }}
+        </div>
+    {% endif %}
+
 
     <form method="POST">
 
@@ -675,7 +682,7 @@
 
             <div class="password-hint">
                 <i class="bi bi-info-circle"></i>
-                Password must contain at least 8 characters.
+                Password must be at least 8 characters, include capital letters, numbers & special characters.
             </div>
 
         </div>
@@ -772,6 +779,22 @@
         }
     }
 
+    function validatePassword() { 
+        
+        const password = document.getElementById("password").value; 
+        const hasMinimumLength = password.length >= 8; 
+        const hasCapitalLetter = /[A-Z]/.test(password); 
+        const hasNumber = /[0-9]/.test(password); 
+        const hasSpecialCharacter = /[^A-Za-z0-9]/.test(password); 
+        
+        return ( 
+            hasMinimumLength && 
+            hasCapitalLetter && 
+            hasNumber && 
+            hasSpecialCharacter 
+        );
+    } 
+    
 
     window.onload = function() {
 
