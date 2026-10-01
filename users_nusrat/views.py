@@ -1,8 +1,11 @@
+import re
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import NusratProfile
+from django.contrib import messages
 
 def login_view(request):
 
@@ -46,6 +49,12 @@ def logout_view(request):
 
 
 def register_view(request):
+
+    if request.GET.get("registered") == "1": 
+
+        success = "Registration successful! Your account has been created. You can now log in." 
+        return render( request, "users_nusrat/register.html", { "success": success } )
+
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         email = request.POST.get("email", "").strip()
@@ -55,6 +64,14 @@ def register_view(request):
         assigned_counter = request.POST.get("assigned_counter", "").strip()
         shift = request.POST.get("shift", "")
         desk_extension = request.POST.get("desk_extension", "").strip()
+
+        context = { 
+            "username": username, 
+            "email": email, 
+            "assigned_counter": assigned_counter, 
+            "shift": shift, 
+            "desk_extension": desk_extension,    
+        }
 
         # Check required fields
         if not all([
@@ -109,19 +126,22 @@ def register_view(request):
                 }
             )
 
-        # Check password length
-        if len(password) < 8:
+
+        # Check for at least 8 characters, a capital letter, a number & a special character
+        if(
+            len(password) < 8
+            or not re.search(r"[A-Z]", password)
+            or not re.search(r"[0-9]", password)
+            or not re.search(r"[^A-Za-z0-9]", password)
+        ):
+            context["error"] = (
+            "Password must contain at least 8 characters, include a capital letter, a number & a special character."
+            )
+
             return render(
                 request,
                 "users_nusrat/register.html",
-                {
-                    "error": "Password must be at least 8 characters long.",
-                    "username": username,
-                    "email": email,
-                    "assigned_counter": assigned_counter,
-                    "shift": shift,
-                    "desk_extension": desk_extension,
-                }
+                context
             )
 
         # Check password confirmation
@@ -139,6 +159,7 @@ def register_view(request):
                 }
             )
 
+
         # Create Django user
         user = User.objects.create_user(
             username=username,
@@ -154,7 +175,7 @@ def register_view(request):
             desk_extension=desk_extension
         )
 
-        return redirect("/nusrat/login/?registered=1")
+        return redirect("/nusrat/register/?registered=1")
 
     return render(
         request,
