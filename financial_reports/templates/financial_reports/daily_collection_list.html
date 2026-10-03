@@ -2,18 +2,28 @@
 
 {% block content %}
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
+
+
+    <!-- =========================================
+         Messages
+         ========================================= -->
 
     <div class="container">
 
-    {% include 'users_ruhul/message.html' %}
+        {% include 'users_ruhul/message.html' %}
 
-</div>
+    </div>
 
-    <!-- Page Header -->
+
+    <!-- =========================================
+         Page Header
+         ========================================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
+
             <h2 class="fw-bold mb-1">
                 Daily Collections
             </h2>
@@ -21,49 +31,280 @@
             <p class="text-muted mb-0">
                 Manage daily hospital counter collections
             </p>
+
+            <small class="text-muted">
+                Role:
+                <strong>{{ role }}</strong>
+            </small>
+
         </div>
 
-        <a href="{% url 'daily_collection_create' %}"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Add Collection
-        </a>
+
+        <!-- Add Collection -->
+
+        {% if role == 'Cashier' or role == 'Pharmacy Cashier' or role == 'Accounts Supervisor' %}
+
+            <a href="{% url 'daily_collection_create' %}"
+               class="btn btn-primary">
+
+                <i class="bi bi-plus-circle"></i>
+                Add Collection
+
+            </a>
+
+        {% endif %}
 
     </div>
 
 
-    <!-- Collection Table Card -->
-    <div class="card shadow-sm border-0">
 
-        <div class="card-header bg-primary text-white">
+    <!-- =========================================
+         Search / Filter Card
+         ========================================= -->
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-header bg-light">
+
             <h5 class="mb-0">
-                Daily Collection Records
+
+                <i class="bi bi-search"></i>
+                Search Daily Collections
+
             </h5>
+
         </div>
+
 
         <div class="card-body">
 
+            <form method="GET">
+
+                <div class="row g-3 align-items-end">
+
+
+                    <!-- =================================
+                         Date
+                         ================================= -->
+
+                    <div class="col-md-2">
+
+                        <label class="form-label fw-semibold">
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ search_date }}"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         Hospital Branch
+                         ================================= -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label fw-semibold">
+                            Hospital Branch
+                        </label>
+
+                        <input
+                            type="text"
+                            name="hospital_branch"
+                            value="{{ hospital_branch }}"
+                            class="form-control"
+                            placeholder="Enter branch"
+                        >
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         Counter
+                         ================================= -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label fw-semibold">
+                            Counter
+                        </label>
+
+                        <select
+                            name="counter_name"
+                            class="form-select"
+                        >
+
+                            <option value="">
+                                All Counters
+                            </option>
+
+
+                            {% for value, label in counter_choices %}
+
+                                <option 
+                                     value="{{ value }}"
+                                    {% if counter_name == value %}
+                                        selected
+                                    {% endif %}
+>
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         Created By
+                         ================================= -->
+                    {% if request.user.ruhul_profile.finance_role == "Accounts Supervisor" %}
+                    <div class="col-md-3">
+
+                        <label class="form-label fw-semibold">
+                            Created By
+                        </label>
+
+                        <input
+                            type="text"
+                            name="created_by"
+                            value="{{ created_by }}"
+                            class="form-control"
+                            placeholder="Username"
+                        >
+
+                    </div>
+                    {% endif %}
+                </div>
+
+
+
+                <!-- =================================
+                     Search / Reset Buttons
+                     ================================= -->
+
+                <div class="mt-3">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="bi bi-search"></i>
+                        Search
+
+                    </button>
+
+
+                    {% if search_date or hospital_branch or counter_name or created_by %}
+
+                        <a
+                            href="{% url 'daily_collection_list' %}"
+                            class="btn btn-outline-secondary"
+                        >
+
+                            <i class="bi bi-x-circle"></i>
+                            Reset Search
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         Collection Table Card
+         ========================================= -->
+
+    <div class="card shadow-sm border-0">
+
+
+        <!-- Card Header -->
+
+        <div class="card-header bg-primary text-white py-3">
+
+            <h5 class="mb-0">
+
+                <i class="bi bi-cash-stack"></i>
+                Daily Collection Records
+
+            </h5>
+
+        </div>
+
+
+
+        <!-- Card Body -->
+
+        <div class="card-body">
+
+
             {% if collections %}
+
+
+            <!-- =====================================
+                 Collection Table
+                 ===================================== -->
 
             <div class="table-responsive">
 
                 <table class="table table-bordered table-hover align-middle">
 
+
+                    <!-- Table Header -->
+
                     <thead class="table-light">
 
                         <tr>
+
                             <th>#</th>
+
                             <th>Date</th>
+
                             <th>Hospital Branch</th>
+
                             <th>Counter</th>
+
                             <th>Cash</th>
+
                             <th>Card</th>
+
                             <th>MFS</th>
+
                             <th>Total</th>
+                            {% if request.user.ruhul_profile.finance_role == "Accounts Supervisor" %}
+
+                            <th>Created By</th>
+
+                            {% endif %}
+
                             <th>Action</th>
+
                         </tr>
 
                     </thead>
+
+
+
+                    <!-- Table Body -->
 
                     <tbody>
 
@@ -71,53 +312,160 @@
 
                         <tr>
 
+
+                            <!-- Serial -->
+
                             <td>
+
                                 {{ forloop.counter }}
+
                             </td>
 
+
+
+                            <!-- Date -->
+
                             <td>
+
                                 {{ collection.date|date:"d M Y" }}
+
                             </td>
 
+
+
+                            <!-- Hospital Branch -->
+
                             <td>
+
                                 {{ collection.hospital_branch }}
+
                             </td>
 
+
+
+                            <!-- Counter -->
+
                             <td>
+
                                 <span class="badge bg-info text-dark">
+
                                     {{ collection.get_counter_name_display }}
+
                                 </span>
+
                             </td>
 
+
+
+                            <!-- Cash -->
+
                             <td>
+
                                 {{ collection.cash_amount }}
+
                             </td>
 
+
+
+                            <!-- Card -->
+
                             <td>
+
                                 {{ collection.card_amount }}
+
                             </td>
 
+
+
+                            <!-- MFS -->
+
                             <td>
+
                                 {{ collection.mfs_amount }}
+
                             </td>
 
-                            <td class="fw-bold">
+
+
+                            <!-- Total -->
+
+                            <td class="fw-bold text-success">
+
                                 {{ collection.total_amount }}
+
                             </td>
+
+
+
+                            <!-- Created By -->
+{% if request.user.ruhul_profile.finance_role == "Accounts Supervisor" %}
+                            <td>
+                                
+
+                                {% if collection.created_by %}
+
+                                    <span class="badge bg-secondary">
+
+                                        <i class="bi bi-person"></i>
+
+                                        {{ collection.created_by.username }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+
+                                        N/A
+
+                                    </span>
+
+                                {% endif %}
+
+                                
+
+                            </td>
+{% endif %}
+
+
+                            <!-- =================================
+                                 Actions
+                                 ================================= -->
 
                             <td>
 
-                                <div class="btn-group" role="group">
+                                <div
+                                    class="btn-group"
+                                    role="group"
+                                >
 
-                                    <a href="{% url 'daily_collection_update' collection.pk %}"
-                                       class="btn btn-sm btn-outline-primary">
+
+                                    <!-- Edit -->
+
+                                    <a
+                                        href="{% url 'daily_collection_update' collection.pk %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+
+                                        <i class="bi bi-pencil"></i>
                                         Edit
+
                                     </a>
 
-                                    <a href="{% url 'daily_collection_delete' collection.pk %}"
-                                       class="btn btn-sm btn-outline-danger">
+
+
+                                    <!-- Delete -->
+
+                                    <a
+                                        href="{% url 'daily_collection_delete' collection.pk %}"
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
+
+                                        <i class="bi bi-trash"></i>
                                         Delete
+
                                     </a>
+
 
                                 </div>
 
@@ -133,26 +481,74 @@
 
             </div>
 
+
             {% else %}
+
+
+                <!-- =================================
+                     Empty State
+                     ================================= -->
 
                 <div class="text-center py-5">
 
-                    <h5 class="text-muted">
+                    <i class="bi bi-cash-stack fs-1 text-muted"></i>
+
+
+                    <h5 class="text-muted mt-3">
+
                         No collection records found.
+
                     </h5>
 
-                    <p class="text-muted">
-                        Add your first daily collection record.
-                    </p>
 
-                    <a href="{% url 'daily_collection_create' %}"
-                       class="btn btn-primary">
-                        Add Collection
-                    </a>
+                    {% if search_date or hospital_branch or counter_name or created_by %}
+
+                        <p class="text-muted">
+
+                            No records match your search criteria.
+
+                        </p>
+
+
+                        <a
+                            href="{% url 'daily_collection_list' %}"
+                            class="btn btn-outline-secondary"
+                        >
+
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            Clear Search
+
+                        </a>
+
+                    {% else %}
+
+                        <p class="text-muted">
+
+                            Add your first daily collection record.
+
+                        </p>
+
+
+                        {% if role == 'Cashier' or role == 'Pharmacy Cashier' or role == 'Accounts Supervisor' %}
+
+                            <a
+                                href="{% url 'daily_collection_create' %}"
+                                class="btn btn-primary"
+                            >
+
+                                <i class="bi bi-plus-circle"></i>
+                                Add Collection
+
+                            </a>
+
+                        {% endif %}
+
+                    {% endif %}
 
                 </div>
 
             {% endif %}
+
 
         </div>
 

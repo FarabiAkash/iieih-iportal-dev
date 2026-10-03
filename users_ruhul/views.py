@@ -2,10 +2,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
-from .models import *
-
-from .forms import RegistrationForm, LoginForm ,ProfileUpdateForm
+from django.contrib.auth.models import User
+from .models import RuhulProfile
+from .forms import (
+    RegistrationForm,
+    LoginForm,
+    ProfileUpdateForm,
+    TestPasswordResetForm,
+    TestSetPasswordForm,
+)
 
 
 def registration_view(request):
@@ -74,7 +79,7 @@ def login_view(request):
     )
 
 
-@login_required
+@login_required(login_url='ruhul_login')
 def logout_view(request):
 
     logout(request)
@@ -87,12 +92,7 @@ def logout_view(request):
     return redirect('ruhul_login')
 
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import RuhulProfile
-
-
-@login_required
+@login_required(login_url='ruhul_login')
 def profile_view(request):
 
     user = request.user
@@ -112,7 +112,7 @@ def profile_view(request):
         context
     )
 
-@login_required
+@login_required(login_url='ruhul_login')
 def profile_update_view(request):
 
     user = request.user
@@ -181,4 +181,169 @@ def profile_update_view(request):
         request,
         'users_ruhul/profile_Update_form.html',
         context
+    )
+
+
+# =========================================================
+# TEST PASSWORD RESET
+# =========================================================
+
+def test_password_reset_view(request):
+
+    if request.method == 'POST':
+
+        form = TestPasswordResetForm(request.POST)
+
+        if form.is_valid():
+
+            email = form.cleaned_data['email']
+
+            # Find registered user by email
+            user = User.objects.filter(
+                email__iexact=email
+            ).first()
+
+            request.session['password_reset_email'] = email
+
+            if user:
+
+                request.session['password_reset_user_id'] = user.id
+
+                request.session['password_reset_valid'] = True
+
+            else:
+
+                request.session['password_reset_user_id'] = None
+
+                request.session['password_reset_valid'] = False
+
+            return redirect('password_reset_done')
+
+    else:
+
+        form = TestPasswordResetForm()
+
+    return render(
+        request,
+        'users_ruhul/password_reset_form.html',
+        {
+            'form': form,
+        }
+    )
+
+
+# =========================================================
+# PASSWORD RESET DONE
+# =========================================================
+
+def test_password_reset_done_view(request):
+
+    return render(
+        request,
+        'users_ruhul/password_reset_done.html'
+    )
+
+
+# =========================================================
+# PASSWORD RESET CONFIRM
+# =========================================================
+
+def test_password_reset_confirm_view(request):
+
+    user_id = request.session.get(
+        'password_reset_user_id'
+    )
+
+    valid_reset = request.session.get(
+        'password_reset_valid',
+        False
+    )
+
+    # No valid registered user
+    if not valid_reset or not user_id:
+
+        return render(
+            request,
+            'users_ruhul/password_reset_confirm.html',
+            {
+                'validlink': False,
+            }
+        )
+
+    try:
+
+        user = User.objects.get(
+            id=user_id
+        )
+
+    except User.DoesNotExist:
+
+        request.session.flush()
+
+        return render(
+            request,
+            'users_ruhul/password_reset_confirm.html',
+            {
+                'validlink': False,
+            }
+        )
+
+
+    if request.method == 'POST':
+
+        form = TestSetPasswordForm(
+            user=user,
+            data=request.POST
+        )
+
+        if form.is_valid():
+
+            form.save()
+
+            # Clear reset session
+            request.session.pop(
+                'password_reset_email',
+                None
+            )
+
+            request.session.pop(
+                'password_reset_user_id',
+                None
+            )
+
+            request.session.pop(
+                'password_reset_valid',
+                None
+            )
+
+            return redirect(
+                'password_reset_complete'
+            )
+
+    else:
+
+        form = TestSetPasswordForm(
+            user=user
+        )
+
+
+    return render(
+        request,
+        'users_ruhul/password_reset_confirm.html',
+        {
+            'form': form,
+            'validlink': True,
+        }
+    )
+
+
+# =========================================================
+# PASSWORD RESET COMPLETE
+# =========================================================
+
+def test_password_reset_complete_view(request):
+
+    return render(
+        request,
+        'users_ruhul/password_reset_complete.html'
     )

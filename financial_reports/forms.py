@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 
 from .models import (
     DailyCollection,
@@ -24,8 +25,6 @@ class DailyCollectionForm(forms.ModelForm):
             'card_amount',
             'mfs_amount',
         ]
-
-        exclude=['total_amount']
 
         widgets = {
 
@@ -76,14 +75,6 @@ class DailyCollectionForm(forms.ModelForm):
                 }
             ),
 
-            # 'total_amount': forms.NumberInput(
-            #     attrs={
-            #         'class': 'form-control',
-            #         'placeholder': 'Enter total amount',
-            #         'step': '0.01',
-            #         'min': '0'
-            #     }
-            # ),
         }
 
         labels = {
@@ -102,6 +93,25 @@ class DailyCollectionForm(forms.ModelForm):
 
         }
 
+    # =====================================================
+    # Initialize Form
+    # =====================================================
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        # Add / Create
+        if not self.instance.pk:
+
+            self.fields['date'].initial = timezone.localdate()
+
+            self.fields['date'].disabled = True
+
+        # Edit / Update
+        else:
+
+            self.fields['date'].disabled = False
 
 # =========================================================
 # Concession Record Form
@@ -119,11 +129,7 @@ class ConcessionRecordForm(forms.ModelForm):
             'concession_type',
             'bill_total',
             'discount_amount',
-            'approved_by',
-            
         ]
-
-        exclude=['payable_amount']
 
         widgets = {
 
@@ -137,7 +143,7 @@ class ConcessionRecordForm(forms.ModelForm):
             'patient_mrn': forms.TextInput(
                 attrs={
                     'class': 'form-control',
-                    'placeholder': 'Enter patient MRN'
+                    'placeholder': 'Enter patient MRN number'
                 }
             ),
 
@@ -165,12 +171,6 @@ class ConcessionRecordForm(forms.ModelForm):
                 }
             ),
 
-            'approved_by': forms.TextInput(
-                attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Enter approver name'
-                }
-            ),
         }
 
         labels = {
@@ -185,5 +185,26 @@ class ConcessionRecordForm(forms.ModelForm):
 
             'discount_amount': 'Discount Amount',
 
-            'approved_by': 'Approved By',
         }
+
+    # =====================================================
+    # Patient MRN Validation
+    # =====================================================
+
+    def clean_patient_mrn(self):
+
+        mrn = self.cleaned_data['patient_mrn'].strip()
+
+        # Remove MRN- if user already entered it
+        if mrn.upper().startswith('MRN-'):
+            mrn = mrn[4:].strip()
+
+        # Only numbers are allowed
+        if not mrn.isdigit():
+
+            raise forms.ValidationError(
+                'Patient MRN must contain numbers only.'
+            )
+
+        # Automatically add MRN-
+        return f'MRN-{mrn}'

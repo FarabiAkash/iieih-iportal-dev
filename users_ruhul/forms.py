@@ -1,9 +1,17 @@
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import (
+    UserCreationForm,
+    AuthenticationForm,
+    SetPasswordForm,
+)
 
 from .models import RuhulProfile
 
+
+# =========================================================
+# REGISTRATION FORM
+# =========================================================
 
 class RegistrationForm(UserCreationForm):
 
@@ -40,19 +48,16 @@ class RegistrationForm(UserCreationForm):
         if not password:
             return password
 
-        # Minimum 6 characters
         if len(password) < 6:
             raise forms.ValidationError(
                 'Password must be at least 6 characters long.'
             )
 
-        # First character must be capital
         if not password[0].isupper():
             raise forms.ValidationError(
                 'First character of password must be a capital letter.'
             )
 
-        # At least one special character
         special_characters = "!@#$%^&*()_+-=[]{}|;:,.<>?/"
 
         if not any(
@@ -66,13 +71,17 @@ class RegistrationForm(UserCreationForm):
         return password
 
 
+# =========================================================
+# LOGIN FORM
+# =========================================================
+
 class LoginForm(AuthenticationForm):
     pass
 
 
-from django import forms
-from .models import RuhulProfile
-
+# =========================================================
+# PROFILE UPDATE FORM
+# =========================================================
 
 class ProfileUpdateForm(forms.ModelForm):
 
@@ -100,7 +109,6 @@ class ProfileUpdateForm(forms.ModelForm):
     )
 
     class Meta:
-
         model = RuhulProfile
 
         fields = [
@@ -113,6 +121,19 @@ class ProfileUpdateForm(forms.ModelForm):
             'discount_approval_limit',
         ]
 
+        widgets = {
+            'discount_approval_limit': forms.NumberInput(
+                            attrs={
+                                'class': 'form-control',
+                                'placeholder': 'Enter discount approval limit',
+                                'step': '0.01',
+                                'min': '0'
+                            }
+                        ),
+
+
+        }
+
     def __init__(self, *args, **kwargs):
 
         user = kwargs.pop('user', None)
@@ -120,11 +141,67 @@ class ProfileUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if user:
-
             self.fields['first_name'].initial = user.first_name
-
             self.fields['last_name'].initial = user.last_name
-
             self.fields['username'].initial = user.username
-
             self.fields['email'].initial = user.email
+
+    # Required fields shows * 
+        for field in self.fields.values():
+            if field.required:
+                field.label = f"{field.label} *"
+
+
+# =========================================================
+# TEST PASSWORD RESET FORM
+# =========================================================
+
+class TestPasswordResetForm(forms.Form):
+
+    email = forms.EmailField(
+        required=True,
+        label="Email Address",
+        widget=forms.EmailInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter any email address',
+                'autocomplete': 'email',
+            }
+        )
+    )
+
+
+# =========================================================
+# TEST SET PASSWORD FORM
+# =========================================================
+
+class TestSetPasswordForm(SetPasswordForm):
+
+    def clean_new_password1(self):
+
+        password = self.cleaned_data.get('new_password1')
+
+        if not password:
+            return password
+
+        if len(password) < 6:
+            raise forms.ValidationError(
+                'Password must be at least 6 characters long.'
+            )
+
+        if not password[0].isupper():
+            raise forms.ValidationError(
+                'First character of password must be a capital letter.'
+            )
+
+        special_characters = "!@#$%^&*()_+-=[]{}|;:,.<>?/"
+
+        if not any(
+            char in special_characters
+            for char in password
+        ):
+            raise forms.ValidationError(
+                'Password must contain at least one special character.'
+            )
+
+        return password

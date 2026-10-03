@@ -44,6 +44,12 @@ urlpatterns = [
     ),
 
     path(
+         'concessions/<int:pk>/approve/',
+        views.concession_approve_view,
+        name='concession_record_approve'
+    ),
+
+    path(
         'concessions/add/',
         views.concession_record_create_view,
         name='concession_record_create'

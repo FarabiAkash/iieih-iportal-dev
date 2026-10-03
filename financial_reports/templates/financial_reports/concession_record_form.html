@@ -7,8 +7,8 @@
     <!-- Messages -->
     <div class="container">
 
-    {% include 'users_ruhul/message.html' %}
-    
+        {% include 'users_ruhul/message.html' %}
+
     </div>
 
 
@@ -56,15 +56,15 @@
                 {% csrf_token %}
 
 
-                <!-- Date & Patient MRN -->
+                <!-- Date, Patient MRN & Concession Type -->
                 <div class="row">
 
                     <!-- Date -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
 
                         <label
                             for="{{ form_data.date.id_for_label }}"
-                            class="form-label fw-semibold">
+                            class="form-label fw-semibold required">
 
                             Concession Date
 
@@ -84,11 +84,11 @@
 
 
                     <!-- Patient MRN -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
 
                         <label
                             for="{{ form_data.patient_mrn.id_for_label }}"
-                            class="form-label fw-semibold">
+                            class="form-label fw-semibold required">
 
                             Patient MRN
 
@@ -106,29 +106,29 @@
 
                     </div>
 
-                </div>
 
+                    <!-- Concession Type -->
+                    <div class="col-md-4 mb-3">
 
-                <!-- Concession Type -->
-                <div class="mb-4">
+                        <label
+                            for="{{ form_data.concession_type.id_for_label }}"
+                            class="form-label fw-semibold required">
 
-                    <label
-                        for="{{ form_data.concession_type.id_for_label }}"
-                        class="form-label fw-semibold">
+                            Concession Type
 
-                        Concession Type
+                        </label>
 
-                    </label>
+                        {{ form_data.concession_type }}
 
-                    {{ form_data.concession_type }}
+                        {% if form_data.concession_type.errors %}
 
-                    {% if form_data.concession_type.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form_data.concession_type.errors }}
+                            </div>
 
-                        <div class="text-danger small mt-1">
-                            {{ form_data.concession_type.errors }}
-                        </div>
+                        {% endif %}
 
-                    {% endif %}
+                    </div>
 
                 </div>
 
@@ -148,7 +148,7 @@
 
                             <label
                                 for="{{ form_data.bill_total.id_for_label }}"
-                                class="form-label fw-semibold">
+                                class="form-label fw-semibold required">
 
                                 Bill Total
 
@@ -172,7 +172,7 @@
 
                             <label
                                 for="{{ form_data.discount_amount.id_for_label }}"
-                                class="form-label fw-semibold">
+                                class="form-label fw-semibold required">
 
                                 Discount Amount
 
@@ -191,30 +191,6 @@
                         </div>
 
                     </div>
-
-                </div>
-
-
-                <!-- Approved By -->
-                <div class="mb-4">
-
-                    <label
-                        for="{{ form_data.approved_by.id_for_label }}"
-                        class="form-label fw-semibold">
-
-                        Approved By
-
-                    </label>
-
-                    {{ form_data.approved_by }}
-
-                    {% if form_data.approved_by.errors %}
-
-                        <div class="text-danger small mt-1">
-                            {{ form_data.approved_by.errors }}
-                        </div>
-
-                    {% endif %}
 
                 </div>
 
@@ -260,5 +236,21 @@
     </div>
 
 </div>
+
+
+<!-- ================= CUSTOM CSS ================= -->
+
+<style>
+
+    /* Required field indicator */
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+</style>
+
 
 {% endblock %}
