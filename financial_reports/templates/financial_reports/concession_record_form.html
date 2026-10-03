@@ -7,8 +7,8 @@
     <!-- Messages -->
     <div class="container">
 
-    {% include 'users_ruhul/message.html' %}
-    
+        {% include 'users_ruhul/message.html' %}
+
     </div>
 
 
@@ -56,7 +56,7 @@
                 {% csrf_token %}
 
 
-                <!-- Date & Patient MRN -->
+                <!-- Date, Patient MRN & Concession Type -->
                 <div class="row">
 
                     <!-- Date -->
@@ -64,7 +64,7 @@
 
                         <label
                             for="{{ form_data.date.id_for_label }}"
-                            class="form-label fw-semibold">
+                            class="form-label fw-semibold required">
 
                             Concession Date
 
@@ -88,7 +88,7 @@
 
                         <label
                             for="{{ form_data.patient_mrn.id_for_label }}"
-                            class="form-label fw-semibold">
+                            class="form-label fw-semibold required">
 
                             Patient MRN
 
@@ -106,31 +106,31 @@
 
                     </div>
 
-                                    <!-- Concession Type -->
-                <div class="col-md-4 mb-3">
 
-                    <label
-                        for="{{ form_data.concession_type.id_for_label }}"
-                        class="form-label fw-semibold">
+                    <!-- Concession Type -->
+                    <div class="col-md-4 mb-3">
 
-                        Concession Type
+                        <label
+                            for="{{ form_data.concession_type.id_for_label }}"
+                            class="form-label fw-semibold required">
 
-                    </label>
+                            Concession Type
 
-                    {{ form_data.concession_type }}
+                        </label>
 
-                    {% if form_data.concession_type.errors %}
+                        {{ form_data.concession_type }}
 
-                        <div class="text-danger small mt-1">
-                            {{ form_data.concession_type.errors }}
-                        </div>
+                        {% if form_data.concession_type.errors %}
 
-                    {% endif %}
+                            <div class="text-danger small mt-1">
+                                {{ form_data.concession_type.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
 
                 </div>
-
-                </div>
-
 
 
                 <!-- Billing Information -->
@@ -148,7 +148,7 @@
 
                             <label
                                 for="{{ form_data.bill_total.id_for_label }}"
-                                class="form-label fw-semibold">
+                                class="form-label fw-semibold required">
 
                                 Bill Total
 
@@ -172,7 +172,7 @@
 
                             <label
                                 for="{{ form_data.discount_amount.id_for_label }}"
-                                class="form-label fw-semibold">
+                                class="form-label fw-semibold required">
 
                                 Discount Amount
 
@@ -193,7 +193,6 @@
                     </div>
 
                 </div>
-
 
 
                 <!-- Non Field Errors -->
@@ -237,5 +236,21 @@
     </div>
 
 </div>
+
+
+<!-- ================= CUSTOM CSS ================= -->
+
+<style>
+
+    /* Required field indicator */
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+</style>
+
 
 {% endblock %}

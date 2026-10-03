@@ -146,6 +146,11 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields['username'].initial = user.username
             self.fields['email'].initial = user.email
 
+    # Required fields shows * 
+        for field in self.fields.values():
+            if field.required:
+                field.label = f"{field.label} *"
+
 
 # =========================================================
 # TEST PASSWORD RESET FORM

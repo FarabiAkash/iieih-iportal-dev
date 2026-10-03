@@ -71,10 +71,8 @@ class DailyCollection(models.Model):
         auto_now=True ,null=True
     )
 
-
     def __str__(self):
         return f"{self.date} - {self.hospital_branch} - {self.counter_name}"
-
 
 class ConcessionRecord(models.Model):
 
@@ -88,30 +86,29 @@ class ConcessionRecord(models.Model):
     date = models.DateTimeField(default=timezone.now)
 
     patient_mrn = models.CharField(
-        max_length=50
+        max_length=50,null=True
     )
 
     concession_type = models.CharField(
         max_length=30,
-        choices=CONCESSION_CHOICES
+        choices=CONCESSION_CHOICES,null=True
     )
 
     bill_total = models.DecimalField(
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,null=True
     )
 
     discount_amount = models.DecimalField(
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,null=True
     )
 
     payable_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,null=True
     )
-
 
     approved_by = models.ForeignKey(
         User,
