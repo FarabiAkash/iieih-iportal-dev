@@ -21,8 +21,8 @@
     }
 
     :root {
-        --primary: #0f766e;
-        --primary-dark: #115e59;
+        --primary: #13719c;
+        --primary-dark: #136388;
         --secondary: #2563eb;
         --background: #f1f5f9;
         --surface: #ffffff;
@@ -60,7 +60,7 @@
 
 
     .header {
-        background: linear-gradient(135deg, #0f4c5c, #0f766e);
+        background: #13719c;
         color: white;
         min-height: 82px;
         padding: 16px 40px;
@@ -134,9 +134,20 @@
         margin-right: 5px;
     }
 
+    .hospital-icon {
+        flex-shrink: 0;
+    }
+
+    .hospital-icon img {
+        width: 55px;
+        height: 55px;
+        object-fit: contain;
+        display: block;
+    }
+
     .profile-btn {
         background: white;
-        color: #0f4c5c;
+        color: #13719c;
     }
 
     .logout-btn {
@@ -980,12 +991,14 @@
 <header class="header">
 
 <div class="brand">
-    <div class="brand-icon">
-        👁️
+    <div class="hospital-icon">
+        <img
+            src="{% static 'users_nusrat/images/hospital-logo.svg' %}"
+            alt="IIEIH Logo">
     </div>
 
     <div class="header-left">
-        <h1>IIEIH iPortal</h1>
+        <h1>ISPAHANI ISLAMIA EYE INSTITUTE & HOSPITAL</h1>
         <p>
             Eye Hospital Management & Reporting System
         </p>
