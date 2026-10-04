@@ -407,6 +407,8 @@
 
 
     .back-button,
+    .update-button,
+    .delete-button,
     .logout-button {
         flex: 1;
 
@@ -440,6 +442,30 @@
         transform: translateY(-1px);
     }
 
+
+    .update-button {
+        background: #0f766e;
+        color: white;
+    }
+
+    .update-button:hover {
+        background: #115e59;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .delete-button {
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #fed7aa;
+        cursor: pointer;
+    }
+
+    .delete-button:hover {
+        background: #ffedd5;
+        color: #9a3412;
+        transform: translateY(-1px);
+    }
 
     .logout-button {
         background: #fef2f2;
@@ -522,6 +548,17 @@
         color: #86efac;
     }
 
+
+    body.dark-mode .delete-button {
+        background: #431407;
+        border-color: #7c2d12;
+        color: #fdba74;
+    }
+
+    body.dark-mode .delete-button:hover {
+        background: #7c2d12;
+        color: #ffedd5;
+    }
 
     body.dark-mode .logout-button {
         background: #450a0a;
@@ -853,6 +890,26 @@
 
             </a>
 
+
+            <a
+                href="{% url 'users_nusrat:update_profile' %}"
+                class="update-button">
+
+                <i class="bi bi-pencil-square"></i>
+
+                Update Profile
+
+            </a>
+
+            <a
+                href="{% url 'users_nusrat:delete_account' %}"
+                class="delete-button">
+
+                <i class="bi bi-trash3-fill"></i>
+
+                Delete Account
+
+            </a>
 
             <a
                 href="{% url 'users_nusrat:logout' %}"
