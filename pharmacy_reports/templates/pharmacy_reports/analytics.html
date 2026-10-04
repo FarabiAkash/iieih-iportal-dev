@@ -1,171 +1,208 @@
 {% load static %}
-<!-- @ts-nocheck -->
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IIEH — Pharmacy Analytics</title>
+  <title>IIEH &mdash; Pharmacy Analytics</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
   <link rel="stylesheet" href="{% static 'pharmacy_reports/analytics.css' %}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-dark px-4 py-3">
-  <span class="navbar-brand fw-bold">
-    <i class="bi bi-hospital me-2"></i>IIEH — Eye Pharmacy & Consumables
-  </span>
-  <div class="d-flex gap-2">
-    <a href="/pharmacy/" class="btn btn-outline-light btn-sm">
-      <i class="bi bi-layout-text-window me-1"></i>Dashboard
-    </a>
-    <a href="/adnan/logout/" class="btn btn-outline-light btn-sm">
-      <i class="bi bi-box-arrow-right me-1"></i>Logout
-    </a>
-  </div>
-</nav>
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark px-4 py-3">
+    <span class="navbar-brand fw-bold">
+      <i class="bi bi-hospital me-2" aria-hidden="true"></i>IIEH &mdash; Eye Pharmacy &amp; Consumables
+    </span>
+    <div class="d-flex gap-2">
+      <a href="{% url 'pharmacy_reports:index' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-layout-text-window me-1" aria-hidden="true"></i>Dashboard
+      </a>
+      <form method="post" action="{% url 'users_adnan:logout' %}" class="d-inline m-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Logout
+        </button>
+      </form>
+    </div>
+  </nav>
 
-<div class="container-fluid px-4 py-4">
+  <main class="container-fluid px-4 py-4">
 
-  <!-- Page Header -->
-  <div class="mb-4">
-    <p class="section-label mb-1">Pharmacy Reports</p>
-    <h1 class="page-title mb-0"><i class="bi bi-bar-chart-line me-2"></i>Analytics Overview</h1>
-    <p class="text-muted small mt-1">Visual summary of medicine dispensing and surgical stock. Data updates in real time.</p>
-  </div>
+    <!-- Page Header -->
+    <div class="mb-4">
+      <p class="section-label mb-1">Pharmacy Reports</p>
+      <h1 class="page-title mb-0"><i class="bi bi-bar-chart-line me-2" aria-hidden="true"></i>Analytics Overview</h1>
+      <p class="text-muted small mt-1">Visual summary of medicine dispensing and surgical stock. Figures are loaded
+        when the page opens; refresh to update them.</p>
+    </div>
 
-  <!-- Row 1: Pie + Bar (subspecialty) -->
-  <div class="row g-4 mb-4">
+    <!-- Row 1: Pie + Bar (subspecialty) -->
+    <div class="row g-4 mb-4">
 
-    <!-- Pie — Medicine by Category -->
-    <div class="col-lg-5">
-      <div class="card shadow-sm h-100 p-4">
-        <p class="section-label mb-1">Dispensing Breakdown</p>
-        <h5 class="fw-bold mb-1">Medicines by Category</h5>
-        <p class="text-muted small mb-3">Total units dispensed across all time, grouped by medicine type.</p>
-        <div class="chart-container">
-          <canvas id="categoryPie"></canvas>
+      <!-- Pie: Medicine by Category -->
+      <div class="col-lg-5">
+        <div class="card shadow-sm h-100 p-4">
+          <p class="section-label mb-1">Dispensing Breakdown</p>
+          <h2 class="h5 fw-bold mb-1">Medicines by Category</h2>
+          <p class="text-muted small mb-3">Total units dispensed across all time, grouped by medicine type.</p>
+          {% if has_category %}
+          <div class="chart-container">
+            <canvas id="categoryPie" role="img"
+              aria-label="Pie chart of units dispensed, grouped by medicine category"></canvas>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0"><i class="bi bi-inbox me-1" aria-hidden="true"></i>No dispensing records yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Bar: Stock by Subspecialty -->
+      <div class="col-lg-7">
+        <div class="card shadow-sm h-100 p-4">
+          <p class="section-label mb-1">Surgical Stock</p>
+          <h2 class="h5 fw-bold mb-1">Current Stock by Subspecialty</h2>
+          <p class="text-muted small mb-3">Total units currently in stock per surgical subspecialty area.</p>
+          {% if has_subspecialty %}
+          <div class="chart-container">
+            <canvas id="subspecialtyBar" role="img"
+              aria-label="Bar chart of units currently in stock, per surgical subspecialty"></canvas>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0"><i class="bi bi-inbox me-1" aria-hidden="true"></i>No stock records yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Row 2: Daily Dispensing Trend -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="card shadow-sm p-4">
+          <p class="section-label mb-1">Trend</p>
+          <h2 class="h5 fw-bold mb-1">Daily Dispensing &mdash; Last {{ days }} Days</h2>
+          <p class="text-muted small mb-3">Number of medicine units dispensed each day. Days with no dispensing show as
+            zero. Helps identify high-demand periods.</p>
+          {% if has_daily %}
+          <div class="chart-container" style="height: 280px;">
+            <canvas id="dailyBar" role="img"
+              aria-label="Bar chart of medicine units dispensed each day over the last {{ days }} days"></canvas>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0"><i class="bi bi-inbox me-1" aria-hidden="true"></i>No dispensing in the last {{ days }} days.</p>
+          {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- Bar — Stock by Subspecialty -->
-    <div class="col-lg-7">
-      <div class="card shadow-sm h-100 p-4">
-        <p class="section-label mb-1">Surgical Stock</p>
-        <h5 class="fw-bold mb-1">Current Stock by Subspecialty</h5>
-        <p class="text-muted small mb-3">Total units currently in stock per surgical subspecialty area.</p>
-        <div class="chart-container">
-          <canvas id="subspecialtyBar"></canvas>
-        </div>
-      </div>
-    </div>
+  </main>
 
-  </div>
+  {{ chart_data|json_script:"chart-data" }}
 
-  <!-- Row 2: Daily Dispensing Trend -->
-  <div class="row g-4">
-    <div class="col-12">
-      <div class="card shadow-sm p-4">
-        <p class="section-label mb-1">Trend</p>
-        <h5 class="fw-bold mb-1">Daily Dispensing — Last 30 Days</h5>
-        <p class="text-muted small mb-3">Number of medicine units dispensed each day. Helps identify high-demand periods.</p>
-        <div class="chart-container" style="height: 280px;">
-          <canvas id="dailyBar"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var dataEl = document.getElementById('chart-data');
+      if (!dataEl) return;
+      var data = JSON.parse(dataEl.textContent);
+      var GRID = '#f0f0f0';
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  /* Colors match dashboard category badges in style.css */
-  const ANTI_GLAUCOMA = '#0077b6'; /* blue   — badge-cat-anti-glaucoma */
-  const ANTIBIOTIC    = '#2d6a4f'; /* green  — badge-cat-antibiotic    */
-  const STEROID       = '#f4a261'; /* orange — badge-cat-steroid       */
-  const LUBRICANT     = '#48cae4'; /* teal   — badge-cat-lubricant     */
-  const SURGICAL      = '#7b2d8b'; /* purple — badge-cat-surgical      */
-
-  // Pie — medicines by category
-  new Chart(document.getElementById('categoryPie'), {
-    type: 'pie',
-    data: {
-      labels: {{ category_labels|safe }},
-      datasets: [{
-        data: {{ category_totals|safe }},
-        backgroundColor: [ANTI_GLAUCOMA, ANTIBIOTIC, STEROID, LUBRICANT, SURGICAL],
-        borderWidth: 2,
-        borderColor: '#fff',
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} units`
+      // Pie: medicines by category (colours come from the view, one per category)
+      var pie = document.getElementById('categoryPie');
+      if (pie) {
+        new Chart(pie, {
+          type: 'pie',
+          data: {
+            labels: data.category.labels,
+            datasets: [{
+              data: data.category.totals,
+              backgroundColor: data.category.colors,
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                    var pct = total ? (ctx.parsed / total * 100).toFixed(1) : '0.0';
+                    return ' ' + ctx.label + ': ' + ctx.parsed.toLocaleString() + ' units (' + pct + '%)';
+                  }
+                }
+              }
+            }
           }
-        }
+        });
       }
-    }
-  });
 
-  // Bar — stock by subspecialty
-  new Chart(document.getElementById('subspecialtyBar'), {
-    type: 'bar',
-    data: {
-      labels: {{ subspecialty_labels|safe }},
-      datasets: [{
-        label: 'Units in Stock',
-        data: {{ subspecialty_totals|safe }},
-        backgroundColor: [ANTI_GLAUCOMA, STEROID, LUBRICANT, ANTIBIOTIC],
-        borderRadius: 8,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 12 } } },
-        x: { grid: { display: false }, ticks: { font: { size: 12 } } }
+      // Bar: stock by subspecialty
+      var sub = document.getElementById('subspecialtyBar');
+      if (sub) {
+        new Chart(sub, {
+          type: 'bar',
+          data: {
+            labels: data.subspecialty.labels,
+            datasets: [{
+              label: 'Units in Stock',
+              data: data.subspecialty.totals,
+              backgroundColor: data.subspecialty.colors,
+              borderRadius: 8,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: GRID }, ticks: { precision: 0, font: { size: 12 } } },
+              x: { grid: { display: false }, ticks: { font: { size: 12 } } }
+            }
+          }
+        });
       }
-    }
-  });
 
-  // Bar — daily dispensing
-  new Chart(document.getElementById('dailyBar'), {
-    type: 'bar',
-    data: {
-      labels: {{ daily_labels|safe }},
-      datasets: [{
-        label: 'Units Dispensed',
-        data: {{ daily_totals|safe }},
-        backgroundColor: ANTI_GLAUCOMA + 'cc',
-        borderColor: ANTI_GLAUCOMA,
-        borderWidth: 1,
-        borderRadius: 6,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 12 } } },
-        x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45 } }
+      // Bar: daily dispensing
+      var daily = document.getElementById('dailyBar');
+      if (daily) {
+        new Chart(daily, {
+          type: 'bar',
+          data: {
+            labels: data.daily.labels,
+            datasets: [{
+              label: 'Units Dispensed',
+              data: data.daily.totals,
+              backgroundColor: '#0077b6cc',
+              borderColor: '#0077b6',
+              borderWidth: 1,
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: GRID }, ticks: { precision: 0, font: { size: 12 } } },
+              x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45 } }
+            }
+          }
+        });
       }
-    }
-  });
-</script>
+    })();
+  </script>
 </body>
+
 </html>
