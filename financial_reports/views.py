@@ -2,6 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from datetime import date, timedelta
+from decimal import Decimal
+from django.db.models import Sum, Count
+from django.utils import timezone
 
 from .models import (
     DailyCollection,
@@ -38,14 +42,220 @@ def get_user_role(request):
 # FINANCIAL DASHBOARD
 # =========================================================
 
+# =========================================================
+# FINANCIAL DASHBOARD
+# Developer: Ruhul
+# App: financial_reports
+# =========================================================
+
 @login_required(login_url='ruhul_login')
 def financial_dashboard_view(request):
 
     role = get_user_role(request)
 
+    # -----------------------------------------------------
+    # Date Filter: Default Last 30 Days
+    # -----------------------------------------------------
+
+    today = timezone.localdate()
+    default_start = today - timedelta(days=29)
+
+    try:
+        start_date = date.fromisoformat(
+            request.GET.get('start_date', '')
+        )
+    except (ValueError, TypeError):
+        start_date = default_start
+
+    try:
+        end_date = date.fromisoformat(
+            request.GET.get('end_date', '')
+        )
+    except (ValueError, TypeError):
+        end_date = today
+
+    # Invalid range হলে default range ব্যবহার হবে
+    if start_date > end_date:
+        start_date = default_start
+        end_date = today
+
+    # -----------------------------------------------------
+    # Role-based Collection Access
+    # -----------------------------------------------------
+
+    if role == 'Accounts Supervisor':
+        collections = DailyCollection.objects.all()
+
+    elif role in ['Cashier', 'Pharmacy Cashier']:
+        collections = DailyCollection.objects.filter(
+            created_by=request.user
+        )
+
+    else:
+        collections = DailyCollection.objects.none()
+
+    # -----------------------------------------------------
+    # Role-based Concession Access
+    # -----------------------------------------------------
+
+    if role == 'Accounts Supervisor':
+        concessions = ConcessionRecord.objects.all()
+
+    elif role == 'Zakat Relief Officer':
+        concessions = ConcessionRecord.objects.filter(
+            created_by=request.user
+        )
+
+    else:
+        concessions = ConcessionRecord.objects.none()
+
+    # -----------------------------------------------------
+    # Apply Date Filters
+    # -----------------------------------------------------
+
+    collections = collections.filter(
+        date__range=(start_date, end_date)
+    )
+
+    concessions = concessions.filter(
+        date__range=(start_date, end_date)
+    )
+
+    # -----------------------------------------------------
+    # Summary Cards
+    # -----------------------------------------------------
+
+    collection_summary = collections.aggregate(
+        total=Sum('total_amount'),
+        cash=Sum('cash_amount'),
+        card=Sum('card_amount'),
+        mfs=Sum('mfs_amount'),
+        count=Count('id'),
+    )
+
+    concession_summary = concessions.aggregate(
+        total_discount=Sum('discount_amount'),
+        total_bill=Sum('bill_total'),
+        total_payable=Sum('payable_amount'),
+        count=Count('id'),
+    )
+
+    zero = Decimal('0.00')
+
+    total_collection = (
+        collection_summary['total'] or zero
+    )
+
+    total_cash = collection_summary['cash'] or zero
+    total_card = collection_summary['card'] or zero
+    total_mfs = collection_summary['mfs'] or zero
+
+    total_concession = (
+        concession_summary['total_discount'] or zero
+    )
+
+    # -----------------------------------------------------
+    # Daily Collection Line Chart
+    # -----------------------------------------------------
+
+    daily_rows = (
+        collections
+        .values('date')
+        .annotate(total=Sum('total_amount'))
+        .order_by('date')
+    )
+
+    daily_totals = {
+        row['date']: float(row['total'] or zero)
+        for row in daily_rows
+    }
+
+    chart_labels = []
+    chart_values = []
+
+    current_date = start_date
+
+    while current_date <= end_date:
+
+        chart_labels.append(
+            current_date.strftime('%d %b')
+        )
+
+        chart_values.append(
+            daily_totals.get(current_date, 0)
+        )
+
+        current_date += timedelta(days=1)
+
+    # -----------------------------------------------------
+    # Counter-wise Collection
+    # -----------------------------------------------------
+
+    counter_rows = (
+        collections
+        .values('counter_name')
+        .annotate(total=Sum('total_amount'))
+        .order_by('counter_name')
+    )
+
+    counter_labels = [
+        row['counter_name']
+        for row in counter_rows
+    ]
+
+    counter_values = [
+        float(row['total'] or zero)
+        for row in counter_rows
+    ]
+
+    # -----------------------------------------------------
+    # Recent Collections
+    # -----------------------------------------------------
+
+    recent_collections = (
+        collections
+        .select_related('created_by')
+        .order_by('-date', '-created_at')[:8]
+    )
+
+    # -----------------------------------------------------
+    # Context
+    # -----------------------------------------------------
+
     context = {
-        'role': role,
         'page_title': 'Financial Dashboard',
+        'role': role,
+
+        'start_date': start_date.isoformat(),
+        'end_date': end_date.isoformat(),
+
+        'total_collection': total_collection,
+        'total_cash': total_cash,
+        'total_card': total_card,
+        'total_mfs': total_mfs,
+
+        'total_concession': total_concession,
+        'total_bill': (
+            concession_summary['total_bill'] or zero
+        ),
+        'total_payable': (
+            concession_summary['total_payable'] or zero
+        ),
+
+        'collection_count': (
+            collection_summary['count'] or 0
+        ),
+        'concession_count': (
+            concession_summary['count'] or 0
+        ),
+
+        'chart_labels': chart_labels,
+        'chart_values': chart_values,
+
+        'counter_labels': counter_labels,
+        'counter_values': counter_values,
+
+        'recent_collections': recent_collections,
     }
 
     return render(
