@@ -13,323 +13,175 @@
 
 <!-- ================= PROFILE PAGE ================= -->
 
-<div class="container py-5">
+<div class="container py-4 py-md-5">
 
     <div class="row justify-content-center">
 
-        <div class="col-12 col-md-10 col-lg-8">
+        <div class="col-12 col-xl-9">
+
+            <!-- ================= MAIN CARD ================= -->
 
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
 
-                <!-- ================= PROFILE HEADER ================= -->
+                <!-- ================= COVER ================= -->
 
-                <div class="card-header bg-primary text-white text-center py-4">
+                <div class="position-relative bg-primary"
+                     style="height: 180px; overflow: hidden;">
 
-                    <div
-                        class="bg-white text-primary rounded-circle
-                               d-inline-flex align-items-center
-                               justify-content-center shadow"
-                        style="width: 80px; height: 80px;"
-                    >
+                    <!-- Decorative circles -->
 
-                        <i class="bi bi-person-fill fs-1"></i>
-
+                    <div class="position-absolute rounded-circle bg-white opacity-10"
+                         style="
+                            width: 230px;
+                            height: 230px;
+                            top: -120px;
+                            right: -60px;
+                         ">
                     </div>
 
+                    <div class="position-absolute rounded-circle bg-white opacity-10"
+                         style="
+                            width: 160px;
+                            height: 160px;
+                            bottom: -100px;
+                            left: -50px;
+                         ">
+                    </div>
 
-                    <h3 class="mt-3 mb-1 fw-bold">
+                    <div class="position-absolute text-white"
+                         style="top: 30px; left: 40px;">
 
-                        {{ user_profile.get_full_name|default:user_profile.username }}
+                        <small class="text-uppercase fw-semibold"
+                               style="letter-spacing: 2px;">
 
-                    </h3>
+                            Finance & Billing Portal
 
+                        </small>
 
-                    <p class="mb-0 opacity-75">
+                        <h4 class="fw-bold mt-2 mb-0">
 
-                        Finance Profile
+                            User Profile
 
-                    </p>
+                        </h4>
+
+                    </div>
 
                 </div>
 
 
-                <!-- ================= PROFILE BODY ================= -->
+                <!-- ================= PROFILE HEADER ================= -->
 
-                <div class="card-body p-4 p-md-5">
+                <div class="card-body px-4 px-md-5 pb-4">
 
+                    <div class="row align-items-end">
 
-                    <!-- ================= PERSONAL INFORMATION ================= -->
+                        <!-- PROFILE IMAGE -->
 
-                    <div class="mb-4">
+                        <div class="col-auto">
 
-                        <h5 class="fw-bold mb-4">
+                            <div class="rounded-circle bg-white shadow-lg
+                                        d-flex align-items-center
+                                        justify-content-center"
+                                 style="
+                                    width: 115px;
+                                    height: 115px;
+                                    margin-top: -65px;
+                                    border: 5px solid white;
+                                 ">
 
-                            <i class="bi bi-person-vcard text-primary me-2"></i>
+                                <div class="rounded-circle bg-primary
+                                            bg-opacity-10
+                                            d-flex align-items-center
+                                            justify-content-center"
+                                     style="
+                                        width: 95px;
+                                        height: 95px;
+                                     ">
 
-                            Personal Information
+                                    <i class="bi bi-person-fill
+                                              text-primary"
+                                       style="font-size: 3rem;">
+                                    </i>
 
-                        </h5>
-
-
-                        <!-- First Name -->
-
-                        <div class="row align-items-center py-3 border-bottom">
-
-                            <div class="col-12 col-md-4">
-
-                                <span class="text-muted">
-
-                                    <i class="bi bi-person me-2"></i>
-
-                                    First Name
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-dark">
-
-                                    {{ user_profile.first_name|default:"Not provided" }}
-
-                                </strong>
+                                </div>
 
                             </div>
 
                         </div>
 
 
-                        <!-- Last Name -->
+                        <!-- USER NAME -->
 
-                        <div class="row align-items-center py-3 border-bottom">
+                        <div class="col mt-3 mt-md-0">
 
-                            <div class="col-12 col-md-4">
+                            <h3 class="fw-bold mb-1">
 
-                                <span class="text-muted">
+                                {{ user_profile.get_full_name|default:user_profile.username }}
 
-                                    <i class="bi bi-person me-2"></i>
+                            </h3>
 
-                                    Last Name
+                            <div class="text-muted">
 
-                                </span>
+                                <i class="bi bi-person-circle me-1"></i>
 
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-dark">
-
-                                    {{ user_profile.last_name|default:"Not provided" }}
-
-                                </strong>
+                                @{{ user_profile.username }}
 
                             </div>
 
                         </div>
 
 
-                        <!-- Username -->
+                        <!-- STATUS -->
 
-                        <div class="row align-items-center py-3 border-bottom">
+                        <div class="col-12 col-md-auto mt-3 mt-md-0">
 
-                            <div class="col-12 col-md-4">
+                            <span class="badge rounded-pill
+                                         bg-success-subtle
+                                         text-success px-3 py-2">
 
-                                <span class="text-muted">
+                                <i class="bi bi-check-circle-fill me-1"></i>
 
-                                    <i class="bi bi-person-circle me-2"></i>
+                                Active
 
-                                    Username
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-dark">
-
-                                    {{ user_profile.username }}
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- Email -->
-
-                        <div class="row align-items-center py-3 border-bottom">
-
-                            <div class="col-12 col-md-4">
-
-                                <span class="text-muted">
-
-                                    <i class="bi bi-envelope me-2"></i>
-
-                                    Email
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-dark text-break">
-
-                                    {{ user_profile.email|default:"Not provided" }}
-
-                                </strong>
-
-                            </div>
+                            </span>
 
                         </div>
 
                     </div>
 
+                </div>
+
+
+                <!-- ================= BODY ================= -->
+
+                <div class="card-body px-4 px-md-5 pt-0">
 
 
                     <!-- ================= FINANCE INFORMATION ================= -->
 
-                    <div class="mt-5">
+                    <div class="mb-5">
 
-                        <h5 class="fw-bold mb-4">
+                        <div class="d-flex align-items-center mb-3">
 
-                            <i class="bi bi-cash-stack text-primary me-2"></i>
+                            <div class="bg-primary bg-opacity-10
+                                        text-primary rounded-3 p-2 me-3">
 
-                            Finance Information
-
-                        </h5>
-
-
-                        <!-- Finance Role -->
-
-                        <div class="row align-items-center py-3 border-bottom">
-
-                            <div class="col-12 col-md-4">
-
-                                <span class="text-muted">
-
-                                    <i class="bi bi-briefcase me-2"></i>
-
-                                    Finance Role
-
-                                </span>
+                                <i class="bi bi-cash-stack fs-5"></i>
 
                             </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                {% if profile.finance_role %}
-
-                                    <span class="badge bg-primary px-3 py-2">
-
-                                        {{ profile.finance_role }}
-
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="text-muted">
-
-                                        Not assigned
-
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- Assigned Counter -->
-
-                        <div class="row align-items-center py-3 border-bottom">
-
-                            <div class="col-12 col-md-4">
-
-                                <span class="text-muted">
-
-                                    <i class="bi bi-shop me-2"></i>
-
-                                    Assigned Counter
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-dark">
-
-                                    {{ profile.assigned_counter|default:"Not assigned" }}
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- Approval Limit -->
-
-                        <div class="row align-items-center py-3">
-
-                            <div class="col-12 col-md-4">
-
-                                <span class="text-muted">
-
-                                    <i class="bi bi-cash-stack me-2"></i>
-
-                                    Approval Limit
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12 col-md-8 mt-1 mt-md-0">
-
-                                <strong class="text-success">
-
-                                    {{ profile.discount_approval_limit|default:"0" }} TK
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <!-- ================= ACCOUNT STATUS ================= -->
-
-                    <div class="alert alert-success mt-4 mb-0 rounded-3">
-
-                        <div class="d-flex align-items-start">
-
-                            <i class="bi bi-check-circle-fill fs-5 me-2"></i>
 
                             <div>
 
-                                <strong>Account Active</strong>
+                                <h5 class="fw-bold mb-0">
 
-                                <br>
+                                    Finance Information
 
-                                <small>
+                                </h5>
 
-                                    Your finance profile is active and ready to use.
+                                <small class="text-muted">
+
+                                    Assigned financial responsibilities
 
                                 </small>
 
@@ -337,38 +189,413 @@
 
                         </div>
 
+
+                        <div class="row g-3">
+
+
+                            <!-- ================= ROLE ================= -->
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="card h-100 border-0
+                                            shadow-sm rounded-4">
+
+                                    <div class="card-body p-4">
+
+                                        <div class="d-flex
+                                                    justify-content-between
+                                                    align-items-start">
+
+                                            <div>
+
+                                                <small class="text-muted
+                                                             text-uppercase fw-semibold">
+
+                                                    Finance Role
+
+                                                </small>
+
+                                                <div class="mt-3">
+
+                                                    {% if profile.finance_role %}
+
+                                                        <span class="badge
+                                                                     bg-primary
+                                                                     px-3 py-2">
+
+                                                            {{ profile.finance_role }}
+
+                                                        </span>
+
+                                                    {% else %}
+
+                                                        <span class="text-muted">
+
+                                                            Not Assigned
+
+                                                        </span>
+
+                                                    {% endif %}
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="rounded-3
+                                                        bg-primary
+                                                        bg-opacity-10
+                                                        text-primary p-2">
+
+                                                <i class="bi bi-briefcase fs-5"></i>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ================= COUNTER ================= -->
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="card h-100 border-0
+                                            shadow-sm rounded-4">
+
+                                    <div class="card-body p-4">
+
+                                        <div class="d-flex
+                                                    justify-content-between
+                                                    align-items-start">
+
+                                            <div>
+
+                                                <small class="text-muted
+                                                             text-uppercase fw-semibold">
+
+                                                    Assigned Counter
+
+                                                </small>
+
+                                                <h6 class="fw-bold mt-3 mb-0">
+
+                                                    {{ profile.assigned_counter|default:"Not Assigned" }}
+
+                                                </h6>
+
+                                            </div>
+
+
+                                            <div class="rounded-3
+                                                        bg-info
+                                                        bg-opacity-10
+                                                        text-info p-2">
+
+                                                <i class="bi bi-shop fs-5"></i>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ================= APPROVAL LIMIT ================= -->
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="card h-100 border-0
+                                            shadow-sm rounded-4">
+
+                                    <div class="card-body p-4">
+
+                                        <div class="d-flex
+                                                    justify-content-between
+                                                    align-items-start">
+
+                                            <div>
+
+                                                <small class="text-muted
+                                                             text-uppercase fw-semibold">
+
+                                                    Approval Limit
+
+                                                </small>
+
+                                                <h4 class="fw-bold
+                                                           text-success
+                                                           mt-2 mb-0">
+
+                                                    {{ profile.discount_approval_limit|default:"0" }}
+
+                                                    <small class="fs-6">
+
+                                                        TK
+
+                                                    </small>
+
+                                                </h4>
+
+                                            </div>
+
+
+                                            <div class="rounded-3
+                                                        bg-success
+                                                        bg-opacity-10
+                                                        text-success p-2">
+
+                                                <i class="bi bi-cash-coin fs-5"></i>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- ================= PERSONAL INFORMATION ================= -->
+
+                    <div class="mb-5">
+
+                        <div class="d-flex align-items-center mb-3">
+
+                            <div class="bg-primary bg-opacity-10
+                                        text-primary rounded-3 p-2 me-3">
+
+                                <i class="bi bi-person-vcard fs-5"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5 class="fw-bold mb-0">
+
+                                    Personal Information
+
+                                </h5>
+
+                                <small class="text-muted">
+
+                                    Basic account information
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+
+                            <!-- FIRST NAME -->
+
+                            <div class="col-12 col-md-6">
+
+                                <div class="border rounded-4 p-3">
+
+                                    <small class="text-muted d-block mb-1">
+
+                                        <i class="bi bi-person me-1"></i>
+
+                                        First Name
+
+                                    </small>
+
+                                    <span class="fw-semibold">
+
+                                        {{ user_profile.first_name|default:"Not provided" }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- LAST NAME -->
+
+                            <div class="col-12 col-md-6">
+
+                                <div class="border rounded-4 p-3">
+
+                                    <small class="text-muted d-block mb-1">
+
+                                        <i class="bi bi-person me-1"></i>
+
+                                        Last Name
+
+                                    </small>
+
+                                    <span class="fw-semibold">
+
+                                        {{ user_profile.last_name|default:"Not provided" }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- USERNAME -->
+
+                            <div class="col-12 col-md-6">
+
+                                <div class="border rounded-4 p-3">
+
+                                    <small class="text-muted d-block mb-1">
+
+                                        <i class="bi bi-person-circle me-1"></i>
+
+                                        Username
+
+                                    </small>
+
+                                    <span class="fw-semibold">
+
+                                        {{ user_profile.username }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- EMAIL -->
+
+                            <div class="col-12 col-md-6">
+
+                                <div class="border rounded-4 p-3">
+
+                                    <small class="text-muted d-block mb-1">
+
+                                        <i class="bi bi-envelope me-1"></i>
+
+                                        Email Address
+
+                                    </small>
+
+                                    <span class="fw-semibold text-break">
+
+                                        {{ user_profile.email|default:"Not provided" }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- ================= ACCOUNT SECURITY ================= -->
+
+                    <div class="rounded-4 p-4
+                                bg-success bg-opacity-10
+                                border border-success border-opacity-25">
+
+                        <div class="d-flex align-items-start">
+
+                            <div class="rounded-circle
+                                        bg-success text-white
+                                        d-flex align-items-center
+                                        justify-content-center me-3"
+                                 style="
+                                    width: 42px;
+                                    height: 42px;
+                                 ">
+
+                                <i class="bi bi-shield-check"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h6 class="fw-bold text-success mb-1">
+
+                                    Account Active & Secure
+
+                                </h6>
+
+                                <p class="text-muted small mb-0">
+
+                                    Your finance profile is active and
+                                    authorized to access the assigned
+                                    finance operations.
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
                     </div>
 
                 </div>
 
 
-
                 <!-- ================= FOOTER ================= -->
 
-                <div class="card-footer bg-white text-center py-4">
+                <div class="card-footer bg-light border-0
+                            px-4 px-md-5 py-4">
 
-                    <a
-                        href="{% url 'ruhul_profile_update' %}"
-                        class="btn btn-primary px-4 me-2"
-                    >
-
-                        <i class="bi bi-pencil-square me-1"></i>
-
-                        Update Profile
-
-                    </a>
+                    <div class="d-flex flex-column
+                                flex-md-row
+                                justify-content-between
+                                gap-2">
 
 
-                    <a
-                        href="{% url 'ruhul_logout' %}"
-                        class="btn btn-outline-danger px-4"
-                    >
+                        <!-- UPDATE PROFILE -->
 
-                        <i class="bi bi-box-arrow-right me-1"></i>
+                        <a
+                            href="{% url 'ruhul_profile_update' %}"
+                            class="btn btn-primary px-4 py-2 rounded-3"
+                        >
 
-                        Logout
+                            <i class="bi bi-pencil-square me-2"></i>
 
-                    </a>
+                            Update Profile
+
+                        </a>
+
+
+                        <!-- LOGOUT -->
+
+                        <a
+                            href="{% url 'ruhul_logout' %}"
+                            class="btn btn-outline-danger px-4 py-2 rounded-3"
+                        >
+
+                            <i class="bi bi-box-arrow-right me-2"></i>
+
+                            Logout
+
+                        </a>
+
+                    </div>
 
                 </div>
 

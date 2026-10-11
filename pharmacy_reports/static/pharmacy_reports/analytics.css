@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════════════
+   IIEH Eye Pharmacy — Analytics Page Stylesheet
+   Linked from: templates/pharmacy_reports/analytics.html
+═══════════════════════════════════════════════════ */
+
+/* ── Base ────────────────────────────────────────── */
+body { background-color: #eaf4fb; }
+
+/* ── Navbar ──────────────────────────────────────── */
+.navbar { background-color: #0077b6; }
+
+/* ── Cards ───────────────────────────────────────── */
+.card { border-radius: 16px; border: none; }
+
+/* ── Page Header ─────────────────────────────────── */
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0077b6;
+}
+.section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+/* ── Chart Containers ────────────────────────────── */
+.chart-container { position: relative; height: 320px; }

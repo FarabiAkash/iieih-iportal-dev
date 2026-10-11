@@ -1,0 +1,1045 @@
+{% extends 'users_ruhul/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .finance-dashboard {
+        --fd-primary: #3157d5;
+        --fd-text: #172033;
+        --fd-muted: #718096;
+        --fd-border: #e8edf5;
+        color: var(--fd-text);
+        padding: 12px 0 30px;
+    }
+
+    .finance-dashboard * {
+        box-sizing: border-box;
+    }
+
+    .fd-layout {
+        display: grid;
+        grid-template-columns: 225px minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .fd-sidebar {
+        background: #111b35;
+        color: #fff;
+        border-radius: 18px;
+        padding: 24px 15px;
+        min-height: 650px;
+    }
+
+    .fd-brand {
+        padding: 0 10px 25px;
+        border-bottom: 1px solid #34405b;
+        margin-bottom: 22px;
+    }
+
+    .fd-brand h5 {
+        font-weight: 800;
+        margin: 0 0 6px;
+        color: #fff;
+    }
+
+    .fd-brand small {
+        color: #aab7d0;
+        font-size: 11px;
+    }
+
+    .fd-nav-label {
+        color: #8492af;
+        text-transform: uppercase;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.3px;
+        padding: 0 10px;
+        margin: 20px 0 10px;
+    }
+
+    .fd-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .fd-nav a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #c4cde0;
+        text-decoration: none;
+        padding: 12px 11px;
+        border-radius: 10px;
+        font-size: 13px;
+        transition: .2s;
+    }
+
+    .fd-nav a:hover,
+    .fd-nav a.active {
+        background: #3157d5;
+        color: white;
+    }
+
+    .fd-main {
+        min-width: 0;
+    }
+
+    .fd-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .fd-header h2 {
+        font-size: 25px;
+        font-weight: 800;
+        margin: 0 0 7px;
+        letter-spacing: -.6px;
+    }
+
+    .fd-muted {
+        color: var(--fd-muted);
+        font-size: 13px;
+    }
+
+    .fd-role {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 20px;
+        background: #eaf0ff;
+        color: #3157d5;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .fd-filter {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        flex-wrap: wrap;
+        background: #fff;
+        border: 1px solid var(--fd-border);
+        padding: 15px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+    }
+
+    .fd-filter .form-control {
+        min-width: 145px;
+        border-color: #e0e6f0;
+        border-radius: 9px;
+        font-size: 13px;
+        min-height: 39px;
+    }
+
+    .fd-filter label {
+        display: block;
+        font-size: 11px;
+        color: var(--fd-muted);
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .fd-btn {
+        border: 0;
+        padding: 10px 15px;
+        border-radius: 9px;
+        background: var(--fd-primary);
+        color: #fff;
+        font-weight: 700;
+        font-size: 12px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 39px;
+    }
+
+    .fd-btn:hover {
+        color: white;
+        background: #2346bd;
+    }
+
+    .fd-btn-light {
+        color: #34415b;
+        background: #edf1f8;
+    }
+
+    .fd-btn-light:hover {
+        background: #dfe6f2;
+        color: #172033;
+    }
+
+    .fd-cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .fd-card {
+        background: #fff;
+        border: 1px solid var(--fd-border);
+        border-radius: 15px;
+        padding: 19px;
+        min-width: 0;
+        box-shadow: 0 4px 18px rgba(30, 50, 90, .025);
+    }
+
+    .fd-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 17px;
+    }
+
+    .fd-card-label {
+        font-size: 12px;
+        color: var(--fd-muted);
+        font-weight: 600;
+    }
+
+    .fd-icon {
+        width: 39px;
+        height: 39px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .fd-blue {
+        color: #3157d5;
+        background: #eaf0ff;
+    }
+
+    .fd-green {
+        color: #16845b;
+        background: #e5f8ef;
+    }
+
+    .fd-orange {
+        color: #b66a0c;
+        background: #fff2dc;
+    }
+
+    .fd-purple {
+        color: #7850c9;
+        background: #f0eaff;
+    }
+
+    .fd-value {
+        font-size: clamp(19px, 1.8vw, 25px);
+        line-height: 1.3;
+        font-weight: 800;
+        letter-spacing: -.6px;
+        overflow-wrap: anywhere;
+    }
+
+    .fd-card-foot {
+        margin-top: 8px;
+        color: var(--fd-muted);
+        font-size: 11px;
+    }
+
+    .fd-section-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .fd-panel {
+        background: #fff;
+        border: 1px solid var(--fd-border);
+        border-radius: 15px;
+        padding: 20px;
+        min-width: 0;
+        margin-bottom: 20px;
+    }
+
+    .fd-panel-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .fd-panel-heading h5 {
+        font-size: 15px;
+        font-weight: 800;
+        margin: 0 0 6px;
+    }
+
+    .fd-chart {
+        position: relative;
+        width: 100%;
+        height: 280px;
+    }
+
+    .fd-chart-doughnut {
+        height: 235px;
+        max-width: 330px;
+        margin: 0 auto;
+    }
+
+    .fd-legend {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 18px;
+    }
+
+    .fd-legend-item {
+        background: #f7f9fc;
+        border-radius: 9px;
+        padding: 10px 8px;
+        text-align: center;
+        min-width: 0;
+    }
+
+    .fd-legend-item small {
+        display: block;
+        font-size: 11px;
+        color: var(--fd-muted);
+        margin-bottom: 5px;
+    }
+
+    .fd-legend-item strong {
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .fd-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .fd-table {
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+    }
+
+    .fd-table th {
+        text-align: left;
+        font-size: 10px;
+        color: var(--fd-muted);
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        padding: 12px;
+        background: #f7f9fc;
+        border-bottom: 1px solid var(--fd-border);
+    }
+
+    .fd-table td {
+        padding: 14px 12px;
+        font-size: 12px;
+        border-bottom: 1px solid #eef1f6;
+    }
+
+    .fd-table tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .fd-amount {
+        font-weight: 800;
+        color: #16845b;
+    }
+
+    .fd-counter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .fd-counter {
+        border: 1px solid var(--fd-border);
+        background: #fbfcff;
+        border-radius: 11px;
+        padding: 14px 10px;
+        min-width: 0;
+    }
+
+    .fd-counter small {
+        display: block;
+        color: var(--fd-muted);
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+
+    .fd-counter strong {
+        display: block;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    .fd-empty {
+        text-align: center;
+        padding: 35px 15px;
+        color: var(--fd-muted);
+        font-size: 13px;
+    }
+
+    .fd-footer {
+        text-align: center;
+        font-size: 11px;
+        color: var(--fd-muted);
+        padding-top: 5px;
+    }
+
+    @media (max-width: 1200px) {
+        .fd-cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .fd-counter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 900px) {
+        .fd-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .fd-sidebar {
+            min-height: auto;
+            padding: 15px;
+        }
+
+        .fd-brand {
+            padding-bottom: 12px;
+            margin-bottom: 10px;
+        }
+
+        .fd-nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .fd-nav-label {
+            margin-top: 10px;
+        }
+
+        .fd-section-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .fd-cards {
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+        }
+
+        .fd-card {
+            padding: 13px;
+        }
+
+        .fd-card-top {
+            align-items: start;
+            flex-direction: column-reverse;
+            margin-bottom: 12px;
+        }
+
+        .fd-header h2 {
+            font-size: 21px;
+        }
+
+        .fd-counter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .fd-panel {
+            padding: 14px;
+        }
+
+        .fd-chart {
+            height: 235px;
+        }
+    }
+</style>
+
+<div class="finance-dashboard">
+    <div class="fd-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="fd-sidebar">
+
+            <div class="fd-brand">
+                <h5><i class="bi bi-hospital me-2"></i>IIEI&H Finance</h5>
+                <small>Finance & Billing Portal</small>
+            </div>
+
+            <div class="fd-nav-label">Workspace</div>
+
+            <nav class="fd-nav">
+                <a href="{% url 'financial_dashboard' %}"
+                   class="active">
+                    <i class="bi bi-grid-1x2"></i>
+                    Dashboard
+                </a>
+
+                {% if role == 'Accounts Supervisor' or role == 'Cashier' or role == 'Pharmacy Cashier' %}
+                <a href="{% url 'daily_collection_list' %}">
+                    <i class="bi bi-wallet2"></i>
+                    Daily Collections
+                </a>
+                {% endif %}
+
+                {% if role == 'Accounts Supervisor' or role == 'Zakat Relief Officer' %}
+                <a href="{% url 'concession_record_list' %}">
+                    <i class="bi bi-hand-coin"></i>
+                    Concessions
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="fd-nav-label">Quick Actions</div>
+
+            <nav class="fd-nav">
+                {% if role == 'Accounts Supervisor' or role == 'Cashier' or role == 'Pharmacy Cashier' %}
+                <a href="{% url 'daily_collection_create' %}">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Collection
+                </a>
+                {% endif %}
+
+                {% if role == 'Accounts Supervisor' or role == 'Zakat Relief Officer' %}
+                <a href="{% url 'concession_record_create' %}">
+                    <i class="bi bi-file-earmark-plus"></i>
+                    Add Concession
+                </a>
+                {% endif %}
+
+                <a href="{% url 'ruhul_profile' %}">
+                    <i class="bi bi-person-circle"></i>
+                    My Profile
+                </a>
+            </nav>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="fd-main">
+
+            <header class="fd-header">
+                <div>
+                    <h2>Financial Dashboard</h2>
+                    <div class="fd-muted">
+                        Hospital revenue and billing overview
+                    </div>
+                </div>
+
+                <div class="fd-role">
+                    <i class="bi bi-shield-check me-1"></i>
+                    {{ role|default:"Finance User" }}
+                </div>
+            </header>
+
+            <!-- DATE FILTER -->
+            <form method="get" class="fd-filter">
+
+                <div>
+                    <label for="start_date">From Date</label>
+                    <input type="date"
+                           class="form-control"
+                           id="start_date"
+                           name="start_date"
+                           value="{{ start_date }}">
+                </div>
+
+                <div>
+                    <label for="end_date">To Date</label>
+                    <input type="date"
+                           class="form-control"
+                           id="end_date"
+                           name="end_date"
+                           value="{{ end_date }}">
+                </div>
+
+                <button type="submit" class="fd-btn">
+                    <i class="bi bi-funnel"></i>
+                    Apply Filter
+                </button>
+
+                <a href="{% url 'financial_dashboard' %}"
+                   class="fd-btn fd-btn-light">
+                    Reset
+                </a>
+
+            </form>
+
+            <!-- SUMMARY CARDS -->
+            <section class="fd-cards">
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Total Collection</span>
+                        <span class="fd-icon fd-blue">
+                            <i class="bi bi-cash-stack"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_collection|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        Selected date range
+                    </div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Cash Collection</span>
+                        <span class="fd-icon fd-green">
+                            <i class="bi bi-wallet2"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_cash|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">Cash payments</div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Card Collection</span>
+                        <span class="fd-icon fd-purple">
+                            <i class="bi bi-credit-card"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_card|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">Card payments</div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">MFS Collection</span>
+                        <span class="fd-icon fd-orange">
+                            <i class="bi bi-phone"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_mfs|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">Mobile financial services</div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Total Concession</span>
+                        <span class="fd-icon fd-orange">
+                            <i class="bi bi-hand-coin"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_concession|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">
+                        Discount amount
+                    </div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Transactions</span>
+                        <span class="fd-icon fd-blue">
+                            <i class="bi bi-receipt"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        {{ collection_count }}
+                    </div>
+
+                    <div class="fd-card-foot">Collection records</div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Concession Records</span>
+                        <span class="fd-icon fd-purple">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        {{ concession_count }}
+                    </div>
+
+                    <div class="fd-card-foot">Discount records</div>
+                </article>
+
+                <article class="fd-card">
+                    <div class="fd-card-top">
+                        <span class="fd-card-label">Net Payable</span>
+                        <span class="fd-icon fd-green">
+                            <i class="bi bi-calculator"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-value">
+                        ৳ {{ total_payable|floatformat:2 }}
+                    </div>
+
+                    <div class="fd-card-foot">
+                        Concession records only
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- CHARTS -->
+            <section class="fd-section-grid">
+
+                <article class="fd-panel">
+                    <div class="fd-panel-heading">
+                        <div>
+                            <h5>Collection Overview</h5>
+                            <div class="fd-muted">
+                                Daily collection trend
+                            </div>
+                        </div>
+
+                        <span class="fd-icon fd-blue">
+                            <i class="bi bi-graph-up"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-chart">
+                        <canvas id="collectionChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="fd-panel">
+                    <div class="fd-panel-heading">
+                        <div>
+                            <h5>Payment Breakdown</h5>
+                            <div class="fd-muted">
+                                Cash, Card and MFS
+                            </div>
+                        </div>
+
+                        <span class="fd-icon fd-purple">
+                            <i class="bi bi-pie-chart"></i>
+                        </span>
+                    </div>
+
+                    <div class="fd-chart fd-chart-doughnut">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+
+                    <div class="fd-legend">
+                        <div class="fd-legend-item">
+                            <small>Cash</small>
+                            <strong>৳ {{ total_cash|floatformat:2 }}</strong>
+                        </div>
+
+                        <div class="fd-legend-item">
+                            <small>Card</small>
+                            <strong>৳ {{ total_card|floatformat:2 }}</strong>
+                        </div>
+
+                        <div class="fd-legend-item">
+                            <small>MFS</small>
+                            <strong>৳ {{ total_mfs|floatformat:2 }}</strong>
+                        </div>
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- COUNTER-WISE COLLECTION -->
+            <section class="fd-panel">
+
+                <div class="fd-panel-heading">
+                    <div>
+                        <h5>Counter-wise Collection</h5>
+                        <div class="fd-muted">
+                            Collection totals by counter
+                        </div>
+                    </div>
+
+                    <i class="bi bi-hospital fd-muted fs-5"></i>
+                </div>
+
+                <div class="fd-counter-grid">
+                    {% for counter in counter_labels %}
+                    <div class="fd-counter">
+                        <small>{{ counter }}</small>
+                        <strong>
+                            ৳ {{ counter_values|default_if_none:"0"|join:"" }}
+                        </strong>
+                    </div>
+                    {% empty %}
+                    <div class="fd-empty">
+                        No counter collection found for this period.
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </section>
+
+            <!-- RECENT COLLECTIONS -->
+            <section class="fd-panel">
+
+                <div class="fd-panel-heading">
+                    <div>
+                        <h5>Recent Collections</h5>
+                        <div class="fd-muted">
+                            Latest collection entries in the selected period
+                        </div>
+                    </div>
+
+                    {% if role == 'Accounts Supervisor' or role == 'Cashier' or role == 'Pharmacy Cashier' %}
+                    <a href="{% url 'daily_collection_list' %}"
+                       class="fd-btn fd-btn-light">
+                        View All
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="fd-table-wrap">
+                    <table class="fd-table">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Branch</th>
+                                <th>Counter</th>
+                                <th>Cash</th>
+                                <th>Card</th>
+                                <th>MFS</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in recent_collections %}
+                            <tr>
+                                <td>{{ item.date|date:"d M Y" }}</td>
+                                <td>{{ item.hospital_branch|default:"—" }}</td>
+                                <td>{{ item.get_counter_name_display|default:item.counter_name }}</td>
+                                <td>৳ {{ item.cash_amount|floatformat:2 }}</td>
+                                <td>৳ {{ item.card_amount|floatformat:2 }}</td>
+                                <td>৳ {{ item.mfs_amount|floatformat:2 }}</td>
+                                <td class="fd-amount">
+                                    ৳ {{ item.total_amount|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="fd-empty">
+                                    No collection records found for the selected dates.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </section>
+
+            <div class="fd-footer">
+                IIEI&H Finance & Billing Portal
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap Icons: include only if not already loaded by base.html -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{ chart_labels|json_script:"collection-labels" }}
+{{ chart_values|json_script:"collection-values" }}
+{{ counter_labels|json_script:"counter-labels" }}
+{{ counter_values|json_script:"counter-values" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const labels = JSON.parse(
+        document.getElementById("collection-labels").textContent
+    );
+
+    const values = JSON.parse(
+        document.getElementById("collection-values").textContent
+    );
+
+    const counterLabels = JSON.parse(
+        document.getElementById("counter-labels").textContent
+    );
+
+    const counterValues = JSON.parse(
+        document.getElementById("counter-values").textContent
+    );
+
+    const currency = (value) =>
+        "৳ " + Number(value).toLocaleString("en-BD", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    // Daily Collection Line Chart
+    const collectionCanvas = document.getElementById("collectionChart");
+
+    if (collectionCanvas && typeof Chart !== "undefined") {
+        new Chart(collectionCanvas, {
+            type: "line",
+
+            data: {
+                labels: labels,
+
+                datasets: [{
+                    label: "Collection",
+                    data: values,
+
+                    borderColor: "#3157d5",
+                    backgroundColor: "rgba(49, 87, 213, 0.12)",
+
+                    fill: true,
+                    tension: 0.35,
+
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                interaction: {
+                    intersect: false,
+                    mode: "index"
+                },
+
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+                        callbacks: {
+                            label: (context) =>
+                                currency(context.parsed.y)
+                        }
+                    }
+                },
+
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+
+                        ticks: {
+                            maxTicksLimit: 8
+                        }
+                    },
+
+                    y: {
+                        beginAtZero: true,
+
+                        ticks: {
+                            callback: (value) =>
+                                "৳ " + Number(value).toLocaleString("en-BD")
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Cash / Card / MFS Doughnut Chart
+    const paymentCanvas = document.getElementById("paymentChart");
+
+    if (paymentCanvas && typeof Chart !== "undefined") {
+        new Chart(paymentCanvas, {
+            type: "doughnut",
+
+            data: {
+                labels: ["Cash", "Card", "MFS"],
+
+                datasets: [{
+                    data: [
+                        Number("{{ total_cash|default_if_none:'0' }}"),
+                        Number("{{ total_card|default_if_none:'0' }}"),
+                        Number("{{ total_mfs|default_if_none:'0' }}")
+                    ],
+
+                    backgroundColor: [
+                        "#3157d5",
+                        "#26a875",
+                        "#f0a53b"
+                    ],
+
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "70%",
+
+                plugins: {
+                    legend: {
+                        position: "bottom",
+
+                        labels: {
+                            usePointStyle: true,
+                            padding: 18
+                        }
+                    },
+
+                    tooltip: {
+                        callbacks: {
+                            label: (context) =>
+                                context.label + ": " +
+                                currency(context.parsed)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+</script>
+
+{% endblock %}

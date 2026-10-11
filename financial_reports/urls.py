@@ -4,6 +4,13 @@ from . import views
 
 urlpatterns = [
 
+    # Dashboard
+    path(
+        '',
+        views.financial_dashboard_view,
+        name='financial_dashboard'
+    ),
+
     # FINANCE HOME
     path(
         '',
@@ -41,6 +48,12 @@ urlpatterns = [
         'concessions/',
         views.concession_record_list_view,
         name='concession_record_list'
+    ),
+
+    path(
+         'concessions/<int:pk>/approve/',
+        views.concession_approve_view,
+        name='concession_record_approve'
     ),
 
     path(

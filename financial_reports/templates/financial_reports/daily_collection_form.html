@@ -1,4 +1,4 @@
-{% extends 'users_ruhul//base.html' %}
+{% extends 'users_ruhul/base.html' %}
 
 {% block content %}
 
@@ -7,9 +7,9 @@
     <!-- Messages -->
     <div class="container">
 
-    {% include 'users_ruhul/message.html' %}
+        {% include 'users_ruhul/message.html' %}
 
-     </div>
+    </div>
 
 
     <!-- Page Header -->
@@ -27,7 +27,9 @@
 
         <a href="{% url 'daily_collection_list' %}"
            class="btn btn-outline-secondary">
+
             Back to Collections
+
         </a>
 
     </div>
@@ -52,13 +54,15 @@
                 {% csrf_token %}
 
 
-                <!-- Date & Branch -->
+                <!-- Date, Branch & Counter -->
                 <div class="row">
 
-                    <div class="col-md-6 mb-3">
+                    <!-- Collection Date -->
+                    <div class="col-md-4 mb-3">
 
-                        <label for="{{ form_data.date.id_for_label }}"
-                               class="form-label fw-semibold">
+                        <label
+                            for="{{ form_data.date.id_for_label }}"
+                            class="form-label fw-semibold required">
 
                             Collection Date
 
@@ -67,18 +71,22 @@
                         {{ form_data.date }}
 
                         {% if form_data.date.errors %}
+
                             <div class="text-danger small mt-1">
                                 {{ form_data.date.errors }}
                             </div>
+
                         {% endif %}
 
                     </div>
 
 
-                    <div class="col-md-6 mb-3">
+                    <!-- Hospital Branch -->
+                    <div class="col-md-4 mb-3">
 
-                        <label for="{{ form_data.hospital_branch.id_for_label }}"
-                               class="form-label fw-semibold">
+                        <label
+                            for="{{ form_data.hospital_branch.id_for_label }}"
+                            class="form-label fw-semibold required">
 
                             Hospital Branch
 
@@ -87,33 +95,38 @@
                         {{ form_data.hospital_branch }}
 
                         {% if form_data.hospital_branch.errors %}
+
                             <div class="text-danger small mt-1">
                                 {{ form_data.hospital_branch.errors }}
                             </div>
+
                         {% endif %}
 
                     </div>
 
-                </div>
 
+                    <!-- Counter -->
+                    <div class="col-md-4 mb-3">
 
-                <!-- Counter -->
-                <div class="mb-4">
+                        <label
+                            for="{{ form_data.counter_name.id_for_label }}"
+                            class="form-label fw-semibold required">
 
-                    <label for="{{ form_data.counter_name.id_for_label }}"
-                           class="form-label fw-semibold">
+                            Counter Name
 
-                        Counter Name
+                        </label>
 
-                    </label>
+                        {{ form_data.counter_name }}
 
-                    {{ form_data.counter_name }}
+                        {% if form_data.counter_name.errors %}
 
-                    {% if form_data.counter_name.errors %}
-                        <div class="text-danger small mt-1">
-                            {{ form_data.counter_name.errors }}
-                        </div>
-                    {% endif %}
+                            <div class="text-danger small mt-1">
+                                {{ form_data.counter_name.errors }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
 
                 </div>
 
@@ -125,13 +138,15 @@
                         Payment Collection
                     </h5>
 
+
                     <div class="row">
 
                         <!-- Cash -->
                         <div class="col-md-4 mb-3">
 
-                            <label for="{{ form_data.cash_amount.id_for_label }}"
-                                   class="form-label fw-semibold">
+                            <label
+                                for="{{ form_data.cash_amount.id_for_label }}"
+                                class="form-label fw-semibold required">
 
                                 Cash Amount
 
@@ -140,9 +155,11 @@
                             {{ form_data.cash_amount }}
 
                             {% if form_data.cash_amount.errors %}
+
                                 <div class="text-danger small mt-1">
                                     {{ form_data.cash_amount.errors }}
                                 </div>
+
                             {% endif %}
 
                         </div>
@@ -151,8 +168,9 @@
                         <!-- Card -->
                         <div class="col-md-4 mb-3">
 
-                            <label for="{{ form_data.card_amount.id_for_label }}"
-                                   class="form-label fw-semibold">
+                            <label
+                                for="{{ form_data.card_amount.id_for_label }}"
+                                class="form-label fw-semibold required">
 
                                 Card Amount
 
@@ -161,9 +179,11 @@
                             {{ form_data.card_amount }}
 
                             {% if form_data.card_amount.errors %}
+
                                 <div class="text-danger small mt-1">
                                     {{ form_data.card_amount.errors }}
                                 </div>
+
                             {% endif %}
 
                         </div>
@@ -172,8 +192,9 @@
                         <!-- MFS -->
                         <div class="col-md-4 mb-3">
 
-                            <label for="{{ form_data.mfs_amount.id_for_label }}"
-                                   class="form-label fw-semibold">
+                            <label
+                                for="{{ form_data.mfs_amount.id_for_label }}"
+                                class="form-label fw-semibold required">
 
                                 MFS Amount
 
@@ -182,9 +203,11 @@
                             {{ form_data.mfs_amount }}
 
                             {% if form_data.mfs_amount.errors %}
+
                                 <div class="text-danger small mt-1">
                                     {{ form_data.mfs_amount.errors }}
                                 </div>
+
                             {% endif %}
 
                         </div>
@@ -194,11 +217,14 @@
                 </div>
 
 
-                {% comment %} <!-- Total Amount -->
+                <!-- Total Amount -->
+                {% comment %}
+
                 <div class="mb-4">
 
-                    <label for="{{ form_data.total_amount.id_for_label }}"
-                           class="form-label fw-semibold">
+                    <label
+                        for="{{ form_data.total_amount.id_for_label }}"
+                        class="form-label fw-semibold">
 
                         Total Collection
 
@@ -207,17 +233,23 @@
                     {{ form_data.total_amount }}
 
                     <div class="form-text">
+
                         Enter the total amount collected through
                         cash, card and MFS.
+
                     </div>
 
                     {% if form_data.total_amount.errors %}
+
                         <div class="text-danger small mt-1">
                             {{ form_data.total_amount.errors }}
                         </div>
+
                     {% endif %}
 
-                </div> {% endcomment %}
+                </div>
+
+                {% endcomment %}
 
 
                 <!-- Non Field Errors -->
@@ -235,15 +267,18 @@
                 <!-- Buttons -->
                 <div class="d-flex justify-content-end gap-2">
 
-                    <a href="{% url 'daily_collection_list' %}"
-                       class="btn btn-secondary">
+                    <a
+                        href="{% url 'daily_collection_list' %}"
+                        class="btn btn-secondary">
 
                         Cancel
 
                     </a>
 
-                    <button type="submit"
-                            class="btn btn-primary">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
 
                         {{ form_btn }}
 
@@ -258,5 +293,21 @@
     </div>
 
 </div>
+
+
+<!-- ================= CUSTOM CSS ================= -->
+
+<style>
+
+    /* Required Field Indicator */
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+</style>
+
 
 {% endblock %}

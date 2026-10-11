@@ -147,9 +147,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-LOGIN_URL = '/ruhul/login/'
-LOGIN_REDIRECT_URL = '/finance/'
-LOGOUT_REDIRECT_URL = '/ruhul/login/'
+# LOGIN_URL = '/ruhul/login/'
+# LOGIN_REDIRECT_URL = '/finance/'
+# LOGOUT_REDIRECT_URL = '/ruhul/login/'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
@@ -158,8 +158,16 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# MAILERS = {
+#     'default': {
+#         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+#     },
+# }
+
+EMAIL_BACKEND = (
+    'django.core.mail.backends.console.EmailBackend'
+)
+
+DEFAULT_FROM_EMAIL = 'noreply@iieih.com'
+
+PASSWORD_RESET_TIMEOUT = 3600

@@ -8,14 +8,21 @@
 
     <div class="auth-wrapper">
 
-        <!-- ================= LEFT SIDE ================= -->
+        <!-- =====================================================
+             LEFT SIDE
+        ====================================================== -->
+
         <div class="auth-form-section">
 
             <!-- Logo -->
             <div class="auth-logo">
+
                 <div class="logo-circle">
+
                     <i class="bi bi-hospital"></i>
+
                 </div>
+
             </div>
 
 
@@ -25,7 +32,9 @@
                 {% if form_btn == 'Login' %}
 
                     <div class="user-icon">
+
                         <i class="bi bi-person-fill"></i>
+
                     </div>
 
                     <h2>Finance Login</h2>
@@ -37,7 +46,9 @@
                 {% else %}
 
                     <div class="user-icon">
+
                         <i class="bi bi-person-plus-fill"></i>
+
                     </div>
 
                     <h2>Finance Registration</h2>
@@ -52,39 +63,81 @@
 
 
             <!-- Messages -->
+
             {% include 'users_ruhul/message.html' %}
 
 
-            <!-- Form -->
-            <form method="POST" action="" class="auth-form">
+            <!-- =================================================
+                 FORM
+            ================================================== -->
+
+            <form
+                method="POST"
+                action=""
+                class="auth-form"
+            >
 
                 {% csrf_token %}
 
+
+                <!-- Crispy Form -->
+
                 {{ form_data|crispy }}
+
+
+                <!-- Submit Button -->
 
                 <button
                     type="submit"
                     class="btn auth-submit-btn w-100"
                 >
+
                     {% if form_btn == 'Login' %}
+
                         <i class="bi bi-box-arrow-in-right me-2"></i>
+
                     {% else %}
+
                         <i class="bi bi-person-plus me-2"></i>
+
                     {% endif %}
 
                     {{ form_btn }}
+
                 </button>
 
             </form>
 
 
-            <!-- Login / Registration Link -->
+            <!-- =================================================
+                 LOGIN / REGISTRATION / FORGOT PASSWORD
+            ================================================== -->
 
             {% if form_btn == 'Login' %}
 
+
+                <!-- Forgot Password -->
+
+                <div class="forgot-password-link">
+
+                    <a href="{% url 'password_reset' %}">
+
+                        <i class="bi bi-key-fill me-1"></i>
+
+                        Forgot Password?
+
+                    </a>
+
+                </div>
+
+
+                <!-- Registration Link -->
+
                 <div class="switch-link">
 
-                    <span>Don't have an account?</span>
+                    <span>
+                        Don't have an account?
+                    </span>
 
                     <a href="{% url 'ruhul_registration' %}">
                         Register here
@@ -92,11 +145,17 @@
 
                 </div>
 
+
             {% elif form_btn == 'Register' %}
+
+
+                <!-- Login Link -->
 
                 <div class="switch-link">
 
-                    <span>Already have an account?</span>
+                    <span>
+                        Already have an account?
+                    </span>
 
                     <a href="{% url 'ruhul_login' %}">
                         Login here
@@ -104,34 +163,51 @@
 
                 </div>
 
+
             {% endif %}
 
         </div>
 
 
-        <!-- ================= RIGHT SIDE ================= -->
+        <!-- =====================================================
+             RIGHT SIDE
+        ====================================================== -->
 
         <div class="auth-welcome-section">
 
             <div class="welcome-overlay"></div>
 
+
             <div class="welcome-content">
 
                 <div class="welcome-icon">
+
                     <i class="bi bi-hospital"></i>
+
                 </div>
+
 
                 <h1>Welcome</h1>
 
+
                 <p>
+
                     Manage financial collections, billing,
                     counter reports and concessions from one
                     secure finance portal.
+
                 </p>
 
-                <a href="#" class="welcome-link">
+
+                <a
+                    href="#"
+                    class="welcome-link"
+                >
+
                     Learn more about the portal
+
                     <i class="bi bi-arrow-right"></i>
+
                 </a>
 
             </div>
@@ -143,31 +219,40 @@
 </div>
 
 
+<!-- =========================================================
+     CSS
+========================================================= -->
+
 <style>
 
-/* =========================================
+/* =========================================================
    MAIN AUTH PAGE
-========================================= */
+========================================================= */
 
 .auth-page {
+
     min-height: calc(100vh - 70px);
+
     background: #f5f7fa;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     padding: 30px;
 }
 
 
-/* =========================================
+/* =========================================================
    AUTH WRAPPER
-========================================= */
+========================================================= */
 
 .auth-wrapper {
 
     width: 100%;
+
     max-width: 1250px;
 
     min-height: 680px;
@@ -187,9 +272,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    LEFT FORM SECTION
-========================================= */
+========================================================= */
 
 .auth-form-section {
 
@@ -205,24 +290,28 @@
 }
 
 
-/* =========================================
+/* =========================================================
    LOGO
-========================================= */
+========================================================= */
 
 .auth-logo {
 
     margin-bottom: 10px;
 }
 
+
 .logo-circle {
 
     width: 48px;
+
     height: 48px;
 
     border-radius: 50%;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     background: #f1f8fb;
@@ -233,9 +322,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    FORM HEADER
-========================================= */
+========================================================= */
 
 .form-header {
 
@@ -248,6 +337,7 @@
 .user-icon {
 
     width: 70px;
+
     height: 70px;
 
     margin: 0 auto 12px;
@@ -261,6 +351,7 @@
     display: flex;
 
     align-items: center;
+
     justify-content: center;
 
     font-size: 32px;
@@ -292,9 +383,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    FORM
-========================================= */
+========================================================= */
 
 .auth-form .form-label {
 
@@ -339,9 +430,73 @@
 }
 
 
-/* =========================================
+/* =========================================================
+   PASSWORD VIEW / HIDE
+========================================================= */
+
+.password-wrapper {
+
+    position: relative;
+
+    width: 100%;
+}
+
+
+.password-wrapper .password-field {
+
+    padding-right: 48px !important;
+}
+
+
+.password-toggle {
+
+    position: absolute;
+
+    right: 12px;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    border: none;
+
+    background: transparent;
+
+    color: #68747c;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    padding: 5px;
+
+    z-index: 5;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+
+.password-toggle:hover {
+
+    color: #087ea4;
+}
+
+
+.password-toggle:focus {
+
+    outline: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
    SUBMIT BUTTON
-========================================= */
+========================================================= */
 
 .auth-submit-btn {
 
@@ -376,9 +531,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    SWITCH LOGIN / REGISTER
-========================================= */
+========================================================= */
 
 .switch-link {
 
@@ -410,9 +565,39 @@
 }
 
 
-/* =========================================
+/* =========================================================
+   FORGOT PASSWORD
+========================================================= */
+
+.forgot-password-link {
+
+    text-align: right;
+
+    margin-top: 12px;
+
+    font-size: 14px;
+}
+
+
+.forgot-password-link a {
+
+    color: #087ea4;
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+
+.forgot-password-link a:hover {
+
+    text-decoration: underline;
+}
+
+
+/* =========================================================
    RIGHT WELCOME SECTION
-========================================= */
+========================================================= */
 
 .auth-welcome-section {
 
@@ -421,7 +606,7 @@
     min-height: 680px;
 
     background-image:
-        url("/static/users_ruhul/images/hospital_background.jpg");
+        url('/static/users_ruhul/images/hospital_background.jpg');
 
     background-size: cover;
 
@@ -429,7 +614,9 @@
 }
 
 
-/* Blue overlay */
+/* =========================================================
+   BLUE OVERLAY
+========================================================= */
 
 .welcome-overlay {
 
@@ -446,9 +633,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    WELCOME CONTENT
-========================================= */
+========================================================= */
 
 .welcome-content {
 
@@ -473,11 +660,12 @@
 .welcome-icon {
 
     width: 65px;
+
     height: 65px;
 
     border-radius: 15px;
 
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
 
     display: flex;
 
@@ -509,7 +697,7 @@
 
     line-height: 1.7;
 
-    color: rgba(255,255,255,0.92);
+    color: rgba(255, 255, 255, 0.92);
 
     margin-bottom: 25px;
 }
@@ -537,9 +725,9 @@
 }
 
 
-/* =========================================
+/* =========================================================
    RESPONSIVE
-========================================= */
+========================================================= */
 
 @media (max-width: 991px) {
 
@@ -550,15 +738,18 @@
         max-width: 600px;
     }
 
+
     .auth-welcome-section {
 
         display: none;
     }
 
+
     .auth-form-section {
 
         padding: 40px 35px;
     }
+
 }
 
 
@@ -569,22 +760,170 @@
         padding: 15px;
     }
 
+
     .auth-wrapper {
 
         border-radius: 12px;
     }
+
 
     .auth-form-section {
 
         padding: 30px 20px;
     }
 
+
     .form-header h2 {
 
         font-size: 24px;
     }
+
 }
 
 </style>
 
-{% endblock content %}
+
+<!-- =========================================================
+     PASSWORD VIEW / HIDE JAVASCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        /*
+         * Find all password inputs
+         * inside authentication form.
+         */
+
+        const passwordFields =
+            document.querySelectorAll(
+                ".auth-form input[type='password']"
+            );
+
+
+        /*
+         * Create View/Hide button
+         * for every password field.
+         */
+
+        passwordFields.forEach(
+            function (input) {
+
+                /*
+                 * Create wrapper
+                 */
+
+                const wrapper =
+                    document.createElement("div");
+
+                wrapper.classList.add(
+                    "password-wrapper"
+                );
+
+
+                /*
+                 * Put wrapper before input
+                 */
+
+                input.parentNode.insertBefore(
+                    wrapper,
+                    input
+                );
+
+
+                /*
+                 * Move input inside wrapper
+                 */
+
+                wrapper.appendChild(input);
+
+
+                /*
+                 * Create button
+                 */
+
+                const button =
+                    document.createElement("button");
+
+                button.type = "button";
+
+                button.classList.add(
+                    "password-toggle"
+                );
+
+
+                /*
+                 * Initial icon
+                 */
+
+                button.innerHTML =
+                    '<i class="bi bi-eye"></i>';
+
+
+                /*
+                 * Add button
+                 * inside wrapper
+                 */
+
+                wrapper.appendChild(button);
+
+
+                /*
+                 * Toggle password
+                 */
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        if (
+                            input.type === "password"
+                        ) {
+
+                            /*
+                             * Show password
+                             */
+
+                            input.type = "text";
+
+
+                            /*
+                             * Change icon
+                             */
+
+                            button.innerHTML =
+                                '<i class="bi bi-eye-slash"></i>';
+
+                        } else {
+
+                            /*
+                             * Hide password
+                             */
+
+                            input.type = "password";
+
+
+                            /*
+                             * Change icon
+                             */
+
+                            button.innerHTML =
+                                '<i class="bi bi-eye"></i>';
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}

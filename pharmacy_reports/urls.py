@@ -5,6 +5,5 @@ app_name = 'pharmacy_reports'
 
 urlpatterns = [
     path('', views.index, name='index'),
-    # Adnan: Add more report URLs here
+    path('analytics/', views.analytics, name='analytics'),
 ]
-

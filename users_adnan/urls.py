@@ -5,6 +5,5 @@ app_name = 'users_adnan'
 
 urlpatterns = [
     path('login/', views.login_view, name='login'),
-    # Adnan: Add more URLs here (e.g. logout, profile, register)
+    path('logout/', views.logout_view, name='logout'),
 ]
-

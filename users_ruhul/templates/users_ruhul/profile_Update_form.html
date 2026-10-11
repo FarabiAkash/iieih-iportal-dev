@@ -60,7 +60,7 @@
 
                         <label
                             for="{{ form_data.first_name.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             First Name
                         </label>
@@ -84,7 +84,7 @@
 
                         <label
                             for="{{ form_data.last_name.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             Last Name
                         </label>
@@ -108,7 +108,7 @@
 
                         <label
                             for="{{ form_data.username.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             Username
                         </label>
@@ -132,7 +132,7 @@
 
                         <label
                             for="{{ form_data.email.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             Email Address
                         </label>
@@ -175,7 +175,7 @@
 
                         <label
                             for="{{ form_data.finance_role.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             Finance Role
                         </label>
@@ -199,7 +199,7 @@
 
                         <label
                             for="{{ form_data.assigned_counter.id_for_label }}"
-                            class="form-label"
+                            class="form-label required"
                         >
                             Assigned Counter
                         </label>
@@ -471,9 +471,15 @@
 }
 
 
-.form-label::after {
+/* Required field indicator */
 
-    content: "";
+.form-label.required::after {
+
+    content: " *";
+
+    color: #dc3545;
+
+    font-weight: 700;
 
 }
 

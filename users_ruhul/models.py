@@ -23,22 +23,22 @@ class RuhulProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='ruhul_profile'
+        related_name='ruhul_profile',null=True
     )
 
     finance_role = models.CharField(
         max_length=50,
-        choices=ROLE_CHOICES
+        choices=ROLE_CHOICES ,null=True
     )
 
     assigned_counter = models.CharField(
-        max_length=100
+        max_length=100 ,null=True
     )
 
     discount_approval_limit = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=0
+        default=0 ,null=True
     )
 
     def __str__(self):
