@@ -146,7 +146,7 @@ function setAppTheme(theme) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     setAppTheme(currentTheme);
 
     // Auto-activate tab from query param ?tab=

@@ -1,41 +1,42 @@
 // ─── Theme Pre-Init (Anti-flicker) ───────────────────────────────────────────
 (function () {
     try {
-        const storedTheme = localStorage.getItem('iieih_theme') || 'dark';
+        const storedTheme = localStorage.getItem('iieih_theme') || 'light';
         document.documentElement.setAttribute('data-theme', storedTheme);
     } catch (e) { }
 })();
 
 // ─── Interactive Behavior Script ─────────────────────────────────────────────
-(function () {
+function initLoginBehavior() {
     // ── 1. Day / Night Theme Switcher ───────────────────────
     const root = document.documentElement;
     const btnLight = document.getElementById('themeBtnLight');
     const btnDark = document.getElementById('themeBtnDark');
 
     function applyTheme(theme) {
-        root.setAttribute('data-theme', theme);
-        try {
-            localStorage.setItem('iieih_theme', theme);
-        } catch (e) { }
+        if (typeof window.setAppTheme === 'function') {
+            window.setAppTheme(theme);
+        } else {
+            root.setAttribute('data-theme', theme);
+            try {
+                localStorage.setItem('iieih_theme', theme);
+            } catch (e) { }
 
-        if (btnLight && btnDark) {
-            if (theme === 'light') {
-                btnLight.classList.add('active');
-                btnLight.setAttribute('aria-pressed', 'true');
-                btnDark.classList.remove('active');
-                btnDark.setAttribute('aria-pressed', 'false');
-            } else {
-                btnDark.classList.add('active');
-                btnDark.setAttribute('aria-pressed', 'true');
-                btnLight.classList.remove('active');
-                btnLight.setAttribute('aria-pressed', 'false');
+            if (btnLight) {
+                const isLight = theme === 'light';
+                btnLight.classList.toggle('active', isLight);
+                btnLight.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+            }
+            if (btnDark) {
+                const isDark = theme === 'dark';
+                btnDark.classList.toggle('active', isDark);
+                btnDark.setAttribute('aria-pressed', isDark ? 'true' : 'false');
             }
         }
     }
 
     // Sync with current theme on load
-    const currentTheme = root.getAttribute('data-theme') || 'dark';
+    const currentTheme = root.getAttribute('data-theme') || 'light';
     applyTheme(currentTheme);
 
     if (btnLight) btnLight.addEventListener('click', () => applyTheme('light'));
@@ -100,7 +101,14 @@
             }
         });
     }
-})();
+}
+
+// Execute when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLoginBehavior);
+} else {
+    initLoginBehavior();
+}
 
 // ─── Quick Fill Helper (for dev / testing convenience) ───────────────────────
 function quickFillDoctor() {

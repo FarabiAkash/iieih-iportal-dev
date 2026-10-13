@@ -1,6 +1,6 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -23,7 +23,7 @@
     <script src="{% static 'users_naimul/js/theme.js' %}"></script>
 
     <!-- Interactive Behavior Script -->
-    <script src="{% static 'users_naimul/js/login.js' %}"></script>
+    <script src="{% static 'users_naimul/js/login.js' %}" defer></script>
 
     <!-- External Stylesheet -->
     <link rel="stylesheet" href="{% static 'users_naimul/css/login.css' %}">
@@ -131,13 +131,13 @@
 
                 <!-- Day / Night Theme Switcher -->
                 <div class="theme-switcher-control" role="group" aria-label="Theme mode switcher">
-                    <button type="button" class="theme-btn" id="themeBtnLight" data-theme-val="light"
-                        aria-pressed="false">
+                    <button type="button" class="theme-btn active" id="themeBtnLight" data-theme-val="light"
+                        aria-pressed="true" onclick="setAppTheme('light')">
                         <i class="fa-solid fa-sun"></i>
                         <span>Day</span>
                     </button>
-                    <button type="button" class="theme-btn active" id="themeBtnDark" data-theme-val="dark"
-                        aria-pressed="true">
+                    <button type="button" class="theme-btn" id="themeBtnDark" data-theme-val="dark"
+                        aria-pressed="false" onclick="setAppTheme('dark')">
                         <i class="fa-solid fa-moon"></i>
                         <span>Night</span>
                     </button>

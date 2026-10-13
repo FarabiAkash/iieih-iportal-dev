@@ -60,3 +60,34 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         # Verify no rogue leftover <style> block exists
         self.assertNotIn('<style>', content)
         self.assertNotIn('</style>', content)
+
+    def test_login_page_defaults_to_light_theme(self):
+        response = self.client.get(reverse('users_naimul:login'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        
+        # Verify default data-theme is light
+        self.assertIn('data-theme="light"', content)
+        self.assertNotIn('<html lang="en" data-theme="dark">', content)
+        
+        # Verify light theme button is active by default
+        self.assertIn('id="themeBtnLight"', content)
+        self.assertTrue('active' in content.split('id="themeBtnLight"')[0].split('<button')[-1])
+        
+        # Verify theme switch buttons have onclick handlers
+        self.assertIn('onclick="setAppTheme(\'light\')"', content)
+        self.assertIn('onclick="setAppTheme(\'dark\')"', content)
+
+    def test_profile_page_defaults_to_light_theme(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        
+        # Verify default data-theme is light
+        self.assertIn('data-theme="light"', content)
+        self.assertNotIn('<html lang="en" data-theme="dark">', content)
+        
+        # Verify Day switch button is active by default
+        self.assertIn('class="theme-switch-btn active" data-theme-val="light"', content)
+
