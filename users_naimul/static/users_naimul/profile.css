@@ -249,22 +249,14 @@
         }
 
         .profile-grid {
-            display: grid;
-            grid-template-columns: 360px minmax(0, 1fr);
-            gap: 28px;
-            align-items: start;
+            display: block;
+            width: 100%;
         }
 
         .clinical-main-content {
             min-width: 0;
             width: 100%;
             max-width: 100%;
-        }
-
-        @media (max-width: 960px) {
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* Card Component */
@@ -1409,8 +1401,7 @@
             }
 
             .profile-grid {
-                grid-template-columns: 280px minmax(0, 1fr);
-                gap: 18px;
+                width: 100%;
             }
 
             .portal-nav {

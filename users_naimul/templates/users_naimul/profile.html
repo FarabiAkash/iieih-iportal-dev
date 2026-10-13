@@ -84,65 +84,7 @@
 
         <div class="profile-grid">
 
-            <!-- Left: Clinical ID Card & Role Privileges -->
-            <div class="card doctor-badge-card">
-                <div class="avatar-box">
-                    <i class="fa-solid fa-user-doctor"></i>
-                    <div class="status-dot" title="Doctor On Duty"></div>
-                </div>
-
-                <h2 class="doctor-name">Dr. {{ user.get_full_name|default:user.username }}</h2>
-                <div class="doctor-role-tag">{{ profile.get_role_display }}</div>
-                <div class="specialty-pill">
-                    <i class="fa-solid fa-microscope"></i> {{ profile.get_specialty_display }}
-                </div>
-
-                <div class="credentials-list">
-                    <div class="credential-item">
-                        <span class="credential-label"><i class="fa-solid fa-id-card"></i> Surgeon Code:</span>
-                        <span class="credential-value">{{ profile.surgeon_code|default:"SURG-101" }}</span>
-                    </div>
-                    <div class="credential-item">
-                        <span class="credential-label"><i class="fa-solid fa-certificate"></i> BMDC Reg:</span>
-                        <span class="credential-value">{{ profile.license_number|default:"BMDC-A-48291" }}</span>
-                    </div>
-                    <div class="credential-item">
-                        <span class="credential-label"><i class="fa-solid fa-door-open"></i> Assigned OT:</span>
-                        <span class="credential-value" style="color: var(--primary-light);">{{ profile.assigned_ot_room }}</span>
-                    </div>
-                    <div class="credential-item">
-                        <span class="credential-label"><i class="fa-solid fa-phone"></i> Emergency Ext:</span>
-                        <span class="credential-value">{{ profile.phone|default:"+880 1308-320991" }}</span>
-                    </div>
-                </div>
-
-                <!-- Doctor Role Clinical Privileges -->
-                <div class="doctor-access-box">
-                    <div class="doctor-access-title">
-                        <i class="fa-solid fa-shield-halved"></i> Doctor Role Privileges:
-                    </div>
-                    <div class="doctor-access-item">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>View Patient Demographics & Records</span>
-                    </div>
-                    <div class="doctor-access-item">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Access Medical History & Scans</span>
-                    </div>
-                    <div class="doctor-access-item">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Manage OT Suite Slot Schedules</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <a href="/surgeries/" class="nav-btn nav-btn-primary" style="justify-content: center; width: 100%;">
-                        <i class="fa-solid fa-table-list"></i> Open Full OT Register
-                    </a>
-                </div>
-            </div>
-
-            <!-- Right: Doctor Clinical Management Center -->
+            <!-- Doctor Clinical Management Center -->
             <div class="clinical-main-content">
                 <!-- Role-Aware Navigation Tabs -->
                 <div class="clinical-tabs">
