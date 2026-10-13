@@ -28,8 +28,14 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         content = response.content.decode('utf-8')
         
         # Verify external CSS and JS are referenced
-        self.assertIn('users_naimul/login.css', content)
-        self.assertIn('users_naimul/login.js', content)
+        self.assertTrue(
+            'users_naimul/css/login.css' in content or 'users_naimul/login.css' in content,
+            "login.css should be referenced"
+        )
+        self.assertTrue(
+            'users_naimul/js/login.js' in content or 'users_naimul/login.js' in content,
+            "login.js should be referenced"
+        )
         
         # Verify large inline style block has been separated
         self.assertNotIn('<style>', content)
@@ -42,9 +48,46 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         content = response.content.decode('utf-8')
         
         # Verify external CSS and JS are referenced
-        self.assertIn('users_naimul/profile.css', content)
-        self.assertIn('users_naimul/profile.js', content)
+        self.assertTrue(
+            'users_naimul/css/profile.css' in content or 'users_naimul/profile.css' in content,
+            "profile.css should be referenced"
+        )
+        self.assertTrue(
+            'users_naimul/js/profile.js' in content or 'users_naimul/profile.js' in content,
+            "profile.js should be referenced"
+        )
         
         # Verify no rogue leftover <style> block exists
         self.assertNotIn('<style>', content)
         self.assertNotIn('</style>', content)
+
+    def test_login_page_defaults_to_light_theme(self):
+        response = self.client.get(reverse('users_naimul:login'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        
+        # Verify default data-theme is light
+        self.assertIn('data-theme="light"', content)
+        self.assertNotIn('<html lang="en" data-theme="dark">', content)
+        
+        # Verify light theme button is active by default
+        self.assertIn('id="themeBtnLight"', content)
+        self.assertTrue('active' in content.split('id="themeBtnLight"')[0].split('<button')[-1])
+        
+        # Verify theme switch buttons have onclick handlers
+        self.assertIn('onclick="setAppTheme(\'light\')"', content)
+        self.assertIn('onclick="setAppTheme(\'dark\')"', content)
+
+    def test_profile_page_defaults_to_light_theme(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        
+        # Verify default data-theme is light
+        self.assertIn('data-theme="light"', content)
+        self.assertNotIn('<html lang="en" data-theme="dark">', content)
+        
+        # Verify Day switch button is active by default
+        self.assertIn('class="theme-switch-btn active" data-theme-val="light"', content)
+

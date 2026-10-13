@@ -1,35 +1,4 @@
-        :root, [data-theme="dark"] {
-            --primary: #0284c7;
-            --primary-dark: #0369a1;
-            --primary-light: #38bdf8;
-            --accent-teal: #0d9488;
-            --teal-light: #14b8a6;
-            --bg-slate: #0b132b;
-            --bg-card: rgba(15, 23, 42, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --nav-bg: rgba(15, 23, 42, 0.92);
-            --input-bg: rgba(15, 23, 42, 0.7);
-            --input-border: rgba(255, 255, 255, 0.12);
-            --input-text: #ffffff;
-            --table-hover: rgba(2, 132, 199, 0.08);
-            --table-stripe: rgba(255, 255, 255, 0.02);
-            --tab-bg: rgba(255, 255, 255, 0.05);
-            --tab-active-bg: rgba(2, 132, 199, 0.25);
-            --modal-bg: #0f172a;
-            --slot-card-bg: rgba(15, 23, 42, 0.6);
-            --slot-card-border: rgba(255, 255, 255, 0.08);
-            --badge-bg: rgba(2, 132, 199, 0.18);
-            --badge-color: #38bdf8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --bar-bg: rgba(255, 255, 255, 0.08);
-            --bar-btn-color: #94a3b8;
-        }
-
-        [data-theme="light"] {
+        :root, [data-theme="light"] {
             --primary: #0284c7;
             --primary-dark: #0369a1;
             --primary-light: #0284c7;
@@ -58,6 +27,37 @@
             --danger: #dc2626;
             --bar-bg: #e2e8f0;
             --bar-btn-color: #64748b;
+        }
+
+        [data-theme="dark"] {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --primary-light: #38bdf8;
+            --accent-teal: #0d9488;
+            --teal-light: #14b8a6;
+            --bg-slate: #0b132b;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --nav-bg: rgba(15, 23, 42, 0.92);
+            --input-bg: rgba(15, 23, 42, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-text: #ffffff;
+            --table-hover: rgba(2, 132, 199, 0.08);
+            --table-stripe: rgba(255, 255, 255, 0.02);
+            --tab-bg: rgba(255, 255, 255, 0.05);
+            --tab-active-bg: rgba(2, 132, 199, 0.25);
+            --modal-bg: #0f172a;
+            --slot-card-bg: rgba(15, 23, 42, 0.6);
+            --slot-card-border: rgba(255, 255, 255, 0.08);
+            --badge-bg: rgba(2, 132, 199, 0.18);
+            --badge-color: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bar-bg: rgba(255, 255, 255, 0.08);
+            --bar-btn-color: #94a3b8;
         }
 
         * {
@@ -249,22 +249,14 @@
         }
 
         .profile-grid {
-            display: grid;
-            grid-template-columns: 360px minmax(0, 1fr);
-            gap: 28px;
-            align-items: start;
+            display: block;
+            width: 100%;
         }
 
         .clinical-main-content {
             min-width: 0;
             width: 100%;
             max-width: 100%;
-        }
-
-        @media (max-width: 960px) {
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* Card Component */
@@ -1409,8 +1401,7 @@
             }
 
             .profile-grid {
-                grid-template-columns: 280px minmax(0, 1fr);
-                gap: 18px;
+                width: 100%;
             }
 
             .portal-nav {
