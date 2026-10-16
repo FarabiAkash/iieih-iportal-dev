@@ -933,6 +933,79 @@ body {
     gap: 12px;
 }
 
+/* ── Modal Inline Error Banner ── */
+.modal-inline-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    border-left: 4px solid #ef4444;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fca5a5;
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.45;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15);
+    animation: shakeAlert 0.35s ease-in-out;
+}
+
+.modal-inline-error i {
+    font-size: 1.25rem;
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+/* ── In-Field Slot Clash Warning Popup ── */
+.field-slot-warning {
+    margin-top: 8px;
+    padding: 9px 12px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(220, 38, 38, 0.08));
+    border: 1.5px solid rgba(239, 68, 68, 0.55);
+    border-radius: 8px;
+    color: #fca5a5;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    animation: clashAlertPulse 2s ease-in-out infinite;
+}
+
+.field-slot-warning i {
+    color: #f87171;
+    font-size: 0.95rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.form-input.slot-clash-active {
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.09) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important;
+}
+
+@keyframes shakeAlert {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes clashAlertPulse {
+    0%, 100% {
+        border-color: rgba(239, 68, 68, 0.55);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.25);
+    }
+    50% {
+        border-color: rgba(239, 68, 68, 0.9);
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+    }
+}
+
 /* ============================================================
    RESPONSIVE MEDIA QUERIES — Surgery & OT Procedures Console
    ============================================================ */

@@ -91,7 +91,17 @@ function openEditSurgeryModal(id, mrn, name, age, gender, eye, type, surgeon, ot
     document.getElementById('edit_notes').value = notes;
     document.getElementById('edit_active_tab').value = returnTab || 'patients';
 
+    // Track which surgery is being edited so we don't flag its own slot as a clash
+    if (typeof currentEditSurgeryId !== 'undefined') {
+        currentEditSurgeryId = id;
+    }
+
     document.getElementById('editSurgeryModal').style.display = 'flex';
+
+    // Run clash check immediately with the pre-populated values
+    if (typeof checkOtClash === 'function') {
+        checkOtClash('edit');
+    }
 }
 
 function closeEditSurgeryModal() {

@@ -1,5 +1,3 @@
-# from django.shortcuts import render
-
 # # ==========================================
 # # Developer: Naimul
 # # Task: Implement your login, logout, and profile logic below.
@@ -11,7 +9,7 @@
 #     """
 #     return render(request, 'users_naimul/login.html')
 
-
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -97,25 +95,35 @@ def profile_view(request):
         notes = request.POST.get('notes', '').strip()
 
         if name:
-            record = SurgeryRecord.objects.create(
-                date=date.today(),
-                patient_name=name,
-                patient_age=int(age) if str(age).isdigit() else 45,
-                patient_gender=gender,
-                eye=eye,
-                surgery_type=surgery_type,
-                surgeon_name=surgeon_name,
-                ot_room=ot_room,
-                ot_slot=ot_slot,
-                outcome=outcome,
-                medical_history=medical_history,
-                notes=notes,
-                # created_by=request.user,
-            )
-            messages.success(request, f"Surgery application for {name} ({record.patient_mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
+            # ── OT Slot Clash Detection ──────────────────────────────────────
+            clash = SurgeryRecord.objects.filter(ot_room=ot_room, ot_slot=ot_slot).first()
+            if clash:
+                messages.error(
+                    request,
+                    f"⚠ OT Slot Clash! {ot_room} / {ot_slot} is already booked for "
+                    f"{clash.patient_name} ({clash.patient_mrn}). "
+                    f"Please choose a different room or slot."
+                )
+            else:
+                record = SurgeryRecord.objects.create(
+                    date=date.today(),
+                    patient_name=name,
+                    patient_age=int(age) if str(age).isdigit() else 45,
+                    patient_gender=gender,
+                    eye=eye,
+                    surgery_type=surgery_type,
+                    surgeon_name=surgeon_name,
+                    ot_room=ot_room,
+                    ot_slot=ot_slot,
+                    outcome=outcome,
+                    medical_history=medical_history,
+                    notes=notes,
+                    # created_by=request.user,
+                )
+                messages.success(request, f"Surgery application for {name} ({record.patient_mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
         else:
             messages.error(request, "Please provide the Patient's Full Name.")
-        redirect_tab = request.POST.get('active_tab', 'ot-matrix' if profile.is_staff_role else 'patients')
+        redirect_tab = request.POST.get('active_tab', 'ot-matrix')
         return redirect(f"{request.path}?tab={redirect_tab}")
 
     # ── POST: Make Appointment ───────────────────────────────────────────────
@@ -156,22 +164,38 @@ def profile_view(request):
         surgery_id = request.POST.get('surgery_id')
         try:
             surg = SurgeryRecord.objects.get(id=surgery_id)
-            surg.patient_mrn = request.POST.get('patient_mrn', surg.patient_mrn).strip()
-            surg.patient_name = request.POST.get('patient_name', surg.patient_name).strip()
-            age_val = request.POST.get('patient_age')
-            if age_val and str(age_val).isdigit():
-                surg.patient_age = int(age_val)
-            surg.patient_gender = request.POST.get('patient_gender', surg.patient_gender)
-            surg.eye = request.POST.get('eye', surg.eye)
-            surg.surgery_type = request.POST.get('surgery_type', surg.surgery_type)
-            surg.surgeon_name = request.POST.get('surgeon_name', surg.surgeon_name).strip()
-            surg.ot_room = request.POST.get('ot_room', surg.ot_room)
-            surg.ot_slot = request.POST.get('ot_slot', surg.ot_slot)
-            surg.outcome = request.POST.get('outcome', surg.outcome)
-            surg.medical_history = request.POST.get('medical_history', surg.medical_history).strip()
-            surg.notes = request.POST.get('notes', surg.notes).strip()
-            surg.save()
-            messages.success(request, f"Surgery record #{surg.id} for {surg.patient_name} ({surg.patient_mrn}) updated successfully.")
+            new_ot_room = request.POST.get('ot_room', surg.ot_room)
+            new_ot_slot = request.POST.get('ot_slot', surg.ot_slot)
+
+            # ── OT Slot Clash Detection (exclude current record) ─────────────
+            clash = SurgeryRecord.objects.filter(
+                ot_room=new_ot_room, ot_slot=new_ot_slot
+            ).exclude(pk=surg.pk).first()
+
+            if clash:
+                messages.error(
+                    request,
+                    f"⚠ OT Slot Clash! {new_ot_room} / {new_ot_slot} is already booked for "
+                    f"{clash.patient_name} ({clash.patient_mrn}). "
+                    f"Please choose a different room or slot."
+                )
+            else:
+                surg.patient_mrn = request.POST.get('patient_mrn', surg.patient_mrn).strip()
+                surg.patient_name = request.POST.get('patient_name', surg.patient_name).strip()
+                age_val = request.POST.get('patient_age')
+                if age_val and str(age_val).isdigit():
+                    surg.patient_age = int(age_val)
+                surg.patient_gender = request.POST.get('patient_gender', surg.patient_gender)
+                surg.eye = request.POST.get('eye', surg.eye)
+                surg.surgery_type = request.POST.get('surgery_type', surg.surgery_type)
+                surg.surgeon_name = request.POST.get('surgeon_name', surg.surgeon_name).strip()
+                surg.ot_room = new_ot_room
+                surg.ot_slot = new_ot_slot
+                surg.outcome = request.POST.get('outcome', surg.outcome)
+                surg.medical_history = request.POST.get('medical_history', surg.medical_history).strip()
+                surg.notes = request.POST.get('notes', surg.notes).strip()
+                surg.save()
+                messages.success(request, f"Surgery record #{surg.id} for {surg.patient_name} ({surg.patient_mrn}) updated successfully.")
         except SurgeryRecord.DoesNotExist:
             messages.error(request, "Surgery record not found.")
         redirect_tab = request.POST.get('active_tab', 'patients')
@@ -315,6 +339,18 @@ def profile_view(request):
             'is_booked': case is not None,
         })
 
+    # Build a JSON map of already-booked OT slots for front-end clash detection
+    # Format: { "OT-1||Slot 1 (08:30 - 10:00 AM)": {patient_name, patient_mrn}, ... }
+    booked_ot_slots_raw = SurgeryRecord.objects.values('ot_room', 'ot_slot', 'patient_name', 'patient_mrn', 'id')
+    booked_ot_slots = {
+        f"{r['ot_room']}||{r['ot_slot']}": {
+            'patient_name': r['patient_name'],
+            'patient_mrn': r['patient_mrn'],
+            'id': r['id'],
+        }
+        for r in booked_ot_slots_raw
+    }
+
     context = {
         'profile': profile,
         'user_surgeries': my_surgeries,
@@ -348,6 +384,7 @@ def profile_view(request):
         'appointment_type_choices': Appointment.Appointment_Type_Choices,
         'appointment_time_slot_choices': Appointment.Time_Slot_Choices,
         'appointment_status_choices': Appointment.Status_Choices,
+        'booked_ot_slots_json': json.dumps(booked_ot_slots),
     }
     return render(request, 'users_naimul/profile.html', context)
 

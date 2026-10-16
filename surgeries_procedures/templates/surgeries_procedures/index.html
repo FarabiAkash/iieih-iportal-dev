@@ -322,10 +322,17 @@
                     Procedure</h2>
                 <button type="button" class="modal-close" onclick="closeNewSurgeryModal()">&times;</button>
             </div>
-            <form method="post" action="/surgeries/">
+            <form method="post" action="/surgeries/" onsubmit="return validateSurgeriesOtSlot('add')">
                 {% csrf_token %}
                 <input type="hidden" name="add_surgery" value="1">
                 <div class="modal-body">
+
+                    <!-- Inline clash/error alert (shown by JS when open_modal=add) -->
+                    <div id="addModalError" class="modal-inline-error" style="display:none;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span id="addModalErrorText"></span>
+                    </div>
+
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Patient MRN</label>
@@ -382,7 +389,7 @@
                         </div>
                         <div>
                             <label class="form-label">OT Suite Room</label>
-                            <select name="ot_room" class="form-input">
+                            <select id="add_ot_room" name="ot_room" class="form-input" onchange="checkSurgeriesOtClash('add')">
                                 <option value="OT-1">OT Room 1 (General / Phaco)</option>
                                 <option value="OT-2">OT Room 2 (Retina OT)</option>
                                 <option value="OT-3">OT Room 3 (Laser OT)</option>
@@ -394,11 +401,16 @@
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Scheduled OT Slot *</label>
-                            <select name="ot_slot" class="form-input">
+                            <select id="add_ot_slot" name="ot_slot" class="form-input" onchange="checkSurgeriesOtClash('add')">
                                 {% for val, label in ot_slot_choices %}
                                 <option value="{{ val }}">{{ label }}</option>
                                 {% endfor %}
                             </select>
+                            <!-- In-field clash warning popup for Add Modal -->
+                            <div id="add_slot_clash_alert" class="field-slot-warning" style="display:none;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span id="add_slot_clash_msg"></span>
+                            </div>
                         </div>
                         <div>
                             <label class="form-label">Surgical Outcome</label>
@@ -425,7 +437,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-nav" onclick="closeNewSurgeryModal()">Cancel</button>
-                    <button type="submit" class="btn-nav btn-action-primary">
+                    <button type="submit" id="add_surgery_submit_btn" class="btn-nav btn-action-primary">
                         <i class="fa-solid fa-check"></i> Save to Surgical Register
                     </button>
                 </div>
@@ -440,11 +452,18 @@
                 <h2><i class="fa-solid fa-pen-to-square" style="color: var(--warning);"></i> Edit Operative Record</h2>
                 <button type="button" class="modal-close" onclick="closeEditSurgeryModal()">&times;</button>
             </div>
-            <form method="post" action="/surgeries/">
+            <form method="post" action="/surgeries/" onsubmit="return validateSurgeriesOtSlot('edit')">
                 {% csrf_token %}
                 <input type="hidden" name="edit_surgery" value="1">
                 <input type="hidden" name="surgery_id" id="edit_surgery_id">
                 <div class="modal-body">
+
+                    <!-- Inline clash/error alert (shown by JS when open_modal=edit) -->
+                    <div id="editModalError" class="modal-inline-error" style="display:none;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span id="editModalErrorText"></span>
+                    </div>
+
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Patient MRN</label>
@@ -500,7 +519,7 @@
                         </div>
                         <div>
                             <label class="form-label">OT Suite Room</label>
-                            <select id="edit_ot_room" name="ot_room" class="form-input">
+                            <select id="edit_ot_room" name="ot_room" class="form-input" onchange="checkSurgeriesOtClash('edit')">
                                 <option value="OT-1">OT Room 1 (General / Phaco)</option>
                                 <option value="OT-2">OT Room 2 (Retina OT)</option>
                                 <option value="OT-3">OT Room 3 (Laser OT)</option>
@@ -512,11 +531,16 @@
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Scheduled OT Slot *</label>
-                            <select id="edit_ot_slot" name="ot_slot" class="form-input">
+                            <select id="edit_ot_slot" name="ot_slot" class="form-input" onchange="checkSurgeriesOtClash('edit')">
                                 {% for val, label in ot_slot_choices %}
                                 <option value="{{ val }}">{{ label }}</option>
                                 {% endfor %}
                             </select>
+                            <!-- In-field clash warning popup for Edit Modal -->
+                            <div id="edit_slot_clash_alert" class="field-slot-warning" style="display:none;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span id="edit_slot_clash_msg"></span>
+                            </div>
                         </div>
                         <div>
                             <label class="form-label">Surgical Outcome</label>
@@ -542,7 +566,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-nav" onclick="closeEditSurgeryModal()">Cancel</button>
-                    <button type="submit" class="btn-nav btn-action-primary">
+                    <button type="submit" id="edit_surgery_submit_btn" class="btn-nav btn-action-primary">
                         <i class="fa-solid fa-check"></i> Save Changes
                     </button>
                 </div>
@@ -550,8 +574,39 @@
         </div>
     </div>
 
+    <!-- Booked OT Slots Data injected from Django for real-time clash prevention -->
+    <script>
+        const bookedOtSlots = {{ booked_ot_slots_json|default:'{}'|safe }};
+    </script>
+
     <!-- External JavaScript -->
     <script src="{% static 'surgeries_procedures/script.js' %}"></script>
+
+    <!-- Inline error messages from Django (for modal popup) -->
+    {% for message in messages %}{% if message.tags == 'error' %}
+    <script>window.__OT_CLASH_ERROR__ = "{{ message|escapejs }}";</script>
+    {% endif %}{% endfor %}
+    <script>
+        (function () {
+            const errorMsg = window.__OT_CLASH_ERROR__ || '';
+            const params = new URLSearchParams(window.location.search);
+            const openModal = params.get('open_modal'); // 'add' | 'edit'
+
+            if (openModal && errorMsg) {
+                if (openModal === 'add') {
+                    document.getElementById('addModalError').style.display = 'flex';
+                    document.getElementById('addModalErrorText').textContent = errorMsg;
+                    document.getElementById('surgeryModal').style.display = 'flex';
+                } else if (openModal === 'edit') {
+                    document.getElementById('editModalError').style.display = 'flex';
+                    document.getElementById('editModalErrorText').textContent = errorMsg;
+                    document.getElementById('editSurgeryModal').style.display = 'flex';
+                }
+                // Clean the URL so the modal doesn't re-open on manual refresh
+                history.replaceState(null, '', '/surgeries/');
+            }
+        })();
+    </script>
 
 </body>
 

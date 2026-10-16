@@ -346,7 +346,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_room">OT Suite Room</label>
-                                    <select id="surg_ot_room" name="ot_room" class="form-control">
+                                    <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg')">
                                         {% for val, label in ot_room_choices_surgery %}
                                         <option value="{{ val }}">{{ label }}</option>
                                         {% endfor %}
@@ -358,7 +358,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_slot">OT Slot <span
                                             style="color: var(--danger);">*</span></label>
-                                    <select id="surg_ot_slot" name="ot_slot" class="form-control">
+                                    <select id="surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('surg')" >
                                         {% for val, label in ot_slot_choices %}
                                         <option value="{{ val }}">{{ label }}</option>
                                         {% endfor %}
@@ -372,6 +372,16 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+                            </div>
+
+                            <!-- OT Clash Warning Banner -->
+                            <div id="surg_clash_alert" style="display:none; margin-bottom: 14px;
+                                background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+                                border: 1.5px solid rgba(239,68,68,0.6); border-radius: 10px;
+                                padding: 12px 16px; color: #fca5a5; font-size: 0.85rem;
+                                animation: clashPulse 1.5s ease-in-out infinite;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color:#f87171; margin-right:8px;"></i>
+                                <strong id="surg_clash_msg"></strong>
                             </div>
 
                             <div class="form-group">
@@ -390,7 +400,7 @@
                             </div>
 
                             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                <button type="submit" class="btn-teal">
+                                <button type="submit" id="surg_submit_btn" class="btn-teal">
                                     <i class="fa-solid fa-file-medical"></i> Submit Surgery Application
                                 </button>
                                 <a href="/surgeries/" class="nav-btn">
@@ -1556,7 +1566,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="edit_ot_room">OT Suite</label>
-                                        <select id="edit_ot_room" name="ot_room" class="form-control">
+                                        <select id="edit_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('edit')">
                                             {% for val, label in ot_room_choices_surgery %}
                                             <option value="{{ val }}">{{ label }}</option>
                                             {% endfor %}
@@ -1567,7 +1577,7 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="form-label" for="edit_ot_slot">Scheduled Slot</label>
-                                        <select id="edit_ot_slot" name="ot_slot" class="form-control">
+                                        <select id="edit_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('edit')">
                                             {% for val, label in ot_slot_choices %}
                                             <option value="{{ val }}">{{ label }}</option>
                                             {% endfor %}
@@ -1581,6 +1591,16 @@
                                             {% endfor %}
                                         </select>
                                     </div>
+                                </div>
+
+                                <!-- OT Clash Warning Banner (Edit Modal) -->
+                                <div id="edit_clash_alert" style="display:none; margin-bottom: 14px;
+                                    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+                                    border: 1.5px solid rgba(239,68,68,0.6); border-radius: 10px;
+                                    padding: 12px 16px; color: #fca5a5; font-size: 0.85rem;
+                                    animation: clashPulse 1.5s ease-in-out infinite;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color:#f87171; margin-right:8px;"></i>
+                                    <strong id="edit_clash_msg"></strong>
                                 </div>
 
                                 <div class="form-group">
@@ -1599,7 +1619,7 @@
                             <div class="modal-footer"
                                 style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 10px;">
                                 <button type="button" class="nav-btn" onclick="closeEditSurgeryModal()">Cancel</button>
-                                <button type="submit" class="btn-save" style="margin-top: 0; padding: 10px 22px;">
+                                <button type="submit" id="edit_submit_btn" class="btn-save" style="margin-top: 0; padding: 10px 22px;">
                                     <i class="fa-solid fa-check"></i> Save Changes to Surgery Record
                                 </button>
                             </div>
@@ -1619,6 +1639,53 @@
                     },
                     {% endfor %}
         };
+
+                    // ── OT Slot Clash Data ────────────────────────────────────────────
+                    // Map: "OT-1||Slot 1 (08:30 - 10:00 AM)" -> {patient_name, patient_mrn, id}
+                    const bookedOtSlots = {{ booked_ot_slots_json|safe }};
+
+                    // Current surgery ID being edited (set by openEditSurgeryModal)
+                    let currentEditSurgeryId = null;
+
+                    /**
+                     * Check for an OT slot clash and show/hide the warning banner.
+                     * @param {string} prefix  - 'surg' for the Apply form, 'edit' for the Edit modal
+                     */
+                    function checkOtClash(prefix) {
+                        const roomEl  = document.getElementById(prefix === 'surg' ? 'surg_ot_room' : 'edit_ot_room');
+                        const slotEl  = document.getElementById(prefix === 'surg' ? 'surg_ot_slot' : 'edit_ot_slot');
+                        const alertEl = document.getElementById(prefix + '_clash_alert');
+                        const msgEl   = document.getElementById(prefix + '_clash_msg');
+                        const submitBtn = document.getElementById(prefix === 'surg' ? 'surg_submit_btn' : 'edit_submit_btn');
+
+                        if (!roomEl || !slotEl || !alertEl) return;
+
+                        const key = roomEl.value + '||' + slotEl.value;
+                        const booked = bookedOtSlots[key];
+
+                        // For the edit modal, the current record's own slot is never a clash
+                        const isSelf = prefix === 'edit' && booked && String(booked.id) === String(currentEditSurgeryId);
+
+                        if (booked && !isSelf) {
+                            msgEl.textContent =
+                                `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked for ` +
+                                `${booked.patient_name} (${booked.patient_mrn}). ` +
+                                `Please select a different OT room or time slot.`;
+                            alertEl.style.display = 'block';
+                            if (submitBtn) {
+                                submitBtn.disabled = true;
+                                submitBtn.style.opacity = '0.45';
+                                submitBtn.style.cursor = 'not-allowed';
+                            }
+                        } else {
+                            alertEl.style.display = 'none';
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.style.opacity = '';
+                                submitBtn.style.cursor = '';
+                            }
+                        }
+                    }
                 </script>
                 <!-- External JavaScript -->
                 <script src="{% static 'users_naimul/js/profile.js' %}"></script>
