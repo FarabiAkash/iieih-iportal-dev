@@ -13,6 +13,7 @@ function updateSlotOptionBadges(mode) {
 
     const selectedRoom = roomEl.value;
     const editingId = mode === 'edit' ? currentEditSurgeryId : null;
+    const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
 
     Array.from(slotEl.options).forEach(opt => {
         if (!opt.dataset.baseText) {
@@ -24,8 +25,16 @@ function updateSlotOptionBadges(mode) {
 
         if (booked && !isSelf) {
             opt.text = `${opt.dataset.baseText} — 🔴 Booked (${booked.patient_name})`;
+            opt.classList.add('slot-option-booked');
+            opt.classList.remove('slot-option-open');
+            opt.style.color = isDark ? '#fca5a5' : '#dc2626';
+            opt.style.backgroundColor = isDark ? '#1e131d' : '#fef2f2';
         } else {
             opt.text = `${opt.dataset.baseText} — 🟢 Open`;
+            opt.classList.add('slot-option-open');
+            opt.classList.remove('slot-option-booked');
+            opt.style.color = isDark ? '#86efac' : '#15803d';
+            opt.style.backgroundColor = isDark ? '#0d1f1b' : '#f0fdf4';
         }
     });
 }
@@ -180,6 +189,13 @@ function setAppTheme(theme) {
     document.querySelectorAll('.theme-switch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-theme-val') === theme);
     });
+    // Dynamically refresh slot options if modal is open or loaded
+    if (typeof updateSlotOptionBadges === 'function') {
+        const addModal = document.getElementById('surgeryModal');
+        const editModal = document.getElementById('editSurgeryModal');
+        if (addModal && addModal.style.display !== 'none') updateSlotOptionBadges('add');
+        if (editModal && editModal.style.display !== 'none') updateSlotOptionBadges('edit');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
