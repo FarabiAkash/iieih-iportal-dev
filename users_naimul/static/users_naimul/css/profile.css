@@ -1,4 +1,5 @@
         :root, [data-theme="light"] {
+            color-scheme: light;
             --primary: #0284c7;
             --primary-dark: #0369a1;
             --primary-light: #0284c7;
@@ -30,6 +31,7 @@
         }
 
         [data-theme="dark"] {
+            color-scheme: dark;
             --primary: #0284c7;
             --primary-dark: #0369a1;
             --primary-light: #38bdf8;
@@ -857,6 +859,43 @@
         .form-control:focus {
             border-color: var(--primary-light);
             box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+        }
+
+        select.form-control,
+        select {
+            color-scheme: dark;
+        }
+
+        [data-theme="light"] select.form-control,
+        [data-theme="light"] select {
+            color-scheme: light;
+        }
+
+        select option,
+        select optgroup {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 9px 12px;
+        }
+
+        [data-theme="light"] select option,
+        [data-theme="light"] select optgroup {
+            background-color: #ffffff;
+            color: #0f172a;
+        }
+
+        #surg_ot_slot option,
+        #edit_ot_slot option {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 9px 12px;
+            font-size: 0.88rem;
+        }
+
+        [data-theme="light"] #surg_ot_slot option,
+        [data-theme="light"] #edit_ot_slot option {
+            background-color: #ffffff;
+            color: #0f172a;
         }
 
         textarea.form-control {
@@ -1830,3 +1869,9 @@
             }
         }
 
+
+/* -- OT Slot Clash Pulse Animation -- */
+@keyframes clashPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
+    50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}

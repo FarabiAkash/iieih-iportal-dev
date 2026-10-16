@@ -1,6 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+def generate_mrn():
+    """
+    Auto-generates the next MRN in the format P26XXXXX
+    (e.g. P2600001, P2600002, …).
+    The counter is the global maximum across all three patient tables
+    so numbers are never repeated across models.
+    """
+    import re
+    max_num = 0
+    for Model in _mrn_models():
+        last = Model.objects.filter(
+            patient_mrn__regex=r'^P26\d{5}$'
+        ).order_by('-patient_mrn').values_list('patient_mrn', flat=True).first()
+        if last:
+            num = int(last[3:])  # strip 'P26'
+            if num > max_num:
+                max_num = num
+    return f'P26{max_num + 1:05d}'
+
+
+def _mrn_models():
+    """Returns the three models that carry a patient_mrn field."""
+    # Imported lazily inside the function to avoid circular imports at module load.
+    from django.apps import apps
+    return [
+        apps.get_model('users_naimul', 'SurgeryRecord'),
+        apps.get_model('users_naimul', 'DiagnosisProcedure'),
+        apps.get_model('users_naimul', 'Appointment'),
+    ]
+
 # ==========================================
 # Developer: Naimul
 # Task: Design your user profile, roles, and fields below.
@@ -61,7 +92,13 @@ class SurgeryRecord(models.Model):
     ]
     
     date = models.DateField(help_text="Date of Surgery (YYYY-MM-DD)")
-    patient_mrn = models.CharField(max_length=8, unique=True, help_text="Medical Record Number (MRN) of the Patient")
+    patient_mrn = models.CharField(
+        max_length=12,
+        unique=True,
+        blank=True,
+        editable=False,
+        help_text="Auto-generated Medical Record Number (MRN) — format: P26XXXXX"
+    )
     patient_name = models.CharField(max_length=100, help_text="Full Name of the Patient")
     patient_age = models.PositiveIntegerField(help_text="Age of the Patient")
     
@@ -77,7 +114,12 @@ class SurgeryRecord(models.Model):
     
     medical_history = models.TextField(blank=True, help_text="Patient's Medical History and Previous Surgeries")
     notes = models.TextField(blank=True, help_text="Additional Notes or Comments")
-    
+
+    def save(self, *args, **kwargs):
+        if not self.patient_mrn:
+            self.patient_mrn = generate_mrn()
+        super().save(*args, **kwargs)
+
 # class DiagnosisProcedure(models.Model):
     
 #     Eye_Choices = [
@@ -136,9 +178,10 @@ class DiagnosisProcedure(models.Model):
     
     date = models.DateField(help_text="Date of Diagnosis (YYYY-MM-DD)")
     patient_mrn = models.CharField(
-        max_length=8,
-        unique=True,
-        help_text="Medical Record Number (MRN) of the Patient"
+        max_length=12,
+        blank=True,
+        editable=False,
+        help_text="Auto-generated Medical Record Number (MRN) — format: P26XXXXX"
     )
     patient_name = models.CharField(max_length=100)
     patient_age = models.PositiveIntegerField()
@@ -161,6 +204,11 @@ class DiagnosisProcedure(models.Model):
         blank=True,
         help_text="Findings summary from the Diagnosis"
     )
+
+    def save(self, *args, **kwargs):
+        if not self.patient_mrn:
+            self.patient_mrn = generate_mrn()
+        super().save(*args, **kwargs)
     
 class NaimulProfile(models.Model):
     
@@ -249,7 +297,12 @@ class Appointment(models.Model):
         ('No-Show', 'No-Show'),
     ]
 
-    patient_mrn = models.CharField(max_length=12, help_text="Medical Record Number (MRN)")
+    patient_mrn = models.CharField(
+        max_length=12,
+        blank=True,
+        editable=False,
+        help_text="Auto-generated Medical Record Number (MRN) — format: P26XXXXX"
+    )
     patient_name = models.CharField(max_length=100, help_text="Full Name of the Patient")
     patient_phone = models.CharField(max_length=20, blank=True, help_text="Patient Contact Number")
     patient_age = models.PositiveIntegerField(help_text="Age of the Patient")
@@ -272,6 +325,11 @@ class Appointment(models.Model):
         help_text="Current status of the appointment"
     )
     notes = models.TextField(blank=True, help_text="Clinical notes, referral details, or special requirements")
+
+    def save(self, *args, **kwargs):
+        if not self.patient_mrn:
+            self.patient_mrn = generate_mrn()
+        super().save(*args, **kwargs)
 
 # role = models.CharField(
 #     max_length=30,

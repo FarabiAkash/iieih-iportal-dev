@@ -13,6 +13,7 @@
 #     return render(request, 'surgeries_procedures/index.html')
 
 
+import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Q
@@ -26,7 +27,6 @@ def index(request):
     """
     # Handle quick surgery record creation from the OT console
     if request.method == 'POST' and 'add_surgery' in request.POST:
-        mrn = request.POST.get('patient_mrn', '').strip()
         name = request.POST.get('patient_name', '').strip()
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
@@ -39,57 +39,81 @@ def index(request):
         medical_history = request.POST.get('medical_history', '').strip() or 'No systemic comorbidities reported. Pre-op IOP normal.'
         notes = request.POST.get('notes', '').strip()
         
-        if mrn and name:
-            user = request.user if request.user.is_authenticated else None
-            # If guest or anonymous, link to first staff user
-            if not user or not user.is_authenticated:
-                from django.contrib.auth.models import User
-                user = User.objects.first()
-
-            SurgeryRecord.objects.create(
-                date=date.today(),
-                patient_mrn=mrn,
-                patient_name=name,
-                patient_age=int(age) if str(age).isdigit() else 45,
-                patient_gender=gender,
-                eye=eye,
-                surgery_type=surgery_type,
-                surgeon_name=surgeon_name,
-                ot_room=ot_room,
-                ot_slot=ot_slot,
-                outcome=outcome,
-                medical_history=medical_history,
-                notes=notes,
-                # created_by=user
-            )
-            messages.success(request, f"Surgery record for Patient {name} ({mrn}) logged successfully in {ot_room} ({ot_slot})!")
-            return redirect('surgeries_procedures:index')
+        if name:
+            # ── OT Slot Clash Detection ──────────────────────────────────────
+            clash = SurgeryRecord.objects.filter(ot_room=ot_room, ot_slot=ot_slot).first()
+            if clash:
+                messages.error(
+                    request,
+                    f"⚠ OT Slot Clash! {ot_room} / {ot_slot} is already booked for "
+                    f"{clash.patient_name} ({clash.patient_mrn}). "
+                    f"Please choose a different room or slot."
+                )
+                # Redirect back with flag so JS can re-open the modal and show the error
+                return redirect('/surgeries/?open_modal=add')
+            else:
+                record = SurgeryRecord.objects.create(
+                    date=date.today(),
+                    patient_name=name,
+                    patient_age=int(age) if str(age).isdigit() else 45,
+                    patient_gender=gender,
+                    eye=eye,
+                    surgery_type=surgery_type,
+                    surgeon_name=surgeon_name,
+                    ot_room=ot_room,
+                    ot_slot=ot_slot,
+                    outcome=outcome,
+                    medical_history=medical_history,
+                    notes=notes,
+                )
+                messages.success(request, f"Surgery record for {name} ({record.patient_mrn}) logged successfully in {ot_room} ({ot_slot})!")
+                return redirect('surgeries_procedures:index')
         else:
-            messages.error(request, "Please provide valid Patient MRN and Full Name.")
+            messages.error(request, "Please provide the Patient's Full Name.")
+            return redirect('/surgeries/?open_modal=add')
 
     # Handle surgery record edit
     elif request.method == 'POST' and 'edit_surgery' in request.POST:
         surgery_id = request.POST.get('surgery_id')
         try:
             surg = SurgeryRecord.objects.get(id=surgery_id)
-            surg.patient_mrn = request.POST.get('patient_mrn', surg.patient_mrn).strip()
-            surg.patient_name = request.POST.get('patient_name', surg.patient_name).strip()
-            age_val = request.POST.get('patient_age')
-            if age_val and str(age_val).isdigit():
-                surg.patient_age = int(age_val)
-            surg.patient_gender = request.POST.get('patient_gender', surg.patient_gender)
-            surg.eye = request.POST.get('eye', surg.eye)
-            surg.surgery_type = request.POST.get('surgery_type', surg.surgery_type)
-            surg.surgeon_name = request.POST.get('surgeon_name', surg.surgeon_name).strip()
-            surg.ot_room = request.POST.get('ot_room', surg.ot_room)
-            surg.ot_slot = request.POST.get('ot_slot', surg.ot_slot)
-            surg.outcome = request.POST.get('outcome', surg.outcome)
-            surg.medical_history = request.POST.get('medical_history', surg.medical_history).strip()
-            surg.notes = request.POST.get('notes', surg.notes).strip()
-            surg.save()
-            messages.success(request, f"Surgery record #{surg.id} for {surg.patient_name} ({surg.patient_mrn}) updated successfully.")
+            new_ot_room = request.POST.get('ot_room', surg.ot_room)
+            new_ot_slot = request.POST.get('ot_slot', surg.ot_slot)
+
+            # ── OT Slot Clash Detection (exclude current record) ─────────────
+            clash = SurgeryRecord.objects.filter(
+                ot_room=new_ot_room, ot_slot=new_ot_slot
+            ).exclude(pk=surg.pk).first()
+
+            if clash:
+                messages.error(
+                    request,
+                    f"⚠ OT Slot Clash! {new_ot_room} / {new_ot_slot} is already booked for "
+                    f"{clash.patient_name} ({clash.patient_mrn}). "
+                    f"Please choose a different room or slot."
+                )
+                # Redirect back with flag so JS can re-open the edit modal and show the error
+                return redirect('/surgeries/?open_modal=edit')
+            else:
+                # MRN is auto-generated and must never be overwritten
+                surg.patient_name = request.POST.get('patient_name', surg.patient_name).strip()
+                age_val = request.POST.get('patient_age')
+                if age_val and str(age_val).isdigit():
+                    surg.patient_age = int(age_val)
+                surg.patient_gender = request.POST.get('patient_gender', surg.patient_gender)
+                surg.eye = request.POST.get('eye', surg.eye)
+                surg.surgery_type = request.POST.get('surgery_type', surg.surgery_type)
+                surg.surgeon_name = request.POST.get('surgeon_name', surg.surgeon_name).strip()
+                surg.ot_room = new_ot_room
+                surg.ot_slot = new_ot_slot
+                surg.outcome = request.POST.get('outcome', surg.outcome)
+                surg.medical_history = request.POST.get('medical_history', surg.medical_history).strip()
+                surg.notes = request.POST.get('notes', surg.notes).strip()
+                surg.save()
+                messages.success(request, f"Surgery record #{surg.id} for {surg.patient_name} ({surg.patient_mrn}) updated successfully.")
         except SurgeryRecord.DoesNotExist:
             messages.error(request, "Surgery record not found.")
+            return redirect('/surgeries/?open_modal=edit')
         return redirect('surgeries_procedures:index')
 
     # Base query
@@ -132,6 +156,16 @@ def index(request):
     ot3_count = all_surgeries.filter(ot_room='OT-3').count()
     ot4_count = all_surgeries.filter(ot_room='OT-4').count()
 
+    # Booked OT slots dictionary for real-time frontend conflict detection
+    booked_ot_slots = {
+        f"{s.ot_room}||{s.ot_slot}": {
+            'id': s.id,
+            'patient_name': s.patient_name,
+            'patient_mrn': s.patient_mrn,
+        }
+        for s in all_surgeries if s.ot_room and s.ot_slot
+    }
+
     context = {
         'surgeries': surgeries,
         'total_count': total_count,
@@ -153,6 +187,7 @@ def index(request):
         'ot_slot_choices': SurgeryRecord.OT_Slot_Choices,
         'surgery_type_choices': SurgeryRecord.Surgery_Type_Choices,
         'outcome_choices': SurgeryRecord.Outcome_Choices,
+        'booked_ot_slots_json': json.dumps(booked_ot_slots),
     }
     return render(request, 'surgeries_procedures/index.html', context)
 

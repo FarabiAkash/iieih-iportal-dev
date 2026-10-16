@@ -22,12 +22,14 @@ class SurgeryRecordAdmin(admin.ModelAdmin):
     list_display = ('patient_mrn', 'patient_name', 'eye', 'surgery_type', 'surgeon_name', 'ot_room', 'date', 'outcome')
     search_fields = ('patient_mrn', 'patient_name', 'surgeon_name')
     list_filter = ('surgery_type', 'ot_room', 'outcome', 'eye', 'date')
+    readonly_fields = ('patient_mrn',)
 
 @admin.register(DiagnosisProcedure)
 class DiagnosisProcedureAdmin(admin.ModelAdmin):
     list_display = ('patient_mrn', 'procedure_name', 'eye', 'date', 'technician_name', 'patient_age', 'patient_gender', 'findings_summary')
     search_fields = ('patient_mrn', 'patient_name', 'technician_name')
     list_filter = ('procedure_name', 'eye', 'date')
+    readonly_fields = ('patient_mrn',)
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
@@ -36,3 +38,4 @@ class AppointmentAdmin(admin.ModelAdmin):
     list_filter = ('status', 'appointment_type', 'appointment_date')
     date_hierarchy = 'appointment_date'
     ordering = ['appointment_date', 'appointment_time_slot']
+    readonly_fields = ('patient_mrn',)
