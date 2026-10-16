@@ -26,7 +26,6 @@ def index(request):
     """
     # Handle quick surgery record creation from the OT console
     if request.method == 'POST' and 'add_surgery' in request.POST:
-        mrn = request.POST.get('patient_mrn', '').strip()
         name = request.POST.get('patient_name', '').strip()
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
@@ -39,16 +38,9 @@ def index(request):
         medical_history = request.POST.get('medical_history', '').strip() or 'No systemic comorbidities reported. Pre-op IOP normal.'
         notes = request.POST.get('notes', '').strip()
         
-        if mrn and name:
-            user = request.user if request.user.is_authenticated else None
-            # If guest or anonymous, link to first staff user
-            if not user or not user.is_authenticated:
-                from django.contrib.auth.models import User
-                user = User.objects.first()
-
-            SurgeryRecord.objects.create(
+        if name:
+            record = SurgeryRecord.objects.create(
                 date=date.today(),
-                patient_mrn=mrn,
                 patient_name=name,
                 patient_age=int(age) if str(age).isdigit() else 45,
                 patient_gender=gender,
@@ -60,19 +52,18 @@ def index(request):
                 outcome=outcome,
                 medical_history=medical_history,
                 notes=notes,
-                # created_by=user
             )
-            messages.success(request, f"Surgery record for Patient {name} ({mrn}) logged successfully in {ot_room} ({ot_slot})!")
+            messages.success(request, f"Surgery record for {name} ({record.patient_mrn}) logged successfully in {ot_room} ({ot_slot})!")
             return redirect('surgeries_procedures:index')
         else:
-            messages.error(request, "Please provide valid Patient MRN and Full Name.")
+            messages.error(request, "Please provide the Patient's Full Name.")
 
     # Handle surgery record edit
     elif request.method == 'POST' and 'edit_surgery' in request.POST:
         surgery_id = request.POST.get('surgery_id')
         try:
             surg = SurgeryRecord.objects.get(id=surgery_id)
-            surg.patient_mrn = request.POST.get('patient_mrn', surg.patient_mrn).strip()
+            # MRN is auto-generated and must never be overwritten
             surg.patient_name = request.POST.get('patient_name', surg.patient_name).strip()
             age_val = request.POST.get('patient_age')
             if age_val and str(age_val).isdigit():

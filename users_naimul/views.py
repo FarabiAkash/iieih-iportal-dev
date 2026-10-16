@@ -84,7 +84,6 @@ def profile_view(request):
 
     # ── POST: Apply for Surgery ──────────────────────────────────────────────
     if request.method == 'POST' and 'apply_surgery' in request.POST:
-        mrn = request.POST.get('patient_mrn', '').strip()
         name = request.POST.get('patient_name', '').strip()
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
@@ -97,10 +96,9 @@ def profile_view(request):
         medical_history = request.POST.get('medical_history', '').strip() or 'No systemic comorbidities reported. Pre-op IOP normal.'
         notes = request.POST.get('notes', '').strip()
 
-        if mrn and name:
-            SurgeryRecord.objects.create(
+        if name:
+            record = SurgeryRecord.objects.create(
                 date=date.today(),
-                patient_mrn=mrn,
                 patient_name=name,
                 patient_age=int(age) if str(age).isdigit() else 45,
                 patient_gender=gender,
@@ -114,15 +112,14 @@ def profile_view(request):
                 notes=notes,
                 # created_by=request.user,
             )
-            messages.success(request, f"Surgery application for {name} ({mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
+            messages.success(request, f"Surgery application for {name} ({record.patient_mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
         else:
-            messages.error(request, "Please provide a valid Patient MRN and Full Name.")
+            messages.error(request, "Please provide the Patient's Full Name.")
         redirect_tab = request.POST.get('active_tab', 'ot-matrix' if profile.is_staff_role else 'patients')
         return redirect(f"{request.path}?tab={redirect_tab}")
 
     # ── POST: Make Appointment ───────────────────────────────────────────────
     elif request.method == 'POST' and 'make_appointment' in request.POST:
-        mrn = request.POST.get('patient_mrn', '').strip()
         name = request.POST.get('patient_name', '').strip()
         phone = request.POST.get('patient_phone', '').strip()
         age = request.POST.get('patient_age', 0)
@@ -134,9 +131,8 @@ def profile_view(request):
         status = request.POST.get('status', 'Scheduled')
         notes = request.POST.get('notes', '').strip()
 
-        if mrn and name and appt_date:
-            Appointment.objects.create(
-                patient_mrn=mrn,
+        if name and appt_date:
+            appt = Appointment.objects.create(
                 patient_name=name,
                 patient_phone=phone,
                 patient_age=int(age) if str(age).isdigit() else 30,
@@ -149,9 +145,9 @@ def profile_view(request):
                 notes=notes,
                 # created_by=request.user,
             )
-            messages.success(request, f"Appointment for {name} ({mrn}) scheduled on {appt_date} at {time_slot}.")
+            messages.success(request, f"Appointment for {name} ({appt.patient_mrn}) scheduled on {appt_date} at {time_slot}.")
         else:
-            messages.error(request, "Please provide Patient MRN, Full Name, and Appointment Date.")
+            messages.error(request, "Please provide Patient Full Name and Appointment Date.")
         redirect_tab = request.POST.get('active_tab', 'appointments')
         return redirect(f"{request.path}?tab={redirect_tab}")
 

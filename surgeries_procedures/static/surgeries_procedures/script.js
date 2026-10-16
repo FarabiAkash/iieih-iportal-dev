@@ -10,7 +10,7 @@ function closeNewSurgeryModal() {
 // --- Modal: Edit Surgery ------------------------------------------------------
 function openEditSurgeryModal(id, mrn, name, age, gender, eye, type, surgeon, ot_room, ot_slot, outcome, med_history, notes) {
     document.getElementById('edit_surgery_id').value = id;
-    document.getElementById('edit_patient_mrn').value = mrn;
+    document.getElementById('edit_patient_mrn_text').textContent = mrn;
     document.getElementById('edit_patient_name').value = name;
     document.getElementById('edit_patient_age').value = age;
     document.getElementById('edit_patient_gender').value = gender;

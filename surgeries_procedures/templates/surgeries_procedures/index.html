@@ -328,9 +328,10 @@
                 <div class="modal-body">
                     <div class="form-grid-2">
                         <div>
-                            <label class="form-label">Patient MRN *</label>
-                            <input type="text" name="patient_mrn" class="form-input" placeholder="e.g. MRN-1028"
-                                required>
+                            <label class="form-label">Patient MRN</label>
+                            <div class="form-input" style="background: rgba(255,255,255,0.05); color: var(--primary-light, #38bdf8); font-weight: 600; cursor: default; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-tag"></i> Auto-assigned on save (P26XXXXX)
+                            </div>
                         </div>
                         <div>
                             <label class="form-label">Patient Full Name *</label>
@@ -446,8 +447,10 @@
                 <div class="modal-body">
                     <div class="form-grid-2">
                         <div>
-                            <label class="form-label">Patient MRN *</label>
-                            <input type="text" id="edit_patient_mrn" name="patient_mrn" class="form-input" required>
+                            <label class="form-label">Patient MRN</label>
+                            <div class="form-input" id="edit_patient_mrn_display" style="background: rgba(255,255,255,0.05); color: var(--primary-light, #38bdf8); font-weight: 600; cursor: default; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-tag"></i> <span id="edit_patient_mrn_text"></span>
+                            </div>
                         </div>
                         <div>
                             <label class="form-label">Patient Full Name *</label>
