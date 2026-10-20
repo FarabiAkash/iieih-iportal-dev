@@ -21,10 +21,10 @@ from .models import NaimulProfile, SurgeryRecord, DiagnosisProcedure, Appointmen
 def login_view(request):
     """
     Surgical & Clinical Staff Portal Login View.
-    Validates credentials and redirects authenticated users to /surgeries/.
+    Validates credentials and redirects authenticated users directly to profile patient details.
     """
     if request.user.is_authenticated:
-        return redirect('/surgeries/')
+        return redirect('/naimul/profile/?tab=patients')
 
     error_message = None
     if request.method == 'POST':
@@ -43,14 +43,16 @@ def login_view(request):
             # Ensure profile exists
             profile, _ = NaimulProfile.objects.get_or_create(user=user)
             
-            if profile.Role_Choices:
+            if profile.is_staff_role:
                 welcome_msg = f"Welcome, {user.get_full_name() or user.username}! OT Coordinator Console is ready."
             else:
                 welcome_msg = f"Welcome back, Dr. {user.get_full_name() or user.username}! Operation Theatre roster loaded."
 
             messages.success(request, welcome_msg)
             
-            next_url = request.GET.get('next') or request.POST.get('next') or '/surgeries/'
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if not next_url or next_url in ['/surgeries/', '/naimul/profile/']:
+                return redirect('/naimul/profile/?tab=patients')
             return redirect(next_url)
         else:
             error_message = "Invalid credentials or access token. Please check your ID and password."
@@ -246,7 +248,7 @@ def profile_view(request):
     # Search Query Handling
     search_mrn = request.GET.get('patient_mrn', '').strip()
     general_query = request.GET.get('q', '').strip()
-    active_tab = request.GET.get('tab', 'patients' if not profile.Role_Choices else 'ot-matrix')
+    active_tab = request.GET.get('tab', 'patients')
 
     is_cross_doctor_lookup = False
     searched_patient_found = None

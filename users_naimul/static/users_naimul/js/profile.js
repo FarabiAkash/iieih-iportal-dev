@@ -159,19 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     setAppTheme(currentTheme);
 
-    // Auto-activate tab from query param ?tab=
+    // Auto-activate tab from query param ?tab= (defaults to patients)
     const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get('tab');
-    if (tabParam) {
-        switchClinicalTab(tabParam);
-    } else {
-        const activeTabBtn = document.querySelector('.clinical-tabs .tab-btn.active');
-        if (activeTabBtn) {
-            try {
-                activeTabBtn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-            } catch (e) {}
-        }
-    }
+    const tabParam = urlParams.get('tab') || 'patients';
+    switchClinicalTab(tabParam);
     // Auto-dismiss alerts after 5 seconds
     initProfileAlerts();
 });

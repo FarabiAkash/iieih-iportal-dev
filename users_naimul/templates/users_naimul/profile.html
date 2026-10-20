@@ -91,7 +91,7 @@
                     {% if profile.is_staff_role %}
                     <!-- STAFF TABS -->
                     <button type="button"
-                        class="tab-btn {% if active_tab == 'ot-matrix' or not active_tab %}active{% endif %}"
+                        class="tab-btn {% if active_tab == 'ot-matrix' %}active{% endif %}"
                         onclick="switchClinicalTab('ot-matrix')">
                         <i class="fa-solid fa-table-cells"></i> <span>OT Slot Details</span>
                     </button>
@@ -107,7 +107,7 @@
                         <i class="fa-solid fa-calendar-plus"></i> <span>Appointments ({{ appointments.count }})</span>
                     </button>
                     {% endif %}
-                    <button type="button" class="tab-btn {% if active_tab == 'patients' %}active{% endif %}"
+                    <button type="button" class="tab-btn {% if active_tab == 'patients' or not active_tab %}active{% endif %}"
                         onclick="switchClinicalTab('patients')">
                         <i class="fa-solid fa-hospital-user"></i> <span>Patient Roster ({{ all_surgeries.count }})</span>
                     </button>
@@ -159,7 +159,7 @@
                 </div>
 
                 <!-- TAB: OT MATRIX (Staff) -->
-                <div class="tab-pane {% if active_tab == 'ot-matrix' or not active_tab and profile.is_staff_role %}active{% endif %}"
+                <div class="tab-pane {% if active_tab == 'ot-matrix' %}active{% endif %}"
                     id="pane-ot-matrix">
                     <div class="card">
                         <div class="card-header">
@@ -600,7 +600,7 @@
                 </div>
 
                 <!-- TAB 2: PATIENT DETAILS VIEW (Isolated with Cross-Doctor MRN Lookup) -->
-                <div class="tab-pane {% if active_tab == 'patients' or not active_tab and not profile.is_staff_role %}active{% endif %}"
+                <div class="tab-pane {% if active_tab == 'patients' or not active_tab %}active{% endif %}"
                     id="pane-patients">
                     <div class="card">
                         <div class="card-header">
@@ -626,7 +626,7 @@
                                     style="color: var(--primary-light); font-size: 1.15rem;"></i>
                                 <span>
                                     <strong>Surgeon Isolation Active:</strong> By default, this roster displays
-                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:"Naimul Hasan" }}</strong>. Other doctors' patients remain protected.
+                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:user.username|title }}</strong>. Other doctors' patients remain protected.
                                 </span>
                             </div>
                             <span style="font-size: 0.78rem; color: var(--success); font-weight: 600; 
@@ -1691,14 +1691,10 @@
                 </script>
                 <!-- External JavaScript -->
                 <script src="{% static 'users_naimul/js/profile.js' %}"></script>
-                <!-- Static asset reference: users_naimul/profile.js -->
 
             </div> <!-- /.clinical-main-content -->
-
         </div> <!-- /.profile-grid -->
-
     </div> <!-- /.container -->
-
 </body>
 
 </html>

@@ -91,3 +91,19 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         # Verify Day switch button is active by default
         self.assertIn('class="theme-switch-btn active" data-theme-val="light"', content)
 
+    def test_login_redirects_directly_to_profile(self):
+        response = self.client.post(reverse('users_naimul:login'), {
+            'username': 'naimul',
+            'password': 'pass@123'
+        })
+        self.assertRedirects(response, f"{reverse('users_naimul:profile')}?tab=patients")
+
+    def test_profile_defaults_to_patients_tab(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_tab'], 'patients')
+        content = response.content.decode('utf-8')
+        self.assertIn('id="pane-patients"', content)
+        self.assertTrue('active' in content.split('id="pane-patients"')[0].split('<div')[-1])
+
