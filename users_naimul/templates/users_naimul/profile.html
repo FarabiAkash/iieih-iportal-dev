@@ -54,7 +54,7 @@
                 </button>
             </div>
 
-            <a href="/surgeries/" class="nav-btn nav-btn-primary">
+            <a href="/surgeries/" class="nav-btn nav-btn-primary" style="display: none;">
                 <i class="fa-solid fa-chart-line"></i> <span>Full OT Surgery Log</span>
             </a>
             <a href="{% url 'users_naimul:logout' %}" class="nav-btn nav-btn-danger">
@@ -343,14 +343,18 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label" for="surg_surgeon">Operating Surgeon</label>
-                                    <input type="text" id="surg_surgeon" name="surgeon_name" class="form-control"
-                                        value="Dr. {{ doctor_display_name }}">
+                                    <select id="surg_surgeon" name="surgeon_name" class="form-control" required
+                                        onchange="autoPopulateDoctorOtRoom('surg')">
+                                        {% for doc in available_doctors %}
+                                        <option value="{{ doc }}" {% if doctor_kw_lower in doc|lower %}selected{% endif %}>{{ doc }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_room">OT Suite Room</label>
                                     <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg')">
                                         {% for val, label in ot_room_choices_surgery %}
-                                        <option value="{{ val }}">{{ label }}</option>
+                                        <option value="{{ val }}" {% if profile.assigned_ot_room == val %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -478,8 +482,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label" for="appt_doctor">Assigned Consultant / Doctor</label>
-                                    <input type="text" id="appt_doctor" name="doctor_name" class="form-control"
-                                        value="Dr. {{ doctor_display_name }}">
+                                    <select id="appt_doctor" name="doctor_name" class="form-control" required>
+                                        {% for doc in available_doctors %}
+                                        <option value="{{ doc }}" {% if doctor_kw_lower in doc|lower %}selected{% endif %}>{{ doc }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="appt_date">Appointment Date <span
@@ -647,7 +654,7 @@
                             <div class="mrn-search-container">
                                 <input type="text" name="patient_mrn" value="{{ search_mrn }}" class="mrn-search-input"
                                     id="patientSearchInput"
-                                    placeholder="Enter Patient MRN (e.g. P2600001, MRN-1022) or Patient Name to search...">
+                                    placeholder="Enter Patient MRN (e.g. P26XXXXX) or Patient Name to search...">
                                 <button type="submit" class="mrn-search-btn" id="patientSearchBtn">
                                     <i class="fa-solid fa-magnifying-glass"></i> Search
                                 </button>
@@ -1618,8 +1625,12 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="form-label" for="edit_surgeon_name">Operating Surgeon</label>
-                                        <input type="text" id="edit_surgeon_name" name="surgeon_name"
-                                            class="form-control" required>
+                                        <select id="edit_surgeon_name" name="surgeon_name" class="form-control" required
+                                            onchange="autoPopulateDoctorOtRoom('edit')">
+                                            {% for doc in available_doctors %}
+                                            <option value="{{ doc }}">{{ doc }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="edit_ot_room">OT Suite</label>
@@ -1700,6 +1711,33 @@
                     // ── OT Slot Clash Data ────────────────────────────────────────────
                     // Map: "OT-1||Slot 1 (08:30 - 10:00 AM)" -> {patient_name, patient_mrn, id}
                     const bookedOtSlots = {{ booked_ot_slots_json|safe }};
+
+                    // ── Doctor → Assigned OT Room Map ─────────────────────────────────
+                    // Fetched from NaimulProfile.assigned_ot_room via database relationship.
+                    // Enables instant OT room auto-population when a doctor is selected.
+                    const doctorOtRoomMap = {{ doctor_ot_room_map_json|safe }};
+
+                    /**
+                     * Auto-populate the OT room dropdown based on the selected doctor.
+                     * Uses the database-derived doctorOtRoomMap. If the doctor has no
+                     * assigned OT room, the field is left unchanged (graceful handling).
+                     * @param {string} prefix - 'surg' for Apply form, 'edit' for Edit modal
+                     */
+                    function autoPopulateDoctorOtRoom(prefix) {
+                        const surgeonEl = document.getElementById(prefix === 'surg' ? 'surg_surgeon' : 'edit_surgeon_name');
+                        const roomEl    = document.getElementById(prefix === 'surg' ? 'surg_ot_room' : 'edit_ot_room');
+                        if (!surgeonEl || !roomEl) return;
+                        const selectedDoctor = surgeonEl.value;
+                        const assignedRoom = doctorOtRoomMap[selectedDoctor];
+                        if (assignedRoom) {
+                            roomEl.value = assignedRoom;
+                            // Trigger clash check after auto-population so warnings update
+                            if (typeof checkOtClash === 'function') {
+                                checkOtClash(prefix);
+                            }
+                        }
+                        // If no assigned room found, leave the field as-is (graceful)
+                    }
 
                     // Current surgery ID being edited (set by openEditSurgeryModal)
                     let currentEditSurgeryId = null;

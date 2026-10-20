@@ -141,7 +141,22 @@ function openEditSurgeryModal(id, mrn, name, age, gender, eye, type, surgeon, ot
     document.getElementById('edit_patient_gender').value = gender;
     document.getElementById('edit_eye').value = eye;
     document.getElementById('edit_surgery_type').value = type;
-    document.getElementById('edit_surgeon_name').value = surgeon;
+    const editSurgeonEl = document.getElementById('edit_surgeon_name');
+    if (editSurgeonEl) {
+        editSurgeonEl.value = surgeon;
+        if (!editSurgeonEl.value && surgeon) {
+            const altSurgeon = surgeon.startsWith('Dr. ') ? surgeon.replace(/^Dr\.\s*/, '') : `Dr. ${surgeon}`;
+            editSurgeonEl.value = altSurgeon;
+            if (!editSurgeonEl.value) {
+                for (let opt of editSurgeonEl.options) {
+                    if (opt.value.toLowerCase().includes(surgeon.toLowerCase()) || surgeon.toLowerCase().includes(opt.value.toLowerCase())) {
+                        editSurgeonEl.value = opt.value;
+                        break;
+                    }
+                }
+            }
+        }
+    }
     document.getElementById('edit_ot_room').value = ot_room;
     document.getElementById('edit_ot_slot').value = ot_slot;
     document.getElementById('edit_outcome').value = outcome;

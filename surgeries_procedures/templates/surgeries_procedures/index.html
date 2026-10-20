@@ -360,7 +360,7 @@
                         <div>
                             <label class="form-label">Gender</label>
                             <select name="patient_gender" class="form-input">
-                                <option value="">Select Gender</option>
+                                <option value="Select Gender" disabled selected>Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
@@ -372,7 +372,7 @@
                         <div>
                             <label class="form-label">Eye Operative Side *</label>
                             <select name="eye" class="form-input" required>
-                                <option value="Select Eye">Select Eye</option>
+                                <option value="Select Eye" disabled selected>Select Eye</option>
                                 <option value="RE">Right Eye (OD)</option>
                                 <option value="LE">Left Eye (OS)</option>
                                 <option value="BE">Both Eyes (OU)</option>
@@ -381,6 +381,7 @@
                         <div>
                             <label class="form-label">Surgery Category</label>
                             <select name="surgery_type" class="form-input">
+                                <option value="Select Category" disabled selected>Select Category</option>
                                 {% for val, label in surgery_type_choices %}
                                 <option value="{{ val }}">{{ label }}</option>
                                 {% endfor %}
@@ -391,12 +392,18 @@
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Lead Operating Surgeon</label>
-                            <input type="text" name="surgeon_name" class="form-input" placeholder="Doctor Name" required>
+                            <select id="add_surgeon_name" name="surgeon_name" class="form-input" required
+                                onchange="autoPopulateDoctorOtRoom('add')">
+                                <option value="Select Doctor" disabled selected>Select Doctor</option>
+                                {% for doc in available_doctors %}
+                                <option value="{{ doc }}" {% if request.user.is_authenticated and request.user.username.lower in doc|lower %}selected{% endif %}>{{ doc }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div>
                             <label class="form-label">OT Suite Room</label>
                             <select id="add_ot_room" name="ot_room" class="form-input" onchange="checkSurgeriesOtClash('add')">
-                                <option value="Select OT Room">Select OT Room</option>
+                                <option value="Select OT Room" disabled selected>Select OT Room</option>
                                 <option value="OT-1">OT Room 1 (General / Phaco)</option>
                                 <option value="OT-2">OT Room 2 (Retina OT)</option>
                                 <option value="OT-3">OT Room 3 (Laser OT)</option>
@@ -409,6 +416,7 @@
                         <div>
                             <label class="form-label">Scheduled OT Slot *</label>
                             <select id="add_ot_slot" name="ot_slot" class="form-input" onchange="checkSurgeriesOtClash('add')">
+                                <option value="Select OT Slot" disabled selected>Select OT Slot</option>
                                 {% for val, label in ot_slot_choices %}
                                 <option value="{{ val }}">{{ label }}</option>
                                 {% endfor %}
@@ -422,7 +430,7 @@
                         <div>
                             <label class="form-label">Surgical Outcome *</label>
                             <select name="outcome" class="form-input" required>
-                                <option value="Select Outcome">Select Outcome</option>
+                                <option value="Select Outcome" disabled selected>Select Outcome</option>
                                 <option value="Successful">Successful</option>
                                 <option value="Under Observation">Under Observation</option>
                                 <option value="Complications">Complications</option>
@@ -523,7 +531,12 @@
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Lead Operating Surgeon</label>
-                            <input type="text" id="edit_surgeon_name" name="surgeon_name" class="form-input" required>
+                            <select id="edit_surgeon_name" name="surgeon_name" class="form-input" required
+                                onchange="autoPopulateDoctorOtRoom('edit')">
+                                {% for doc in available_doctors %}
+                                <option value="{{ doc }}">{{ doc }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div>
                             <label class="form-label">OT Suite Room</label>
@@ -639,6 +652,33 @@
     <!-- Booked OT Slots Data injected from Django for real-time clash prevention -->
     <script>
         const bookedOtSlots = {{ booked_ot_slots_json|default:'{}'|safe }};
+
+        // ── Doctor → Assigned OT Room Map ─────────────────────────────────────
+        // Fetched from NaimulProfile.assigned_ot_room (database relationship).
+        // Enables instant OT room auto-population on doctor selection.
+        const doctorOtRoomMap = {{ doctor_ot_room_map_json|default:'{}'|safe }};
+
+        /**
+         * Auto-populate the OT room dropdown based on the selected doctor.
+         * Uses the database-derived doctorOtRoomMap. If the doctor has no
+         * assigned OT room, the field is left unchanged (graceful handling).
+         * @param {string} mode - 'add' for Add modal, 'edit' for Edit modal
+         */
+        function autoPopulateDoctorOtRoom(mode) {
+            const surgeonEl = document.getElementById(mode === 'add' ? 'add_surgeon_name' : 'edit_surgeon_name');
+            const roomEl    = document.getElementById(mode === 'add' ? 'add_ot_room'     : 'edit_ot_room');
+            if (!surgeonEl || !roomEl) return;
+            const selectedDoctor = surgeonEl.value;
+            const assignedRoom = doctorOtRoomMap[selectedDoctor];
+            if (assignedRoom) {
+                roomEl.value = assignedRoom;
+                // Trigger slot availability refresh after auto-population
+                if (typeof checkSurgeriesOtClash === 'function') {
+                    checkSurgeriesOtClash(mode);
+                }
+            }
+            // If no assigned room found, leave the field as-is (graceful)
+        }
     </script>
 
     <!-- External JavaScript -->
@@ -667,6 +707,13 @@
                 // Clean the URL so the modal doesn't re-open on manual refresh
                 history.replaceState(null, '', '/surgeries/');
             }
+
+            // Auto-populate OT room for any pre-selected doctor on page load
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof autoPopulateDoctorOtRoom === 'function') {
+                    autoPopulateDoctorOtRoom('add');
+                }
+            });
         })();
     </script>
 

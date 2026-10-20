@@ -11,12 +11,21 @@
 
 import json
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from datetime import date
-from .models import NaimulProfile, SurgeryRecord, DiagnosisProcedure, Appointment
+from .models import (
+    NaimulProfile,
+    SurgeryRecord,
+    DiagnosisProcedure,
+    Appointment,
+    get_available_doctors,
+    get_doctor_assigned_ot_room,
+    get_doctor_ot_room_map,
+)
 
 def login_view(request):
     """
@@ -397,6 +406,12 @@ def profile_view(request):
 
     # Precompute doctor display name for form defaults and template use
     doctor_display_name = _u.get_full_name() or _u.username
+    available_doctors = get_available_doctors()
+    if doctor_display_name:
+        current_doc = f"Dr. {doctor_display_name}" if not doctor_display_name.lower().startswith(('dr.', 'prof.')) else doctor_display_name
+        if not any(doctor_kw.lower() in d.lower() for d in available_doctors) and current_doc not in available_doctors:
+            available_doctors.append(current_doc)
+            available_doctors.sort()
 
     context = {
         'profile': profile,
@@ -437,6 +452,10 @@ def profile_view(request):
         'appointment_time_slot_choices': Appointment.Time_Slot_Choices,
         'appointment_status_choices': Appointment.Status_Choices,
         'booked_ot_slots_json': json.dumps(booked_ot_slots),
+        # Available doctors for patient registration dropdown
+        'available_doctors': available_doctors,
+        # Doctor → assigned OT room map (JSON for frontend auto-populate)
+        'doctor_ot_room_map_json': json.dumps(get_doctor_ot_room_map()),
         # Doctor identity helpers for template-level display logic
         'doctor_kw': doctor_kw,
         'doctor_kw_lower': doctor_kw.lower(),
