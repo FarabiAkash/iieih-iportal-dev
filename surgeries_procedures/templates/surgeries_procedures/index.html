@@ -79,12 +79,14 @@
         <!-- Django Toast Notifications -->
         {% if messages %}
         {% for message in messages %}
-        <div class="alert-toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+        <div class="alert-toast {% if message.tags == 'error' %}error{% else %}success{% endif %}" role="alert">
             <span><i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"
                     style="margin-right: 8px;"></i> {{ message }}</span>
-            <button type="button" onclick="this.parentElement.remove()"
-                style="background:none;border:none;color:inherit;cursor:pointer;"><i
+            <button type="button" onclick="dismissToast(this.closest('.alert-toast'))"
+                aria-label="Dismiss alert"
+                style="background:none;border:none;color:inherit;cursor:pointer;padding:4px 8px;font-size:1rem;line-height:1;"><i
                     class="fa-solid fa-xmark"></i></button>
+            <div class="toast-progress"></div>
         </div>
         {% endfor %}
         {% endif %}

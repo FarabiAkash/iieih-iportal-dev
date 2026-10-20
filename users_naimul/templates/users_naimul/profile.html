@@ -69,13 +69,15 @@
         <!-- Alerts -->
         {% if messages %}
         {% for message in messages %}
-        <div style="background: rgba(16, 185, 129, 0.15); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            color: #10b981; padding: 12px 18px; 
-            border-radius: 12px; margin-bottom: 20px; 
-            display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>{{ message }}</span>
+        <div class="profile-alert" role="alert">
+            <div class="profile-alert-content">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="profile-alert-close" onclick="dismissProfileAlert(this.closest('.profile-alert'))" aria-label="Dismiss alert">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="profile-alert-progress"></div>
         </div>
         {% endfor %}
         {% endif %}

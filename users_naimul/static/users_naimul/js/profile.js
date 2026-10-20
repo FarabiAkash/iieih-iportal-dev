@@ -172,4 +172,31 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {}
         }
     }
+    // Auto-dismiss alerts after 5 seconds
+    initProfileAlerts();
 });
+
+// ─── Auto-Dismiss Profile Alerts (5 seconds) ─────────────────────────────────
+function dismissProfileAlert(alertEl) {
+    if (!alertEl || alertEl.classList.contains('fade-out')) return;
+    alertEl.classList.add('fade-out');
+    setTimeout(() => {
+        if (alertEl && alertEl.parentNode) {
+            alertEl.remove();
+        }
+    }, 400);
+}
+window.dismissProfileAlert = dismissProfileAlert;
+
+function initProfileAlerts() {
+    const alerts = document.querySelectorAll('.profile-alert');
+    alerts.forEach(alertEl => {
+        setTimeout(() => {
+            dismissProfileAlert(alertEl);
+        }, 5000);
+    });
+}
+
+if (document.readyState !== 'loading') {
+    initProfileAlerts();
+}

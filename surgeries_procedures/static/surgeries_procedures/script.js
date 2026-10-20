@@ -180,6 +180,27 @@ window.onclick = function (event) {
     }
 };
 
+// --- Auto-dismiss alert toasts after 5 seconds --------------------------------
+function dismissToast(toastEl) {
+    if (!toastEl || toastEl.classList.contains('fade-out')) return;
+    toastEl.classList.add('fade-out');
+    setTimeout(() => {
+        if (toastEl && toastEl.parentNode) {
+            toastEl.remove();
+        }
+    }, 400);
+}
+window.dismissToast = dismissToast;
+
+function initAlertToasts() {
+    const toasts = document.querySelectorAll('.alert-toast');
+    toasts.forEach(toast => {
+        setTimeout(() => {
+            dismissToast(toast);
+        }, 3000);
+    });
+}
+
 // --- Day / Night Theme Controller --------------------------------------------
 function setAppTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
@@ -201,4 +222,9 @@ function setAppTheme(theme) {
 document.addEventListener('DOMContentLoaded', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     setAppTheme(currentTheme);
+    initAlertToasts();
 });
+
+if (document.readyState !== 'loading') {
+    initAlertToasts();
+}

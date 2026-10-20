@@ -465,15 +465,59 @@
 
         /* Alerts and Notification */
         .alert-box {
+            position: relative;
+            overflow: hidden;
             padding: 12px 16px;
             border-radius: var(--radius-md);
             margin-bottom: 20px;
             font-size: 0.84rem;
             font-weight: 600;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
+            justify-content: space-between;
             gap: 10px;
             animation: fadeIn 0.3s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+            max-height: 120px;
+        }
+
+        .alert-box .alert-message-text {
+            flex: 1;
+        }
+
+        .alert-box.fade-out {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            border: none;
+            pointer-events: none;
+        }
+
+        .alert-close-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .alert-close-btn:hover {
+            opacity: 1;
+        }
+
+        .alert-box .alert-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            animation: alertProgress 5s linear forwards;
         }
 
         .alert-error {
@@ -482,16 +526,28 @@
             color: #ef4444;
         }
 
+        .alert-error .alert-progress {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
         .alert-info {
             background: rgba(2, 132, 199, 0.12);
             border: 1px solid rgba(2, 132, 199, 0.3);
             color: #0284c7;
         }
 
+        .alert-info .alert-progress {
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+        }
+
         .alert-success {
             background: rgba(16, 185, 129, 0.12);
             border: 1px solid rgba(16, 185, 129, 0.3);
             color: #10b981;
+        }
+
+        .alert-success .alert-progress {
+            background: linear-gradient(90deg, #10b981, #34d399);
         }
 
         @keyframes fadeIn {
@@ -503,6 +559,16 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        @keyframes alertProgress {
+            from {
+                width: 100%;
+            }
+
+            to {
+                width: 0%;
             }
         }
 

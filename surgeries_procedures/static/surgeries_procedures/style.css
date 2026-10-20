@@ -216,6 +216,8 @@ body {
 
 /* Flash Messages */
 .alert-toast {
+    position: relative;
+    overflow: hidden;
     padding: 14px 20px;
     border-radius: 12px;
     margin-bottom: 24px;
@@ -224,6 +226,28 @@ body {
     justify-content: space-between;
     font-size: 0.9rem;
     animation: slideDown 0.3s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+    max-height: 120px;
+}
+
+.alert-toast.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border: none;
+    pointer-events: none;
+}
+
+.alert-toast .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    animation: toastProgress 5s linear forwards;
 }
 
 .alert-toast.success {
@@ -232,10 +256,18 @@ body {
     color: #6ee7b7;
 }
 
+.alert-toast.success .toast-progress {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
 .alert-toast.error {
     background: rgba(239, 68, 68, 0.15);
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #fca5a5;
+}
+
+.alert-toast.error .toast-progress {
+    background: linear-gradient(90deg, #ef4444, #f87171);
 }
 
 @keyframes slideDown {
@@ -246,6 +278,15 @@ body {
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+@keyframes toastProgress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
     }
 }
 

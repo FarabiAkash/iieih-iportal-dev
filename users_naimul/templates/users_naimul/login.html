@@ -158,7 +158,11 @@
                     role="alert">
                     <i
                         class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% elif message.tags == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %}"></i>
-                    <div>{{ message }}</div>
+                    <div class="alert-message-text">{{ message }}</div>
+                    <button type="button" class="alert-close-btn" onclick="dismissAlertBox(this.closest('.alert-box'))" aria-label="Dismiss alert">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="alert-progress"></div>
                 </div>
                 {% endfor %}
                 {% endif %}
@@ -166,7 +170,11 @@
                 {% if error_message %}
                 <div class="alert-box alert-error" role="alert">
                     <i class="fa-solid fa-circle-exclamation"></i>
-                    <div>{{ error_message }}</div>
+                    <div class="alert-message-text">{{ error_message }}</div>
+                    <button type="button" class="alert-close-btn" onclick="dismissAlertBox(this.closest('.alert-box'))" aria-label="Dismiss alert">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="alert-progress"></div>
                 </div>
                 {% endif %}
 
