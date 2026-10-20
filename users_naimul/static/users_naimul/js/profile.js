@@ -108,15 +108,60 @@ function closeEditSurgeryModal() {
     document.getElementById('editSurgeryModal').style.display = 'none';
 }
 
+// ─── Search Error & Patient Not Found Modal Controller ───────────────────────
+function openSearchErrorModal(title, headline, desc) {
+    const modal = document.getElementById('searchErrorModal');
+    if (!modal) return;
+    if (title) {
+        const titleEl = document.getElementById('searchAlertTitle');
+        if (titleEl) titleEl.innerText = title;
+    }
+    if (headline) {
+        const headlineEl = document.getElementById('searchAlertPrimary');
+        if (headlineEl) headlineEl.innerHTML = '<strong>' + headline + '</strong>';
+    }
+    if (desc) {
+        const descEl = document.getElementById('searchAlertDesc');
+        if (descEl) descEl.innerHTML = desc;
+    }
+    modal.style.display = 'flex';
+}
+window.openSearchErrorModal = openSearchErrorModal;
+
+function closeSearchErrorModal() {
+    const modal = document.getElementById('searchErrorModal');
+    if (modal) modal.style.display = 'none';
+    const input = document.getElementById('patientSearchInput') || document.querySelector('.mrn-search-input');
+    if (input) {
+        try {
+            input.focus();
+            input.select();
+        } catch (e) {}
+    }
+}
+window.closeSearchErrorModal = closeSearchErrorModal;
+
 // ─── Close on clicking outside modal ─────────────────────────────────────────
 window.onclick = function (e) {
     const dossier = document.getElementById('dossierModal');
     const ocular = document.getElementById('ocularReportModal');
     const editModal = document.getElementById('editSurgeryModal');
+    const searchModal = document.getElementById('searchErrorModal');
     if (e.target === dossier) closePatientDossier();
     if (e.target === ocular) closeOcularReport();
     if (e.target === editModal) closeEditSurgeryModal();
+    if (e.target === searchModal) closeSearchErrorModal();
 };
+
+// Close modals on Escape key
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        closeSearchErrorModal();
+        closePatientDossier();
+        closeOcularReport();
+        closeEditSurgeryModal();
+    }
+});
 
 // ─── Mobile Nav Hamburger Toggle ─────────────────────────────────────────────
 function toggleMobileNav() {
@@ -164,12 +209,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabParam = urlParams.get('tab');
     if (tabParam) {
         switchClinicalTab(tabParam);
-    } else {
-        const activeTabBtn = document.querySelector('.clinical-tabs .tab-btn.active');
-        if (activeTabBtn) {
-            try {
-                activeTabBtn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-            } catch (e) {}
-        }
+    }
+    // Auto-dismiss alerts after 5 seconds
+    initProfileAlerts();
+
+    // Client-side empty search guard
+    const searchForm = document.getElementById('patientSearchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function (e) {
+            const input = document.getElementById('patientSearchInput');
+            const query = input ? input.value.trim() : '';
+            if (!query) {
+                e.preventDefault();
+                openSearchErrorModal(
+                    "Search Input Required",
+                    "Not a valid MRN number or not such patient found.",
+                    "Please enter a patient MRN number (e.g. P2600001, MRN-1022) or patient name to search."
+                );
+            }
+        });
     }
 });
+
+// ─── Auto-Dismiss Profile Alerts (5 seconds) ─────────────────────────────────
+function dismissProfileAlert(alertEl) {
+    if (!alertEl || alertEl.classList.contains('fade-out')) return;
+    alertEl.classList.add('fade-out');
+    setTimeout(() => {
+        if (alertEl && alertEl.parentNode) {
+            alertEl.remove();
+        }
+    }, 400);
+}
+window.dismissProfileAlert = dismissProfileAlert;
+
+function initProfileAlerts() {
+    const alerts = document.querySelectorAll('.profile-alert');
+    alerts.forEach(alertEl => {
+        setTimeout(() => {
+            dismissProfileAlert(alertEl);
+        }, 5000);
+    });
+}
+
+if (document.readyState !== 'loading') {
+    initProfileAlerts();
+}

@@ -131,12 +131,28 @@ def index(request):
         surgeries = surgeries.filter(surgery_type__icontains=type_filter)
     if outcome_filter:
         surgeries = surgeries.filter(outcome=outcome_filter)
+    search_error = False
+    search_error_title = ""
+    search_error_headline = ""
+    search_error_desc = ""
+
     if search_query:
         surgeries = surgeries.filter(
             Q(patient_mrn__icontains=search_query) |
             Q(patient_name__icontains=search_query) |
             Q(surgeon_name__icontains=search_query)
         )
+        if not surgeries.exists():
+            search_error = True
+            import re
+            is_mrn_like = bool(re.search(r'mrn|\bp\d|\b\d{3,}', search_query, re.IGNORECASE))
+            search_error_headline = "Not a valid MRN number or not such patient found."
+            if is_mrn_like:
+                search_error_title = "Not a Valid MRN Number"
+                search_error_desc = f"\"{search_query}\" is not a valid MRN number or no patient was found in the surgical register."
+            else:
+                search_error_title = "No Such Patient Found"
+                search_error_desc = f"No surgical records found matching \"{search_query}\"."
 
     # Statistical Aggregates
     all_surgeries = SurgeryRecord.objects.all()
@@ -183,6 +199,10 @@ def index(request):
         'selected_type': type_filter,
         'selected_outcome': outcome_filter,
         'search_query': search_query,
+        'search_error': search_error,
+        'search_error_title': search_error_title,
+        'search_error_headline': search_error_headline,
+        'search_error_desc': search_error_desc,
         'ot_room_choices': SurgeryRecord.OT_Room_Choices,
         'ot_slot_choices': SurgeryRecord.OT_Slot_Choices,
         'surgery_type_choices': SurgeryRecord.Surgery_Type_Choices,

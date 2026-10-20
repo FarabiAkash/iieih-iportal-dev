@@ -69,13 +69,15 @@
         <!-- Alerts -->
         {% if messages %}
         {% for message in messages %}
-        <div style="background: rgba(16, 185, 129, 0.15); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            color: #10b981; padding: 12px 18px; 
-            border-radius: 12px; margin-bottom: 20px; 
-            display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>{{ message }}</span>
+        <div class="profile-alert" role="alert">
+            <div class="profile-alert-content">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="profile-alert-close" onclick="dismissProfileAlert(this.closest('.profile-alert'))" aria-label="Dismiss alert">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="profile-alert-progress"></div>
         </div>
         {% endfor %}
         {% endif %}
@@ -624,7 +626,7 @@
                                     style="color: var(--primary-light); font-size: 1.15rem;"></i>
                                 <span>
                                     <strong>Surgeon Isolation Active:</strong> By default, this roster displays
-                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:"Naimul Hasan" }}</strong>. Other doctors' patients remain protected.
+                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:user.username|title }}</strong>. Other doctors' patients remain protected.
                                 </span>
                             </div>
                             <span style="font-size: 0.78rem; color: var(--success); font-weight: 600; 
@@ -633,20 +635,21 @@
                             </span>
                         </div>
 
-                        <!-- Special Cross-Doctor Patient MRN Search -->
-                        <form method="get" action="{% url 'users_naimul:profile' %}" class="mrn-search-form">
+                        <!-- Patient Search by MRN or Name (with Cross-Doctor Lookup) -->
+                        <form method="get" action="{% url 'users_naimul:profile' %}" class="mrn-search-form" id="patientSearchForm">
                             <input type="hidden" name="tab" value="patients">
                             <label style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); 
                                 margin-bottom: 8px;">
                                 <i class="fa-solid fa-magnifying-glass"
                                     style="color: var(--primary-light); margin-right: 6px;"></i>
-                                Search Another Doctor's Patient via Patient_MRN:
+                                Search Patient by MRN Number or Patient Name:
                             </label>
                             <div class="mrn-search-container">
                                 <input type="text" name="patient_mrn" value="{{ search_mrn }}" class="mrn-search-input"
-                                    placeholder="Enter Patient_MRN (e.g. MRN-1022, MRN-1024, MRN-1027) to access external patient...">
-                                <button type="submit" class="mrn-search-btn">
-                                    <i class="fa-solid fa-magnifying-glass"></i> Search via MRN
+                                    id="patientSearchInput"
+                                    placeholder="Enter Patient MRN (e.g. P2600001, MRN-1022) or Patient Name to search...">
+                                <button type="submit" class="mrn-search-btn" id="patientSearchBtn">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Search
                                 </button>
                                 {% if search_mrn %}
                                 <a href="{% url 'users_naimul:profile' %}?tab=patients" class="mrn-clear-btn">
@@ -1327,6 +1330,60 @@
                 </div> -->
 
 
+                <!-- Search Error / Patient Not Found Popup Modal -->
+                <div class="modal-overlay" id="searchErrorModal" {% if search_error %}style="display: flex;"{% endif %}>
+                    <div class="modal-card search-alert-modal-card">
+                        <div class="modal-header search-alert-header">
+                            <div class="search-alert-title-wrap">
+                                <div class="search-alert-icon-badge">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <div>
+                                    <h3 class="modal-title" id="searchAlertTitle">{{ search_error_title|default:"Patient Search Alert" }}</h3>
+                                    <span class="search-alert-subtitle">Clinical Patient Directory Verification</span>
+                                </div>
+                            </div>
+                            <button type="button" class="modal-close-btn" onclick="closeSearchErrorModal()" aria-label="Close modal">&times;</button>
+                        </div>
+                        <div class="modal-body search-alert-body">
+                            <div class="search-alert-banner">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                <div id="searchAlertPrimary">
+                                    <strong>{{ search_error_headline|default:"Not a valid MRN number or not such patient found." }}</strong>
+                                </div>
+                            </div>
+
+                            <p class="search-alert-desc" id="searchAlertDesc">
+                                {% if search_error_desc %}
+                                    {{ search_error_desc }}
+                                {% elif search_query %}
+                                    We could not find any active clinical record matching <strong>&ldquo;{{ search_query }}&rdquo;</strong> in the hospital registry.
+                                {% else %}
+                                    No matching patient record was found in the hospital registry.
+                                {% endif %}
+                            </p>
+
+                            <div class="search-alert-guide">
+                                <div class="guide-title"><i class="fa-solid fa-circle-info"></i> Search Guidelines:</div>
+                                <ul>
+                                    <li><strong>By MRN Number:</strong> Ensure format follows <code>P26XXXXX</code> (e.g. <code>P2600001</code>) or legacy <code>MRN-XXXX</code>.</li>
+                                    <li><strong>By Patient Name:</strong> Check for typographical errors or try searching by first name.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer search-alert-footer">
+                            {% if search_query %}
+                            <a href="{% url 'users_naimul:profile' %}?tab=patients" class="nav-btn" style="text-decoration: none;">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Reset to My Patients
+                            </a>
+                            {% endif %}
+                            <button type="button" class="search-alert-ok-btn" onclick="closeSearchErrorModal()">
+                                <i class="fa-solid fa-magnifying-glass"></i> Try Another Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Patient Dossier Modal -->
                 <div class="modal-overlay" id="dossierModal">
                     <div class="modal-card">
@@ -1689,14 +1746,10 @@
                 </script>
                 <!-- External JavaScript -->
                 <script src="{% static 'users_naimul/js/profile.js' %}"></script>
-                <!-- Static asset reference: users_naimul/profile.js -->
 
             </div> <!-- /.clinical-main-content -->
-
         </div> <!-- /.profile-grid -->
-
     </div> <!-- /.container -->
-
 </body>
 
 </html>

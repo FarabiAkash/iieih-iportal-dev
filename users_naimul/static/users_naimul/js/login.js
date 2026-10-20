@@ -101,7 +101,25 @@ function initLoginBehavior() {
             }
         });
     }
+    // ── 5. Auto-Dismiss Alert Popups (5 seconds) ────────────
+    const alerts = document.querySelectorAll('.alert-box');
+    alerts.forEach(alertEl => {
+        setTimeout(() => {
+            dismissAlertBox(alertEl);
+        }, 5000);
+    });
 }
+
+function dismissAlertBox(alertEl) {
+    if (!alertEl || alertEl.classList.contains('fade-out')) return;
+    alertEl.classList.add('fade-out');
+    setTimeout(() => {
+        if (alertEl && alertEl.parentNode) {
+            alertEl.remove();
+        }
+    }, 400);
+}
+window.dismissAlertBox = dismissAlertBox;
 
 // Execute when DOM is ready
 if (document.readyState === 'loading') {

@@ -120,39 +120,7 @@ class SurgeryRecord(models.Model):
             self.patient_mrn = generate_mrn()
         super().save(*args, **kwargs)
 
-# class DiagnosisProcedure(models.Model):
-    
-#     Eye_Choices = [
-#         ('LE', 'Left Eye'),
-#         ('RE', 'Right Eye'),
-#         ('BE', 'Both Eyes'),
-#     ]
-    
-#     Gender_Choices = [
-#         ('Male', 'Male'),
-#         ('Female', 'Female'),
-#         ('Other', 'Other'),
-#     ]
-    
-#     Procedure_Choices = [        
-#         ('OCT Macula', 'OCT Macula'),
-#         ('OCT RNFL', 'OCT RNFL'),
-#         ('Visual Field (Perimetry)', 'Visual Field (Perimetry)'),
-#         ('B-Scan', 'B-Scan'),
-#         ('FFA', 'FFA'),
-#         ('Other', 'Other'),
-#     ]
-    
-#     date = models.DateField(help_text="Date of Diagnosis (YYYY-MM-DD)")
-#     patient_mrn = models.CharField(max_length=8, unique=True, help_text="Medical Record Number (MRN) of the Patient")
-#     patient_name = models.CharField(max_length=100)
-#     patient_age = models.PositiveIntegerField()
-#     patient_gender = models.CharField(max_length=10, choices=Gender_Choices)
-#     eye = models.CharField(max_length=2, choices=Eye_Choices, help_text="Which eye was diagnosed")
-#     procedure_name = models.CharField(max_length=50, choices=Procedure_Choices, help_text="Procedure Performed")
-#     technician_name = models.CharField(max_length=100, help_text="Name of the Technician")
-#     findings_summary = models.TextField(blank=True, help_text="Findings summary from the Diagnosis")
-    
+
 class DiagnosisProcedure(models.Model):
     
     Eye_Choices = [
@@ -258,6 +226,10 @@ class NaimulProfile(models.Model):
     can_view_ot_slots = models.BooleanField(default=True, help_text="Doctor Role Permission: View Operation Theatre Slot Schedules")
     can_apply_surgery = models.BooleanField(default=True, help_text="Staff Role Permission: Submit Surgery Applications & Book OT Slots")
     can_make_appointments = models.BooleanField(default=True, help_text="Staff Role Permission: Schedule & Manage Patient Appointments")
+
+    @property
+    def is_staff_role(self):
+        return self.role in ['Staff', 'OT Nurse', 'Admin', 'Technician']
     
 class Appointment(models.Model): 
 

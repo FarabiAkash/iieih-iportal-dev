@@ -91,3 +91,89 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         # Verify Day switch button is active by default
         self.assertIn('class="theme-switch-btn active" data-theme-val="light"', content)
 
+    def test_login_redirects_directly_to_profile(self):
+        response = self.client.post(reverse('users_naimul:login'), {
+            'username': 'naimul',
+            'password': 'pass@123'
+        })
+        self.assertRedirects(response, f"{reverse('users_naimul:profile')}?tab=patients")
+
+    def test_profile_defaults_to_patients_tab(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_tab'], 'patients')
+        content = response.content.decode('utf-8')
+        self.assertIn('id="pane-patients"', content)
+        self.assertTrue('active' in content.split('id="pane-patients"')[0].split('<div')[-1])
+
+    def test_surgeon_role_renders_doctor_tabs(self):
+        self.assertFalse(self.profile.is_staff_role)
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        # Check that doctor tabs are rendered
+        self.assertIn('Patient Details', content)
+        self.assertIn('OT Slot Schedule', content)
+        self.assertIn('Medical History', content)
+        self.assertIn('Diagnostic History', content)
+        self.assertIn('OT Utilization', content)
+        self.assertIn('Ocular Reports', content)
+        self.assertIn('Surgery History (View &amp; Edit)', content)
+    def test_search_invalid_mrn_displays_popup(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile') + '?tab=patients&patient_mrn=MRN-999999')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['search_error'])
+        self.assertEqual(response.context['search_error_headline'], "Not a valid MRN number or not such patient found.")
+        content = response.content.decode('utf-8')
+        self.assertIn('id="searchErrorModal"', content)
+        self.assertIn('style="display: flex;"', content)
+        self.assertIn('Not a valid MRN number or not such patient found.', content)
+
+    def test_search_invalid_patient_name_displays_popup(self):
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile') + '?tab=patients&patient_mrn=NonExistentPatientNameXYZ')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['search_error'])
+        self.assertEqual(response.context['search_error_headline'], "Not a valid MRN number or not such patient found.")
+        content = response.content.decode('utf-8')
+        self.assertIn('id="searchErrorModal"', content)
+        self.assertIn('style="display: flex;"', content)
+        self.assertIn('No Such Patient Found', content)
+
+    def test_search_valid_patient_finds_record_without_popup(self):
+        from .models import SurgeryRecord
+        from datetime import date
+        record = SurgeryRecord.objects.create(
+            date=date.today(),
+            patient_name='Shahida Akhter',
+            patient_age=45,
+            patient_gender='Female',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            outcome='Successful'
+        )
+        self.client.login(username='naimul', password='pass@123')
+        
+        # Test 1: Search by valid MRN
+        response = self.client.get(reverse('users_naimul:profile') + f'?tab=patients&patient_mrn={record.patient_mrn}')
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['search_error'])
+        self.assertEqual(response.context['displayed_patients'].count(), 1)
+        content = response.content.decode('utf-8')
+        # Popup modal should NOT have inline display: flex
+        self.assertNotIn('id="searchErrorModal" style="display: flex;"', content)
+        self.assertIn(record.patient_mrn, content)
+
+        # Test 2: Search by valid patient name
+        response_name = self.client.get(reverse('users_naimul:profile') + '?tab=patients&patient_mrn=Shahida')
+        self.assertEqual(response_name.status_code, 200)
+        self.assertFalse(response_name.context['search_error'])
+        self.assertEqual(response_name.context['displayed_patients'].count(), 1)
+
+
+
