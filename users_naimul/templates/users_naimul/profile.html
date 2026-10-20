@@ -344,7 +344,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="surg_surgeon">Operating Surgeon</label>
                                     <input type="text" id="surg_surgeon" name="surgeon_name" class="form-control"
-                                        value="Dr. Naimul Islam">
+                                        value="Dr. {{ doctor_display_name }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_room">OT Suite Room</label>
@@ -479,7 +479,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="appt_doctor">Assigned Consultant / Doctor</label>
                                     <input type="text" id="appt_doctor" name="doctor_name" class="form-control"
-                                        value="Dr. Naimul Islam">
+                                        value="Dr. {{ doctor_display_name }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="appt_date">Appointment Date <span
@@ -706,7 +706,7 @@
                                     <tr>
                                         <td>
                                             <span class="badge-mrn">{{ s.patient_mrn }}</span>
-                                            {% if 'naimul' not in s.surgeon_name.lower %}
+                                            {% if doctor_kw_lower not in s.surgeon_name|lower %}
                                             <div style="margin-top: 4px;">
                                                 <span class="badge-cross-doctor"><i class="fa-solid fa-user-doctor"></i>
                                                     External Doctor</span>
@@ -726,7 +726,7 @@
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 6px;">
                                                 <i class="fa-solid fa-user-doctor"
-                                                    style="color: {% if 'naimul' in s.surgeon_name.lower %}
+                                                    style="color: {% if doctor_kw_lower in s.surgeon_name|lower %}
                                                     var(--primary-light){% else %}#f59e0b{% endif %}; font-size: 0.82rem;"></i>
                                                 <span style="font-size: 0.84rem; font-weight: 600;">{{ s.surgeon_name }}</span>
                                             </div>

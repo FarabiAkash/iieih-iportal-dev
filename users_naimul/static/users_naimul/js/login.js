@@ -128,11 +128,8 @@ if (document.readyState === 'loading') {
     initLoginBehavior();
 }
 
-// ─── Quick Fill Helper (for dev / testing convenience) ───────────────────────
+// ─── Quick Fill Helper (dev/testing — credentials intentionally left blank) ────
 function quickFillDoctor() {
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    if (usernameInput) usernameInput.value = 'naimul';
-    if (passwordInput) passwordInput.value = 'pass@123';
+    // Credentials intentionally not pre-filled; enter your own login details.
 }
 window.quickFillDoctor = quickFillDoctor;

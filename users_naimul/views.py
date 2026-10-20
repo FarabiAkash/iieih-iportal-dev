@@ -89,7 +89,8 @@ def profile_view(request):
         gender = request.POST.get('patient_gender', 'Male')
         eye = request.POST.get('eye', 'RE')
         surgery_type = request.POST.get('surgery_type', 'Cataract')
-        surgeon_name = request.POST.get('surgeon_name', '').strip() or 'Dr. Naimul Islam'
+        _default_surgeon = f"Dr. {request.user.get_full_name() or request.user.username}"
+        surgeon_name = request.POST.get('surgeon_name', '').strip() or _default_surgeon
         ot_room = request.POST.get('ot_room', 'OT-1')
         ot_slot = request.POST.get('ot_slot', 'Slot 1 (08:30 - 10:00 AM)')
         outcome = request.POST.get('outcome', 'Successful')
@@ -135,7 +136,8 @@ def profile_view(request):
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
         appt_type = request.POST.get('appointment_type', 'Consultant Clinic')
-        doctor = request.POST.get('doctor_name', '').strip() or 'Dr. Naimul Islam'
+        _default_doctor = f"Dr. {request.user.get_full_name() or request.user.username}"
+        doctor = request.POST.get('doctor_name', '').strip() or _default_doctor
         appt_date = request.POST.get('appointment_date', '')
         time_slot = request.POST.get('appointment_time_slot', '09:00 - 10:00 AM')
         status = request.POST.get('status', 'Scheduled')
@@ -232,18 +234,35 @@ def profile_view(request):
     # All hospital surgery records
     all_surgeries = SurgeryRecord.objects.all().order_by('-date', '-id')
 
-    # Logged-in doctor identification (e.g. Dr. Naimul Islam)
-    doctor_kw = request.user.first_name or 'Naimul'
+    # ── Logged-in doctor identity — derived entirely from the authenticated user account.
+    # Build a set of keywords from first_name, last_name, full name, and username.
+    # This avoids any hardcoded fallback and works for every registered doctor.
+    _u = request.user
+    _full_name = _u.get_full_name().strip()
+    doctor_keywords = []
+    if _u.first_name.strip():
+        doctor_keywords.append(_u.first_name.strip())
+    if _u.last_name.strip() and len(_u.last_name.strip()) >= 3:
+        doctor_keywords.append(_u.last_name.strip())
+    if _full_name and _full_name not in doctor_keywords:
+        doctor_keywords.append(_full_name)
+    # Username is the reliable fallback (it often appears inside the surgeon_name string)
+    if _u.username.strip() and len(_u.username.strip()) >= 3:
+        doctor_keywords.append(_u.username.strip())
+
+    # Best single display keyword (first_name → full name → username)
+    doctor_kw = _u.first_name.strip() or _full_name or _u.username.strip()
 
     # STRICT PATIENT ISOLATION:
-    # By default, only the logged-in surgeon's patients are loaded
-    my_surgeries = SurgeryRecord.objects.filter(
-        Q(surgeon_name__icontains=doctor_kw) |
-        Q(surgeon_name__icontains='Naimul')
-    ).order_by('-date', '-id')
-
-    # if not my_surgeries.exists():
-        # my_surgeries = SurgeryRecord.objects.filter(created_by=request.user).order_by('-date', '-id')
+    # Only load patients whose surgeon_name matches any of the logged-in doctor's identity keywords.
+    my_surgeries_q = Q()
+    for _kw in doctor_keywords:
+        if _kw:
+            my_surgeries_q |= Q(surgeon_name__icontains=_kw)
+    if my_surgeries_q:
+        my_surgeries = SurgeryRecord.objects.filter(my_surgeries_q).order_by('-date', '-id')
+    else:
+        my_surgeries = SurgeryRecord.objects.none()
 
     # Search Query Handling (Doctor can search via MRN Number or Patient Name)
     search_mrn = request.GET.get('patient_mrn', '').strip()
@@ -271,7 +290,12 @@ def profile_view(request):
         if matched_records.exists():
             displayed_patients = matched_records
             first_match = matched_records.first()
-            if doctor_kw.lower() not in first_match.surgeon_name.lower() and 'naimul' not in first_match.surgeon_name.lower():
+            # Determine if the found patient belongs to the logged-in doctor
+            is_own_patient = any(
+                _kw.lower() in first_match.surgeon_name.lower()
+                for _kw in doctor_keywords if _kw
+            )
+            if not is_own_patient:
                 is_cross_doctor_lookup = True
                 searched_patient_found = first_match
                 searched_doctor_name = first_match.surgeon_name
@@ -371,6 +395,9 @@ def profile_view(request):
         for r in booked_ot_slots_raw
     }
 
+    # Precompute doctor display name for form defaults and template use
+    doctor_display_name = _u.get_full_name() or _u.username
+
     context = {
         'profile': profile,
         'user_surgeries': my_surgeries,
@@ -410,6 +437,10 @@ def profile_view(request):
         'appointment_time_slot_choices': Appointment.Time_Slot_Choices,
         'appointment_status_choices': Appointment.Status_Choices,
         'booked_ot_slots_json': json.dumps(booked_ot_slots),
+        # Doctor identity helpers for template-level display logic
+        'doctor_kw': doctor_kw,
+        'doctor_kw_lower': doctor_kw.lower(),
+        'doctor_display_name': doctor_display_name,
     }
     return render(request, 'users_naimul/profile.html', context)
 
