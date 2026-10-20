@@ -64,8 +64,7 @@
             <button type="button" class="btn-nav btn-action-primary" onclick="openNewSurgeryModal()">
                 <i class="fa-solid fa-plus"></i> New Surgery Entry
             </button>
-            <a href="{% url 'users_naimul:logout' %}" class="btn-nav"
-                style="border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">
+            <a href="{% url 'users_naimul:logout' %}" class="btn-nav btn-signout">
                 <i class="fa-solid fa-power-off"></i> Sign Out
             </a>
             {% else %}
@@ -161,7 +160,7 @@
                     <span class="chip-dot"></span> OT-4 Pediatric OT ({{ ot4_count }})
                 </a>
                 {% if selected_ot %}
-                <a href="?" class="ot-chip" style="border-color: #ef4444; color: #fca5a5;">
+                <a href="?" class="ot-chip ot-chip-clear">
                     <i class="fa-solid fa-xmark"></i> Clear Filter
                 </a>
                 {% endif %}
