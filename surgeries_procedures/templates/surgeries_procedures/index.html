@@ -31,8 +31,11 @@
     <!-- Main Navigation Header -->
     <header class="header-nav">
         <a href="/surgeries/" class="brand-section">
-            <div class="brand-badge">
+            {% comment %} <div class="brand-badge">
                 <i class="fa-solid fa-eye"></i>
+            </div> {% endcomment %}
+            <div class="brand-badge">
+                <img src="{% static 'surgeries_procedures/iieih_logo.svg' %}" alt="IIEIH Logo">
             </div>
             <div class="brand-titles">
                 <h1>IIEI&amp;H Eye Microsurgery Complex</h1>
@@ -344,20 +347,21 @@
                         </div>
                         <div>
                             <label class="form-label">Patient Full Name *</label>
-                            <input type="text" name="patient_name" class="form-input" placeholder="e.g. Rafiqul Islam"
+                            <input type="text" name="patient_name" class="form-input" placeholder="Full Name"
                                 required>
                         </div>
                     </div>
 
                     <div class="form-grid-2">
                         <div>
-                            <label class="form-label">Patient Age</label>
-                            <input type="number" name="patient_age" class="form-input" value="50" min="1" max="110"
+                            <label class="form-label">Patient Age *</label>
+                            <input type="number" name="patient_age" class="form-input" placeholder="Age" min="1" max="110"
                                 required>
                         </div>
                         <div>
                             <label class="form-label">Gender</label>
                             <select name="patient_gender" class="form-input">
+                                <option value="">Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
@@ -367,8 +371,9 @@
 
                     <div class="form-grid-2">
                         <div>
-                            <label class="form-label">Eye Operative Side</label>
-                            <select name="eye" class="form-input">
+                            <label class="form-label">Eye Operative Side *</label>
+                            <select name="eye" class="form-input" required>
+                                <option value="Select Eye">Select Eye</option>
                                 <option value="RE">Right Eye (OD)</option>
                                 <option value="LE">Left Eye (OS)</option>
                                 <option value="BE">Both Eyes (OU)</option>
@@ -387,11 +392,12 @@
                     <div class="form-grid-2">
                         <div>
                             <label class="form-label">Lead Operating Surgeon</label>
-                            <input type="text" name="surgeon_name" class="form-input" value="Dr. Naimul Islam" required>
+                            <input type="text" name="surgeon_name" class="form-input" placeholder="Doctor Name" required>
                         </div>
                         <div>
                             <label class="form-label">OT Suite Room</label>
                             <select id="add_ot_room" name="ot_room" class="form-input" onchange="checkSurgeriesOtClash('add')">
+                                <option value="Select OT Room">Select OT Room</option>
                                 <option value="OT-1">OT Room 1 (General / Phaco)</option>
                                 <option value="OT-2">OT Room 2 (Retina OT)</option>
                                 <option value="OT-3">OT Room 3 (Laser OT)</option>
@@ -415,8 +421,9 @@
                             </div>
                         </div>
                         <div>
-                            <label class="form-label">Surgical Outcome</label>
-                            <select name="outcome" class="form-input">
+                            <label class="form-label">Surgical Outcome *</label>
+                            <select name="outcome" class="form-input" required>
+                                <option value="Select Outcome">Select Outcome</option>
                                 <option value="Successful">Successful</option>
                                 <option value="Under Observation">Under Observation</option>
                                 <option value="Complications">Complications</option>
