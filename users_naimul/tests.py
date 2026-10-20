@@ -175,5 +175,82 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         self.assertFalse(response_name.context['search_error'])
         self.assertEqual(response_name.context['displayed_patients'].count(), 1)
 
+    def test_get_available_doctors_fetches_from_database(self):
+        from .models import get_available_doctors, SurgeryRecord
+        from datetime import date
+        SurgeryRecord.objects.create(
+            date=date.today(),
+            patient_name='Patient For Dr Akib',
+            patient_age=60,
+            patient_gender='Male',
+            eye='LE',
+            surgery_type='Glaucoma',
+            surgeon_name='Dr. Akib Ashfaq',
+            ot_room='OT-2',
+            outcome='Successful'
+        )
+        doctors = get_available_doctors()
+        self.assertIn('Dr. Naimul Islam', doctors)
+        self.assertIn('Dr. Akib Ashfaq', doctors)
+
+    def test_patient_registration_forms_render_doctor_dropdown(self):
+        from .models import SurgeryRecord
+        from datetime import date
+        SurgeryRecord.objects.create(
+            date=date.today(),
+            patient_name='Sample Patient',
+            patient_age=50,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Akib Ashfaq',
+            ot_room='OT-1',
+            outcome='Successful'
+        )
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+
+        # Check that surgery doctor field is a <select> element, not <input type="text">
+        self.assertIn('<select id="surg_surgeon" name="surgeon_name"', content)
+        # Check that appointment doctor field is a <select> element, not <input type="text">
+        self.assertIn('<select id="appt_doctor" name="doctor_name"', content)
+        # Check that available doctors are rendered as <option> values
+        self.assertIn('<option value="Dr. Naimul Islam"', content)
+        self.assertIn('<option value="Dr. Akib Ashfaq"', content)
+
+    def test_patient_registration_saves_selected_doctor(self):
+        from .models import SurgeryRecord
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.post(reverse('users_naimul:profile'), {
+            'apply_surgery': '1',
+            'patient_name': 'Test Registered Patient',
+            'patient_age': '48',
+            'patient_gender': 'Male',
+            'eye': 'RE',
+            'surgery_type': 'Cataract',
+            'surgeon_name': 'Dr. Akib Ashfaq',
+            'ot_room': 'OT-3',
+            'ot_slot': 'Slot 4 (02:00 - 03:30 PM)',
+            'outcome': 'Successful',
+            'medical_history': 'No comorbidities.',
+            'notes': 'Booked via dropdown.'
+        })
+        self.assertEqual(response.status_code, 302)
+
+        saved_record = SurgeryRecord.objects.filter(patient_name='Test Registered Patient').first()
+        self.assertIsNotNone(saved_record)
+        self.assertEqual(saved_record.surgeon_name, 'Dr. Akib Ashfaq')
+
+        resp_naimul = self.client.get(reverse('users_naimul:profile') + '?tab=patients')
+        self.assertNotIn(saved_record, resp_naimul.context['user_surgeries'])
+
+        resp_search = self.client.get(reverse('users_naimul:profile') + f'?tab=patients&patient_mrn={saved_record.patient_mrn}')
+        self.assertEqual(resp_search.status_code, 200)
+        self.assertTrue(resp_search.context['is_cross_doctor_lookup'])
+        self.assertEqual(resp_search.context['searched_doctor_name'], 'Dr. Akib Ashfaq')
+
+
 
 

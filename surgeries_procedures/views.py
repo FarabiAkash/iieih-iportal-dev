@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Q
 from datetime import date
-from users_naimul.models import SurgeryRecord, NaimulProfile, DiagnosisProcedure
+from users_naimul.models import SurgeryRecord, NaimulProfile, DiagnosisProcedure, get_available_doctors, get_doctor_ot_room_map
 
 def index(request):
     """
@@ -208,6 +208,9 @@ def index(request):
         'surgery_type_choices': SurgeryRecord.Surgery_Type_Choices,
         'outcome_choices': SurgeryRecord.Outcome_Choices,
         'booked_ot_slots_json': json.dumps(booked_ot_slots),
+        'available_doctors': get_available_doctors(),
+        # Doctor → assigned OT room map (JSON for frontend auto-populate)
+        'doctor_ot_room_map_json': json.dumps(get_doctor_ot_room_map()),
     }
     return render(request, 'surgeries_procedures/index.html', context)
 

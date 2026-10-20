@@ -32,6 +32,138 @@ def _mrn_models():
         apps.get_model('users_naimul', 'Appointment'),
     ]
 
+
+def get_available_doctors():
+    """
+    Fetches distinct doctor/surgeon names from the existing database:
+    - Existing SurgeryRecord entries
+    - Existing Appointment entries
+    - Registered User accounts with Doctor/Surgeon roles in NaimulProfile
+    Returns a sorted list of unique formatted doctor names (e.g. 'Dr. ...').
+    """
+    from django.apps import apps
+    doctors = []
+    try:
+        SurgeryRecord = apps.get_model('users_naimul', 'SurgeryRecord')
+        Appointment = apps.get_model('users_naimul', 'Appointment')
+        NaimulProfile = apps.get_model('users_naimul', 'NaimulProfile')
+
+        # 1. Doctors from existing SurgeryRecord entries in DB
+        for name in SurgeryRecord.objects.values_list('surgeon_name', flat=True).distinct():
+            if name and name.strip():
+                clean = name.strip()
+                doc_name = clean if clean.lower().startswith(('dr.', 'prof.')) else f"Dr. {clean}"
+                if doc_name not in doctors:
+                    doctors.append(doc_name)
+
+        # 2. Doctors from existing Appointment entries in DB
+        for name in Appointment.objects.values_list('doctor_name', flat=True).distinct():
+            if name and name.strip():
+                clean = name.strip()
+                doc_name = clean if clean.lower().startswith(('dr.', 'prof.')) else f"Dr. {clean}"
+                if doc_name not in doctors:
+                    doctors.append(doc_name)
+
+        # 3. Doctors from registered User accounts with clinical roles in NaimulProfile
+        doc_profiles = NaimulProfile.objects.select_related('user').filter(
+            role__in=['Surgeon', 'Consultant', 'Associate', 'Resident']
+        )
+        for p in doc_profiles:
+            u = p.user
+            full_name = u.get_full_name().strip()
+            if full_name:
+                doc_name = full_name if full_name.lower().startswith(('dr.', 'prof.')) else f"Dr. {full_name}"
+                if doc_name not in doctors:
+                    doctors.append(doc_name)
+            else:
+                uname = u.username.strip()
+                if uname and uname.lower() != 'admin':
+                    if not any(uname.lower() in d.lower() for d in doctors):
+                        doc_name = f"Dr. {uname.title()}"
+                        if doc_name not in doctors:
+                            doctors.append(doc_name)
+    except Exception:
+        pass
+
+    if not doctors:
+        doctors = ['Dr. Akib Ashfaq', 'Dr. Md. Mridul Ali', 'Dr. Naimul Islam']
+
+    return sorted(doctors)
+
+
+def get_doctor_assigned_ot_room(doctor_name):
+    """
+    Fetches the dedicated OT room assigned to the doctor based on database relationships:
+    1. Look up NaimulProfile where the user's username, full name, first name, or last name
+       matches the doctor's name, returning p.assigned_ot_room if set.
+    2. Fallback: Look up existing SurgeryRecord entries for this doctor in the database
+       to retrieve their operational OT room.
+    3. If the doctor has no assigned OT room, returns None (handles gracefully).
+    """
+    if not doctor_name:
+        return None
+    from django.apps import apps
+    import re
+
+    clean = re.sub(r'^(Dr\.|Prof\.)\s*', '', doctor_name.strip(), flags=re.IGNORECASE).strip()
+    if not clean:
+        return None
+    clean_lower = clean.lower()
+    tokens = [t.lower() for t in re.split(r'[\s.]+', clean) if len(t) >= 2]
+
+    try:
+        NaimulProfile = apps.get_model('users_naimul', 'NaimulProfile')
+        SurgeryRecord = apps.get_model('users_naimul', 'SurgeryRecord')
+
+        # 1. Primary DB relationship: NaimulProfile.assigned_ot_room
+        profiles = list(
+            NaimulProfile.objects.select_related('user')
+            .filter(assigned_ot_room__isnull=False)
+            .exclude(assigned_ot_room='')
+        )
+        for p in profiles:
+            u = p.user
+            uname = u.username.lower() if u.username else ''
+            full = u.get_full_name().strip().lower() if u.get_full_name() else ''
+            fname = u.first_name.strip().lower() if u.first_name else ''
+            lname = u.last_name.strip().lower() if u.last_name else ''
+
+            if uname and (uname == clean_lower or uname in tokens or uname in clean_lower):
+                return p.assigned_ot_room
+            if full and (full == clean_lower or full in clean_lower or clean_lower in full):
+                return p.assigned_ot_room
+            if fname and (fname == clean_lower or fname in tokens):
+                return p.assigned_ot_room
+            if lname and len(lname) >= 3 and (lname == clean_lower or lname in tokens):
+                return p.assigned_ot_room
+
+        # 2. Secondary DB relationship fallback: SurgeryRecord
+        surg = SurgeryRecord.objects.filter(
+            models.Q(surgeon_name__iexact=doctor_name) |
+            models.Q(surgeon_name__iexact=clean) |
+            models.Q(surgeon_name__icontains=clean)
+        ).exclude(ot_room__isnull=True).exclude(ot_room='').order_by('-id').first()
+        if surg and surg.ot_room:
+            return surg.ot_room
+    except Exception:
+        pass
+
+    return None
+
+
+def get_doctor_ot_room_map():
+    """
+    Returns a dictionary mapping each available doctor name to their dedicated OT room
+    fetched dynamically from the database.
+    Example: {'Dr. Akib Ashfaq': 'OT-1', 'Dr. Md. Mridul Ali': 'OT-2', 'Dr. Naimul Islam': 'OT-3'}
+    If a doctor has no assigned OT room, maps to None.
+    """
+    doctors = get_available_doctors()
+    mapping = {}
+    for doc in doctors:
+        mapping[doc] = get_doctor_assigned_ot_room(doc)
+    return mapping
+
 # ==========================================
 # Developer: Naimul
 # Task: Design your user profile, roles, and fields below.
