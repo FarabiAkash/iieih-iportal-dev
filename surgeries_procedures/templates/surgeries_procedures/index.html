@@ -583,6 +583,60 @@
         </div>
     </div>
 
+    <!-- Search Error / Patient Not Found Popup Modal -->
+    <div class="modal-overlay" id="searchErrorModal" {% if search_error %}style="display: flex;"{% endif %}>
+        <div class="modal-card search-alert-modal-card">
+            <div class="modal-header search-alert-header">
+                <div class="search-alert-title-wrap">
+                    <div class="search-alert-icon-badge">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h3 class="modal-title" id="searchAlertTitle">{{ search_error_title|default:"Patient Search Alert" }}</h3>
+                        <span class="search-alert-subtitle">Surgical Record Verification</span>
+                    </div>
+                </div>
+                <button type="button" class="search-alert-close-btn" onclick="closeSearchErrorModal()" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body search-alert-body">
+                <div class="search-alert-banner">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div id="searchAlertPrimary">
+                        <strong>{{ search_error_headline|default:"Not a valid MRN number or not such patient found." }}</strong>
+                    </div>
+                </div>
+
+                <p class="search-alert-desc" id="searchAlertDesc">
+                    {% if search_error_desc %}
+                        {{ search_error_desc }}
+                    {% elif search_query %}
+                        We could not find any active clinical record matching <strong>&ldquo;{{ search_query }}&rdquo;</strong> in the surgical register.
+                    {% else %}
+                        No matching patient record was found in the surgical register.
+                    {% endif %}
+                </p>
+
+                <div class="search-alert-guide">
+                    <div class="guide-title"><i class="fa-solid fa-circle-info"></i> Search Guidelines:</div>
+                    <ul>
+                        <li><strong>By MRN Number:</strong> Ensure format follows <code>P26XXXXX</code> (e.g. <code>P2600001</code>) or legacy <code>MRN-XXXX</code>.</li>
+                        <li><strong>By Patient Name:</strong> Check for typographical errors or try searching by first name.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer search-alert-footer">
+                {% if search_query %}
+                <a href="/surgeries/" class="btn-nav" style="text-decoration: none;">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Clear Search
+                </a>
+                {% endif %}
+                <button type="button" class="search-alert-ok-btn" onclick="closeSearchErrorModal()">
+                    <i class="fa-solid fa-magnifying-glass"></i> Try Another Search
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Booked OT Slots Data injected from Django for real-time clash prevention -->
     <script>
         const bookedOtSlots = {{ booked_ot_slots_json|default:'{}'|safe }};

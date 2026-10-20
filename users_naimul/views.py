@@ -245,41 +245,59 @@ def profile_view(request):
     # if not my_surgeries.exists():
         # my_surgeries = SurgeryRecord.objects.filter(created_by=request.user).order_by('-date', '-id')
 
-    # Search Query Handling
+    # Search Query Handling (Doctor can search via MRN Number or Patient Name)
     search_mrn = request.GET.get('patient_mrn', '').strip()
     general_query = request.GET.get('q', '').strip()
-    active_tab = request.GET.get('tab', 'patients')
+    search_query = search_mrn or general_query
+    default_tab = 'ot-matrix' if profile.is_staff_role else 'patients'
+    active_tab = request.GET.get('tab') or default_tab
 
     is_cross_doctor_lookup = False
     searched_patient_found = None
     searched_doctor_name = None
+    search_error = False
+    search_error_title = ""
+    search_error_headline = ""
+    search_error_desc = ""
 
-    if search_mrn:
-        # CROSS-DOCTOR LOOKUP VIA PATIENT_MRN:
-        # Searching via Patient_MRN allows visiting other doctors' patients across the entire hospital
-        matched_records = SurgeryRecord.objects.filter(patient_mrn__icontains=search_mrn).order_by('-date', '-id')
-        displayed_patients = matched_records
+    if search_query:
+        # Cross-Doctor Lookup via MRN OR Patient Name
+        matched_records = SurgeryRecord.objects.filter(
+            Q(patient_mrn__iexact=search_query) |
+            Q(patient_mrn__icontains=search_query) |
+            Q(patient_name__icontains=search_query)
+        ).order_by('-date', '-id')
+
         if matched_records.exists():
+            displayed_patients = matched_records
             first_match = matched_records.first()
-            if 'naimul' not in first_match.surgeon_name.lower():
+            if doctor_kw.lower() not in first_match.surgeon_name.lower() and 'naimul' not in first_match.surgeon_name.lower():
                 is_cross_doctor_lookup = True
                 searched_patient_found = first_match
                 searched_doctor_name = first_match.surgeon_name
-    elif general_query:
-        # Standard search is restricted strictly to the surgeon's own patients
-        displayed_patients = my_surgeries.filter(
-            Q(patient_name__icontains=general_query) |
-            Q(surgery_type__icontains=general_query) |
-            Q(patient_mrn__icontains=general_query)
-        )
+        else:
+            displayed_patients = SurgeryRecord.objects.none()
+            search_error = True
+            import re
+            is_mrn_like = bool(re.search(r'mrn|\bp\d|\b\d{3,}', search_query, re.IGNORECASE))
+            search_error_headline = "Not a valid MRN number or not such patient found."
+            if is_mrn_like:
+                search_error_title = "Not a Valid MRN Number"
+                search_error_desc = f"\"{search_query}\" is not a valid MRN number or no matching patient was found in the hospital registry."
+            else:
+                search_error_title = "No Such Patient Found"
+                search_error_desc = f"No patient records found matching the name \"{search_query}\"."
     else:
         # DEFAULT: Strictly show only my own patients!
         displayed_patients = my_surgeries
 
     # Diagnostic procedures & Ocular Diagnostic Reports
     diagnostic_procedures = DiagnosisProcedure.objects.all().order_by('-date', '-id')
-    if search_mrn:
-        displayed_diagnostics = DiagnosisProcedure.objects.filter(patient_mrn__icontains=search_mrn)
+    if search_query:
+        displayed_diagnostics = DiagnosisProcedure.objects.filter(
+            Q(patient_mrn__icontains=search_query) |
+            Q(patient_name__icontains=search_query)
+        )
     else:
         my_mrns = my_surgeries.values_list('patient_mrn', flat=True)
         displayed_diagnostics = DiagnosisProcedure.objects.filter(patient_mrn__in=my_mrns)
@@ -359,7 +377,12 @@ def profile_view(request):
         'all_surgeries': all_surgeries,
         'diagnostic_records': displayed_diagnostics,
         'displayed_patients': displayed_patients,
-        'search_mrn': search_mrn,
+        'search_mrn': search_query,
+        'search_query': search_query,
+        'search_error': search_error,
+        'search_error_title': search_error_title,
+        'search_error_headline': search_error_headline,
+        'search_error_desc': search_error_desc,
         'general_query': general_query,
         'is_cross_doctor_lookup': is_cross_doctor_lookup,
         'searched_patient_found': searched_patient_found,

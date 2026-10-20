@@ -229,7 +229,7 @@ class NaimulProfile(models.Model):
 
     @property
     def is_staff_role(self):
-        return self.role in ['Staff', 'OT Nurse', 'Admin', 'Technician', 'Surgeon']
+        return self.role in ['Staff', 'OT Nurse', 'Admin', 'Technician']
     
 class Appointment(models.Model): 
 

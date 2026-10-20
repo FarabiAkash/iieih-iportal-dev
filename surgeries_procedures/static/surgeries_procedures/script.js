@@ -168,17 +168,63 @@ function closeEditSurgeryModal() {
     if (fieldAlert) fieldAlert.style.display = 'none';
 }
 
+// --- Search Error & Patient Not Found Modal Controller -----------------------
+function openSearchErrorModal(title, headline, desc) {
+    const modal = document.getElementById('searchErrorModal');
+    if (!modal) return;
+    if (title) {
+        const titleEl = document.getElementById('searchAlertTitle');
+        if (titleEl) titleEl.innerText = title;
+    }
+    if (headline) {
+        const headlineEl = document.getElementById('searchAlertPrimary');
+        if (headlineEl) headlineEl.innerHTML = '<strong>' + headline + '</strong>';
+    }
+    if (desc) {
+        const descEl = document.getElementById('searchAlertDesc');
+        if (descEl) descEl.innerHTML = desc;
+    }
+    modal.style.display = 'flex';
+}
+window.openSearchErrorModal = openSearchErrorModal;
+
+function closeSearchErrorModal() {
+    const modal = document.getElementById('searchErrorModal');
+    if (modal) modal.style.display = 'none';
+    const input = document.querySelector('.search-input');
+    if (input) {
+        try {
+            input.focus();
+            input.select();
+        } catch (e) {}
+    }
+}
+window.closeSearchErrorModal = closeSearchErrorModal;
+
 // --- Close modal on overlay click --------------------------------------------
 window.onclick = function (event) {
     const modal = document.getElementById('surgeryModal');
     const editModal = document.getElementById('editSurgeryModal');
+    const searchModal = document.getElementById('searchErrorModal');
     if (event.target === modal) {
         closeNewSurgeryModal();
     }
     if (event.target === editModal) {
         closeEditSurgeryModal();
     }
+    if (event.target === searchModal) {
+        closeSearchErrorModal();
+    }
 };
+
+// Close modals on Escape key
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        closeSearchErrorModal();
+        closeNewSurgeryModal();
+        closeEditSurgeryModal();
+    }
+});
 
 // --- Auto-dismiss alert toasts after 5 seconds --------------------------------
 function dismissToast(toastEl) {
