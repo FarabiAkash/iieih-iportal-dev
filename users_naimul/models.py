@@ -225,6 +225,7 @@ class SurgeryRecord(models.Model):
         ('Successful', 'Successful'),
         ('Under Observation', 'Under Observation'),
         ('Complications', 'Complications'),
+        ('Cancelled', 'Cancelled'),
     ]
     
     date = models.DateField(help_text="Date of Surgery (YYYY-MM-DD)")

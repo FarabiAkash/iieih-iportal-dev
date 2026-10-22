@@ -223,10 +223,10 @@
                                     onclick="openSchedulePatientModal('', '{{ profile.assigned_ot_room|escapejs }}')">
                                     <i class="fa-solid fa-plus"></i> Schedule Patient
                                 </button>
-                                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                {% comment %} <span style="font-size: 0.82rem; color: var(--text-muted);">
                                     <i class="fa-solid fa-shield-heart"
                                         style="color: var(--success); margin-right: 4px;"></i> Active Sterilized Suite
-                                </span>
+                                </span> {% endcomment %}
                             </div>
                         </div>
 
@@ -310,25 +310,30 @@
                                         class="form-control"
                                         min="{% now 'Y-m-d' %}"
                                         required
-                                        oninput="refreshOtSlotAvailability('surg')">
+                                        oninput="refreshOtSlotAvailability('surg')"
+                                        onchange="refreshOtSlotAvailability('surg')">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_name">Patient Full Name <span
                                             style="color: var(--danger);">*</span></label>
                                     <input type="text" id="surg_name" name="patient_name" class="form-control"
-                                        placeholder="e.g. Rafiqul Islam" required>
+                                        placeholder="Full name" required>
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_age">Patient Age</label>
+                                    <label class="form-label" for="surg_age">Patient Age
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
                                     <input type="number" id="surg_age" name="patient_age" class="form-control"
-                                        placeholder="Age" min="1" max="120">
+                                        placeholder="Age" min="1" max="120" required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_gender">Gender</label>
-                                    <select id="surg_gender" name="patient_gender" class="form-control">
+                                    <label class="form-label" for="surg_gender">Gender
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="surg_gender" name="patient_gender" class="form-control" required>
                                         <option value="Select Gender" disabled selected> Select Gender</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
@@ -339,16 +344,22 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_eye">Eye Operative Side</label>
-                                    <select id="surg_eye" name="eye" class="form-control">
+                                    <label class="form-label" for="surg_eye">Eye Operative Side
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="surg_eye" name="eye" class="form-control" required>
+                                        <option value="Select Eye" disabled selected>Select Eye</option>
                                         <option value="RE">Right Eye (OD)</option>
                                         <option value="LE">Left Eye (OS)</option>
                                         <option value="BE">Both Eyes (OU)</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_type">Surgery Type</label>
-                                    <select id="surg_type" name="surgery_type" class="form-control">
+                                    <label class="form-label" for="surg_type">Surgery Type
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="surg_type" name="surgery_type" class="form-control" required>
+                                        <option value="Select Surgery Type" disabled selected>Select Surgery Type</option>
                                         {% for val, label in surgery_type_choices %}
                                         <option value="{{ val }}">{{ label }}</option>
                                         {% endfor %}
@@ -358,17 +369,23 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_surgeon">Operating Surgeon</label>
+                                    <label class="form-label" for="surg_surgeon">Operating Surgeon
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
                                     <select id="surg_surgeon" name="surgeon_name" class="form-control" required
                                         onchange="autoPopulateDoctorOtRoom('surg')">
+                                        <option value="Select Surgeon" disabled selected>Select Surgeon</option>
                                         {% for doc in available_doctors %}
                                         <option value="{{ doc }}" {% if doctor_kw_lower in doc|lower %}selected{% endif %}>{{ doc }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_ot_room">OT Suite Room</label>
-                                    <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg'); refreshOtSlotAvailability('surg');">
+                                    <label class="form-label" for="surg_ot_room">OT Suite Room
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg'); refreshOtSlotAvailability('surg');" required>
+                                        <option value="Select OT Room" disabled selected>Select OT Room</option>
                                         {% for val, label in ot_room_choices_surgery %}
                                         <option value="{{ val }}" {% if profile.assigned_ot_room == val %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
@@ -378,9 +395,10 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_ot_slot">OT Slot <span
+                                    <label class="form-label" for="surg_ot_slot">OT Slot<span
                                             style="color: var(--danger);">*</span></label>
-                                    <select id="surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('surg')">
+                                    <select id="surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('surg')" onfocus="refreshOtSlotAvailability('surg')" onclick="refreshOtSlotAvailability('surg')" required>
+                                        <option value="Select OT Slot" disabled selected>Select OT Slot</option>
                                         {% for val, label in ot_slot_choices %}
                                         <option value="{{ val }}">{{ label }}</option>
                                         {% endfor %}
@@ -1754,13 +1772,14 @@
                                             class="form-control"
                                             min="{% now 'Y-m-d' %}"
                                             required
-                                            oninput="refreshOtSlotAvailability('modal_surg')">
+                                            oninput="refreshOtSlotAvailability('modal_surg')"
+                                            onchange="refreshOtSlotAvailability('modal_surg')">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="modal_surg_name">Patient Full Name <span
                                                 style="color: var(--danger);">*</span></label>
                                         <input type="text" id="modal_surg_name" name="patient_name" class="form-control"
-                                            placeholder="e.g. Rafiqul Islam" required>
+                                            placeholder="Full name" required>
                                     </div>
                                 </div>
 
@@ -1847,7 +1866,7 @@
                                     <div class="form-group">
                                         <label class="form-label" for="modal_surg_ot_slot">OT Slot <span
                                                 style="color: var(--danger);">*</span></label>
-                                        <select id="modal_surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('modal_surg')">
+                                        <select id="modal_surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('modal_surg')" onfocus="refreshOtSlotAvailability('modal_surg')" onclick="refreshOtSlotAvailability('modal_surg')">
                                             {% for val, label in ot_slot_choices %}
                                             <option value="{{ val }}">{{ label }}</option>
                                             {% endfor %}
@@ -2034,10 +2053,14 @@
                         } else {
                             // New booking forms: use the per-date cache
                             const cache = _perDateBookedSlots[prefix] || {};
-                            isClash = !!cache[slotEl.value];
+                            const booking = cache[slotEl.value];
+                            isClash = !!booking;
                             if (isClash && msgEl) {
+                                const patientName = (booking && typeof booking === 'object' && booking.patient_name)
+                                    ? ` for ${booking.patient_name}`
+                                    : '';
                                 msgEl.textContent =
-                                    `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked on this date. ` +
+                                    `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked${patientName} on this date. ` +
                                     `Please select a different OT slot.`;
                             }
                         }
@@ -2091,9 +2114,21 @@
 
                         if (!roomEl || !slotEl || !dateEl) return;
 
-                        // Resolve actual room value (hidden input for doctors, select for staff)
-                        const roomVal = roomEl.value || currentDoctorAssignedRoom;
-                        const dateVal = dateEl.value;
+                        // Resolve actual room value (hidden input for doctors, select for staff).
+                        // Treat the placeholder sentinel as absent so we fall back to the doctor's assigned room.
+                        let roomVal = (roomEl.value && roomEl.value !== 'Select OT Room')
+                            ? roomEl.value
+                            : (currentDoctorAssignedRoom || '');
+                        // Also keep the select widget in sync so downstream code sees the right value
+                        if (roomEl.tagName === 'SELECT' && roomVal && roomEl.value !== roomVal) {
+                            roomEl.value = roomVal;
+                        }
+
+                        let dateVal = dateEl.value;
+                        if (!dateVal) {
+                            dateVal = (typeof getLocalDateString === 'function') ? getLocalDateString() : new Date().toISOString().slice(0, 10);
+                            dateEl.value = dateVal;
+                        }
 
                         if (!roomVal || !dateVal) return;
 
@@ -2117,34 +2152,44 @@
                             });
                             if (!resp.ok) return;
                             const data = await resp.json();
-                            const bookedSlots = new Set(data.booked_slots || []);
+                            const bookedDetails = data.booked_details || {};
+                            const bookedSlots = new Set(data.booked_slots || Object.keys(bookedDetails));
 
                             // Store per-date cache for checkOtClash
                             _perDateBookedSlots[prefix] = {};
                             for (const s of bookedSlots) {
-                                _perDateBookedSlots[prefix][s] = true;
+                                _perDateBookedSlots[prefix][s] = bookedDetails[s] || { patient_name: 'Booked' };
                             }
 
-                            // Update each <option> in the slot dropdown
+                            // Update each <option> in the slot dropdown with live availability, session name, and time
                             let firstAvailable = null;
                             for (const opt of slotEl.options) {
-                                if (bookedSlots.has(opt.value)) {
-                                    // Mark as booked
+                                if (!opt.value || opt.value === 'Select OT Slot') {
+                                    continue;
+                                }
+                                if (!opt.dataset.originalLabel) {
+                                    opt.dataset.originalLabel = opt.textContent.trim();
+                                }
+                                const baseLabel = opt.dataset.originalLabel;
+                                const booking = bookedDetails[opt.value];
+
+                                if (booking || bookedSlots.has(opt.value)) {
+                                    // Mark as booked: red with 🔴 Booked (Patient Name) label
+                                    const patientName = (booking && booking.patient_name) ? booking.patient_name : 'Booked';
                                     opt.disabled = true;
-                                    opt.textContent = `❌ Booked/Unavailable — ${opt.value}`;
+                                    opt.textContent = `${baseLabel} — 🔴 Booked (${patientName})`;
                                     opt.style.color = '#ef4444';
                                     opt.style.fontWeight = '600';
-                                    opt.style.background = 'rgba(239,68,68,0.12)';
+                                    opt.classList.add('slot-booked');
+                                    opt.classList.remove('slot-open');
                                 } else {
-                                    // Restore original label (strip any previous markup)
+                                    // Mark as available: green with 🟢 Open label
                                     opt.disabled = false;
-                                    // Restore from data-original-label if present
-                                    if (opt.dataset.originalLabel) {
-                                        opt.textContent = opt.dataset.originalLabel;
-                                    }
-                                    opt.style.color = '';
-                                    opt.style.fontWeight = '';
-                                    opt.style.background = '';
+                                    opt.textContent = `${baseLabel} — 🟢 Open`;
+                                    opt.style.color = '#22c55e';
+                                    opt.style.fontWeight = '600';
+                                    opt.classList.add('slot-open');
+                                    opt.classList.remove('slot-booked');
                                     if (!firstAvailable) firstAvailable = opt;
                                 }
                             }
@@ -2164,14 +2209,14 @@
                                             <i class="fa-solid fa-circle-xmark" style="margin-right:4px;"></i>
                                             ${bookedSlots.size} slot${bookedSlots.size > 1 ? 's' : ''} already booked on this date
                                         </span>`;
-                                } else {
+                                } /*else {
                                     hintsEl.style.display = 'block';
                                     hintsEl.innerHTML =
                                         `<span style="font-size:0.78rem; color:#22c55e;">
                                             <i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>
                                             All slots available on this date
                                         </span>`;
-                                }
+                                }*/
                             }
 
                         } catch (e) {
@@ -2198,17 +2243,26 @@
                         ['surg_ot_slot', 'modal_surg_ot_slot'].forEach(id => {
                             const sel = document.getElementById(id);
                             if (!sel) return;
+                            const prefix = id === 'surg_ot_slot' ? 'surg' : 'modal_surg';
                             for (const opt of sel.options) {
-                                if (!opt.dataset.originalLabel) {
-                                    opt.dataset.originalLabel = opt.textContent;
+                                if (!opt.dataset.originalLabel && opt.value && opt.value !== 'Select OT Slot') {
+                                    opt.dataset.originalLabel = opt.textContent.trim();
                                 }
                             }
+                            // Clicking or focusing the OT Slot dropdown ensures fresh live availability
+                            sel.addEventListener('focus', function () {
+                                refreshOtSlotAvailability(prefix);
+                            });
+                            sel.addEventListener('mousedown', function () {
+                                refreshOtSlotAvailability(prefix);
+                            });
                         });
 
                         const todayStr = getLocalDateString();
                         ['surg_ot_date', 'modal_surg_ot_date'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) {
+                                const prefix = id === 'surg_ot_date' ? 'surg' : 'modal_surg';
                                 el.min = todayStr;
                                 if (!el.value || el.value < todayStr) {
                                     el.value = todayStr;
@@ -2219,6 +2273,7 @@
                                         this.setCustomValidity("Please select today or a future date. Past dates are not allowed.");
                                     } else {
                                         this.setCustomValidity("");
+                                        refreshOtSlotAvailability(prefix);
                                     }
                                 });
                                 el.addEventListener('change', function () {
@@ -2227,6 +2282,7 @@
                                         this.setCustomValidity("Please select today or a future date. Past dates are not allowed.");
                                     } else {
                                         this.setCustomValidity("");
+                                        refreshOtSlotAvailability(prefix);
                                     }
                                 });
                             }
@@ -2236,12 +2292,16 @@
                         if (surgDateEl) {
                             refreshOtSlotAvailability('surg');
                         }
+                        const modalDateEl = document.getElementById('modal_surg_ot_date');
+                        if (modalDateEl) {
+                            refreshOtSlotAvailability('modal_surg');
+                        }
                     })();
 
                     /**
                      * Open Schedule Patient Modal (from OT Schedule tab or header)
                      */
-                    function openSchedulePatientModal(slotName, roomName) {
+                    async function openSchedulePatientModal(slotName, roomName) {
                         const errorBox = document.getElementById('modal_surg_form_error');
                         if (errorBox) errorBox.style.display = 'none';
 
@@ -2249,13 +2309,13 @@
                         if (nameEl) nameEl.value = '';
 
                         const ageEl = document.getElementById('modal_surg_age');
-                        if (ageEl) ageEl.value = '50';
+                        if (ageEl) ageEl.value = 'Age';
 
                         const genderEl = document.getElementById('modal_surg_gender');
-                        if (genderEl) genderEl.value = 'Male';
+                        if (genderEl) genderEl.value = 'Select Gender';
 
                         const eyeEl = document.getElementById('modal_surg_eye');
-                        if (eyeEl) eyeEl.value = 'RE';
+                        if (eyeEl) eyeEl.value = 'Select Eye';
 
                         const typeEl = document.getElementById('modal_surg_type');
                         if (typeEl && typeEl.options.length > 0) typeEl.selectedIndex = 0;
@@ -2321,8 +2381,9 @@
                         const notesEl = document.getElementById('modal_surg_notes');
                         if (notesEl) notesEl.value = '';
 
-                        // ── Trigger slot availability refresh for today ───────────────────
-                        refreshOtSlotAvailability('modal_surg');
+                        // ── Trigger slot availability refresh for today ─────────────────
+                        // Await so the modal shows with fully populated 🟢/🔴 statuses
+                        await refreshOtSlotAvailability('modal_surg');
 
                         const modal = document.getElementById('schedulePatientModal');
                         if (modal) {

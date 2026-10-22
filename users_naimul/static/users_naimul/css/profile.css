@@ -885,6 +885,7 @@
         }
 
         #surg_ot_slot option,
+        #modal_surg_ot_slot option,
         #edit_ot_slot option {
             background-color: #0f172a;
             color: #f8fafc;
@@ -893,9 +894,38 @@
         }
 
         [data-theme="light"] #surg_ot_slot option,
+        [data-theme="light"] #modal_surg_ot_slot option,
         [data-theme="light"] #edit_ot_slot option {
             background-color: #ffffff;
             color: #0f172a;
+        }
+
+        #surg_ot_slot option.slot-open,
+        #modal_surg_ot_slot option.slot-open,
+        select option.slot-open {
+            color: #16a34a !important;
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] #surg_ot_slot option.slot-open,
+        [data-theme="dark"] #modal_surg_ot_slot option.slot-open,
+        [data-theme="dark"] select option.slot-open {
+            color: #22c55e !important;
+            font-weight: 600;
+        }
+
+        #surg_ot_slot option.slot-booked,
+        #modal_surg_ot_slot option.slot-booked,
+        select option.slot-booked {
+            color: #dc2626 !important;
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] #surg_ot_slot option.slot-booked,
+        [data-theme="dark"] #modal_surg_ot_slot option.slot-booked,
+        [data-theme="dark"] select option.slot-booked {
+            color: #ef4444 !important;
+            font-weight: 600;
         }
 
         textarea.form-control {
