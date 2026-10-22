@@ -181,7 +181,7 @@
                 <!-- Authentication Form -->
                 <form method="post" action="{% url 'users_naimul:login' %}" id="loginForm" novalidate>
                     {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.GET.next|default:'/naimul/profile/?tab=patients' }}">
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
 
                     <!-- Doctor ID / Username -->
                     <div class="form-group">
