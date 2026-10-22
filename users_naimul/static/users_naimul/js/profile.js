@@ -10,7 +10,7 @@ function switchClinicalTab(tabId) {
         clickedBtn.classList.add('active');
         try {
             clickedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } catch (e) {}
+        } catch (e) { }
     }
 
     const targetPane = document.getElementById('pane-' + tabId);
@@ -151,7 +151,7 @@ function closeSearchErrorModal() {
         try {
             input.focus();
             input.select();
-        } catch (e) {}
+        } catch (e) { }
     }
 }
 window.closeSearchErrorModal = closeSearchErrorModal;
@@ -212,7 +212,7 @@ function setAppTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     try {
         localStorage.setItem('iieih_theme', theme);
-    } catch (e) {}
+    } catch (e) { }
     document.querySelectorAll('.theme-switch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-theme-val') === theme);
     });
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 openSearchErrorModal(
                     "Search Input Required",
                     "Not a valid MRN number or not such patient found.",
-                    "Please enter a patient MRN number (e.g. P2600001, MRN-1022) or patient name to search."
+                    "Please enter a patient MRN number (e.g. P26XXXXX) or patient name to search."
                 );
             }
         });

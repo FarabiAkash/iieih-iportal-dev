@@ -102,7 +102,8 @@ def profile_view(request):
         _default_surgeon = profile.get_surgeon_display_name() if profile.is_doctor_role else ""
         surgeon_name = request.POST.get('surgeon_name', '').strip() or _default_surgeon
         ot_room = request.POST.get('ot_room', 'OT-1')
-        ot_slot = request.POST.get('ot_slot', 'Slot 1 (08:30 - 10:00 AM)')
+        valid_slots = [choice[0] for choice in SurgeryRecord.OT_Slot_Choices]
+        ot_slot = (request.POST.get('ot_slot') or '').strip() or 'Slot 1 (08:30 - 10:00 AM)'
         outcome = request.POST.get('outcome', 'Successful')
         medical_history = request.POST.get('medical_history', '').strip() or 'No systemic comorbidities reported. Pre-op IOP normal.'
         notes = request.POST.get('notes', '').strip()
@@ -142,9 +143,16 @@ def profile_view(request):
             if is_ajax:
                 return JsonResponse({'success': False, 'error': err_msg})
             messages.error(request, err_msg)
+        elif not ot_slot or ot_slot == 'Select OT Slot' or ot_slot not in valid_slots:
+            err_msg = "Please select a valid OT Slot."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': err_msg})
+            messages.error(request, err_msg)
         else:
             # ── OT Slot Clash Detection (scoped to ot_room + ot_slot + date) ─
-            clash_qs = SurgeryRecord.objects.filter(ot_room=ot_room, ot_slot=ot_slot, date=record_date)
+            clash_qs = SurgeryRecord.objects.filter(
+                ot_room=ot_room, ot_slot=ot_slot, date=record_date
+            ).exclude(outcome='Cancelled')
             clash = clash_qs.first()
             if clash:
                 err_msg = (
@@ -243,7 +251,7 @@ def profile_view(request):
             # ── OT Slot Clash Detection (scoped to room + slot + date, exclude current record) ──
             clash = SurgeryRecord.objects.filter(
                 ot_room=new_ot_room, ot_slot=new_ot_slot, date=surg.date
-            ).exclude(pk=surg.pk).first()
+            ).exclude(outcome='Cancelled').exclude(pk=surg.pk).first()
 
             if clash:
                 messages.error(
@@ -444,10 +452,13 @@ def profile_view(request):
     appointments = Appointment.objects.all().order_by('appointment_date', 'appointment_time_slot')
     upcoming_appointments = appointments.filter(status__in=['Scheduled', 'Confirmed'])
     
-    # Full OT Slot Matrix — all 4 suites
+    # Full OT Slot Matrix — all 4 suites (filtered to today, excludes cancelled)
+    today = date.today()
     ot_suite_matrix = []
     for room_val, room_label in SurgeryRecord.OT_Room_Choices:
-        room_surgeries = SurgeryRecord.objects.filter(ot_room=room_val).order_by('ot_slot')
+        room_surgeries = SurgeryRecord.objects.filter(
+            ot_room=room_val, date=today
+        ).exclude(outcome='Cancelled').order_by('ot_slot')
         slots = []
         for slot_val, slot_label in SurgeryRecord.OT_Slot_Choices:
             case = room_surgeries.filter(ot_slot=slot_val).first()
@@ -465,10 +476,10 @@ def profile_view(request):
             'utilization': round((room_surgeries.count() / 5) * 100, 1),
         })
 
-    # Legacy single-suite slot schedule (assigned room)
-    ot_suite_surgeries = SurgeryRecord.objects.filter(ot_room=profile.assigned_ot_room).order_by('ot_slot')
-    if not ot_suite_surgeries.exists():
-        ot_suite_surgeries = my_surgeries
+    # Doctor's single-suite slot schedule (assigned room, filtered to today)
+    ot_suite_surgeries = SurgeryRecord.objects.filter(
+        ot_room=profile.assigned_ot_room, date=today
+    ).exclude(outcome='Cancelled').order_by('ot_slot')
 
     ot_slots_schedule = []
     for slot_val, slot_label in SurgeryRecord.OT_Slot_Choices:
@@ -481,8 +492,11 @@ def profile_view(request):
         })
 
     # Build a JSON map of already-booked OT slots for front-end clash detection
+    # Scoped to today's date and excludes cancelled bookings
     # Format: { "OT-1||Slot 1 (08:30 - 10:00 AM)": {patient_name, patient_mrn}, ... }
-    booked_ot_slots_raw = SurgeryRecord.objects.values('ot_room', 'ot_slot', 'patient_name', 'patient_mrn', 'id')
+    booked_ot_slots_raw = SurgeryRecord.objects.filter(
+        date=today
+    ).exclude(outcome='Cancelled').values('ot_room', 'ot_slot', 'patient_name', 'patient_mrn', 'id')
     booked_ot_slots = {
         f"{r['ot_room']}||{r['ot_slot']}": {
             'patient_name': r['patient_name'],
@@ -554,18 +568,37 @@ def profile_view(request):
 @login_required(login_url='users_naimul:login')
 def ot_slot_availability_api(request):
     """
-    AJAX API: Return the list of booked OT slots for a given OT room and date.
+    AJAX API: Return the list of booked OT slots, patient names, and availability for a given OT room and date.
     Query params:
         ot_room  - e.g. 'OT-1'
         ot_date  - ISO date string 'YYYY-MM-DD'
     Response JSON:
-        { "booked_slots": ["Slot 1 (08:30 - 10:00 AM)", ...] }
+        {
+            "booked_slots": ["Slot 1 (08:30 - 10:00 AM)", ...],
+            "booked_details": {
+                "Slot 1 (08:30 - 10:00 AM)": {
+                    "patient_name": "...",
+                    "patient_mrn": "...",
+                    "id": 1
+                }
+            },
+            "slots": [
+                {
+                    "slot_val": "Slot 1 (08:30 - 10:00 AM)",
+                    "slot_label": "Slot 1 (08:30 - 10:00 AM) - Morning Primary",
+                    "is_booked": true,
+                    "patient_name": "...",
+                    "patient_mrn": "..."
+                },
+                ...
+            ]
+        }
     """
     ot_room = request.GET.get('ot_room', '').strip()
     ot_date_raw = request.GET.get('ot_date', '').strip()
 
     if not ot_room or not ot_date_raw:
-        return JsonResponse({'booked_slots': []})
+        return JsonResponse({'booked_slots': [], 'booked_details': {}, 'slots': []})
 
     try:
         from datetime import datetime
@@ -573,12 +606,42 @@ def ot_slot_availability_api(request):
     except ValueError:
         return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
 
-    booked = list(
+    booked_records = list(
         SurgeryRecord.objects
         .filter(ot_room=ot_room, date=ot_date)
         .exclude(ot_slot__isnull=True)
         .exclude(ot_slot='')
-        .values_list('ot_slot', flat=True)
+        .exclude(outcome='Cancelled')
+        .values('ot_slot', 'patient_name', 'patient_mrn', 'id')
     )
-    return JsonResponse({'booked_slots': booked})
+
+    booked_slots = [r['ot_slot'] for r in booked_records]
+    booked_details = {
+        r['ot_slot']: {
+            'patient_name': r['patient_name'],
+            'patient_mrn': r['patient_mrn'],
+            'id': r['id'],
+        }
+        for r in booked_records
+    }
+
+    slots_data = []
+    for slot_val, slot_label in SurgeryRecord.OT_Slot_Choices:
+        detail = booked_details.get(slot_val)
+        is_booked = detail is not None
+        p_name = detail['patient_name'] if is_booked else None
+        p_mrn = detail['patient_mrn'] if is_booked else None
+        slots_data.append({
+            'slot_val': slot_val,
+            'slot_label': slot_label,
+            'is_booked': is_booked,
+            'patient_name': p_name,
+            'patient_mrn': p_mrn,
+        })
+
+    return JsonResponse({
+        'booked_slots': booked_slots,
+        'booked_details': booked_details,
+        'slots': slots_data,
+    })
 

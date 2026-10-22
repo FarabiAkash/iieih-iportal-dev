@@ -622,6 +622,38 @@ class OtSlotAvailabilityAndClashTests(TestCase):
         self.assertIn('Slot 1 (08:30 - 10:00 AM)', data['booked_slots'])
         self.assertIn('Slot 3 (12:00 - 01:30 PM)', data['booked_slots'])
         self.assertNotIn('Slot 2 (10:15 - 11:45 AM)', data['booked_slots'])
+        # Verify dynamic booked_details and patient names
+        self.assertIn('booked_details', data)
+        self.assertEqual(data['booked_details']['Slot 1 (08:30 - 10:00 AM)']['patient_name'], 'Existing Patient 1')
+        self.assertEqual(data['booked_details']['Slot 3 (12:00 - 01:30 PM)']['patient_name'], 'Existing Patient 2')
+        # Verify structured slots with availability status
+        self.assertIn('slots', data)
+        slot1 = next(s for s in data['slots'] if s['slot_val'] == 'Slot 1 (08:30 - 10:00 AM)')
+        self.assertTrue(slot1['is_booked'])
+        self.assertEqual(slot1['patient_name'], 'Existing Patient 1')
+        slot2 = next(s for s in data['slots'] if s['slot_val'] == 'Slot 2 (10:15 - 11:45 AM)')
+        self.assertFalse(slot2['is_booked'])
+        self.assertIsNone(slot2['patient_name'])
+
+    def test_backend_prevents_booking_invalid_slot(self):
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Invalid Slot Patient',
+                'patient_age': '40',
+                'patient_gender': 'Male',
+                'eye': 'LE',
+                'surgery_type': 'Glaucoma',
+                'ot_date': '2026-10-25',
+                'ot_slot': 'Select OT Slot',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn('valid OT Slot', data['error'])
 
     def test_backend_prevents_booking_occupied_slot_on_same_date(self):
         from .models import SurgeryRecord
