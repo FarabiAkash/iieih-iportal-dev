@@ -218,15 +218,21 @@
                                 <i class="fa-solid fa-door-open"></i> {{ profile.assigned_ot_room }} &bull; Today's OT
                                 Slot Schedule
                             </h2>
-                            <span style="font-size: 0.82rem; color: var(--text-muted);">
-                                <i class="fa-solid fa-shield-heart"
-                                    style="color: var(--success); margin-right: 4px;"></i> Active Sterilized Suite
-                            </span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" class="btn-action-view" style="margin: 0; padding: 6px 14px; font-size: 0.82rem;"
+                                    onclick="openSchedulePatientModal('', '{{ profile.assigned_ot_room|escapejs }}')">
+                                    <i class="fa-solid fa-plus"></i> Schedule Patient
+                                </button>
+                                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                    <i class="fa-solid fa-shield-heart"
+                                        style="color: var(--success); margin-right: 4px;"></i> Active Sterilized Suite
+                                </span>
+                            </div>
                         </div>
 
                         <div class="ot-slots-grid">
                             {% for slot in ot_slots_schedule %}
-                            <div class="slot-card">
+                            <div class="slot-card" data-slot-name="{{ slot.slot_name }}">
                                 <div class="slot-header">
                                     <div class="slot-time">
                                         <i class="fa-regular fa-clock"></i> {{ slot.slot_name }}
@@ -264,9 +270,10 @@
                                 <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 12px;">Slot open for
                                     elective cataract or emergency add-on surgical procedure.</p>
                                 <div style="margin-top: 16px;">
-                                    <a href="/surgeries/" class="btn-action-view">
+                                    <button type="button" class="btn-action-view"
+                                        onclick="openSchedulePatientModal('{{ slot.slot_name|escapejs }}', '{{ profile.assigned_ot_room|escapejs }}')">
                                         <i class="fa-solid fa-plus"></i> Schedule Patient
-                                    </a>
+                                    </button>
                                 </div>
                                 {% endif %}
                             </div>
@@ -290,12 +297,20 @@
                             {% csrf_token %}
                             <input type="hidden" name="apply_surgery" value="1">
 
+                            <!-- Patient MRN is auto-generated on save — hidden field preserves existing MRN logic -->
+                            <input type="hidden" name="patient_mrn" id="surg_mrn" value="">
+
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="surg_mrn">Patient MRN</label>
-                                    <div class="form-control" style="background: var(--surface-2, #1e293b); color: var(--accent, #38bdf8); font-weight: 600; cursor: default;" id="surg_mrn">
-                                        <i class="fa-solid fa-tag" style="margin-right:6px;"></i> Auto-assigned on save (P26XXXXX)
-                                    </div>
+                                    <label class="form-label" for="surg_ot_date">
+                                        <i class="fa-regular fa-calendar" style="margin-right:4px;"></i>
+                                        Date <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="date" id="surg_ot_date" name="ot_date"
+                                        class="form-control"
+                                        min="{% now 'Y-m-d' %}"
+                                        required
+                                        oninput="refreshOtSlotAvailability('surg')">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_name">Patient Full Name <span
@@ -309,11 +324,12 @@
                                 <div class="form-group">
                                     <label class="form-label" for="surg_age">Patient Age</label>
                                     <input type="number" id="surg_age" name="patient_age" class="form-control"
-                                        value="50" min="1" max="120">
+                                        placeholder="Age" min="1" max="120">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_gender">Gender</label>
                                     <select id="surg_gender" name="patient_gender" class="form-control">
+                                        <option value="Select Gender" disabled selected> Select Gender</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
                                         <option value="Other">Other</option>
@@ -352,7 +368,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_room">OT Suite Room</label>
-                                    <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg')">
+                                    <select id="surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('surg'); refreshOtSlotAvailability('surg');">
                                         {% for val, label in ot_room_choices_surgery %}
                                         <option value="{{ val }}" {% if profile.assigned_ot_room == val %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
@@ -364,11 +380,12 @@
                                 <div class="form-group">
                                     <label class="form-label" for="surg_ot_slot">OT Slot <span
                                             style="color: var(--danger);">*</span></label>
-                                    <select id="surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('surg')" >
+                                    <select id="surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('surg')">
                                         {% for val, label in ot_slot_choices %}
                                         <option value="{{ val }}">{{ label }}</option>
                                         {% endfor %}
                                     </select>
+                                    <div id="surg_slot_hints" style="margin-top:8px; display:none;"></div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="surg_outcome">Planned Outcome Status</label>
@@ -443,7 +460,7 @@
                                     <label class="form-label" for="appt_name">Patient Full Name <span
                                             style="color: var(--danger);">*</span></label>
                                     <input type="text" id="appt_name" name="patient_name" class="form-control"
-                                        placeholder="e.g. Karimul Haq" required>
+                                        placeholder="Full Name" required>
                                 </div>
                             </div>
 
@@ -451,7 +468,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="appt_age">Patient Age</label>
                                     <input type="number" id="appt_age" name="patient_age" class="form-control"
-                                        value="40" min="1" max="120">
+                                        placeholder="Age" min="1" max="120" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="appt_phone">Contact Number</label>
@@ -464,6 +481,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="appt_gender">Gender</label>
                                     <select id="appt_gender" name="patient_gender" class="form-control">
+                                        <option value="Select Gender" disabled selected>Select Gender</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
                                         <option value="Other">Other</option>
@@ -1695,6 +1713,194 @@
                     </div>
                 </div>
 
+                <!-- Schedule Patient Surgery Registration Modal (Doctor OT Schedule Modal) -->
+                <div class="modal-overlay" id="schedulePatientModal">
+                    <div class="modal-card" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+                        <div class="modal-header">
+                            <h2
+                                style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; 
+                                align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-calendar-plus" style="color: var(--primary-light);"></i> Schedule Patient for Surgery
+                            </h2>
+                            <button type="button" onclick="closeSchedulePatientModal()"
+                                style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; 
+                                cursor: pointer;" aria-label="Close modal">&times;</button>
+                        </div>
+                        <form id="schedulePatientModalForm" method="post" action="{% url 'users_naimul:profile' %}"
+                            onsubmit="handleSchedulePatientSubmit(event)" style="display: flex; flex-direction: column; overflow: hidden; margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="apply_surgery" value="1">
+                            <input type="hidden" name="active_tab" value="ot-slots">
+
+                            <div class="modal-body" style="overflow-y: auto; padding: 20px 24px;">
+                                <!-- Inline Error Banner inside Modal (displays errors without redirect) -->
+                                <div id="modal_surg_form_error" style="display:none; margin-bottom: 14px;
+                                    background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; border-radius: 10px;
+                                    padding: 12px 16px; color: #fca5a5; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; margin-right: 8px;"></i>
+                                    <span id="modal_surg_form_error_msg"></span>
+                                </div>
+
+                                <!-- Patient MRN is auto-generated on save — hidden field preserves existing MRN logic -->
+                                <input type="hidden" name="patient_mrn" id="modal_surg_mrn" value="">
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_ot_date">
+                                            <i class="fa-regular fa-calendar" style="margin-right:4px;"></i>
+                                            Date <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="date" id="modal_surg_ot_date" name="ot_date"
+                                            class="form-control"
+                                            min="{% now 'Y-m-d' %}"
+                                            required
+                                            oninput="refreshOtSlotAvailability('modal_surg')">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_name">Patient Full Name <span
+                                                style="color: var(--danger);">*</span></label>
+                                        <input type="text" id="modal_surg_name" name="patient_name" class="form-control"
+                                            placeholder="e.g. Rafiqul Islam" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_age">Patient Age</label>
+                                        <input type="number" id="modal_surg_age" name="patient_age" class="form-control"
+                                            placeholder="Age" min="1" max="120" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_gender">Gender</label>
+                                        <select id="modal_surg_gender" name="patient_gender" class="form-control">
+                                            <option value="Select Gender" disabled selected>Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_eye">Eye Operative Side</label>
+                                        <select id="modal_surg_eye" name="eye" class="form-control">
+                                            <option value="Select Eye" disabled selected> Select Eye</option>
+                                            <option value="RE">Right Eye (OD)</option>
+                                            <option value="LE">Left Eye (OS)</option>
+                                            <option value="BE">Both Eyes (OU)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_type">Surgery Type</label>
+                                        <select id="modal_surg_type" name="surgery_type" class="form-control">
+                                            <option value="Select Surgery Type" disabled selected> Select Surgery Type</option>
+                                            {% for val, label in surgery_type_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_surgeon">Operating Surgeon</label>
+                                        {% if profile.is_doctor_role %}
+                                        {# Doctor: locked to their own profile name — cannot be changed #}
+                                        <div class="form-control" style="background: var(--surface-2, #1e293b); color: var(--accent, #38bdf8); font-weight: 600; cursor: default; display:flex; align-items:center; gap:8px;">
+                                            <i class="fa-solid fa-user-doctor"></i> {{ doctor_display_name }}
+                                            <span style="margin-left:auto; font-size:0.72rem; color:var(--text-muted); font-weight:400;"><i class="fa-solid fa-lock" style="margin-right:3px;"></i>Locked</span>
+                                        </div>
+                                        <input type="hidden" id="modal_surg_surgeon" name="surgeon_name" value="{{ doctor_display_name|escapejs }}">
+                                        {% else %}
+                                        {# Staff: full dropdown to choose any doctor #}
+                                        <select id="modal_surg_surgeon" name="surgeon_name" class="form-control" required
+                                            onchange="autoPopulateDoctorOtRoom('modal_surg')">
+                                            {% for doc in available_doctors %}
+                                            <option value="{{ doc }}" {% if doctor_kw_lower in doc|lower %}selected{% endif %}>{{ doc }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_ot_room">OT Suite Room</label>
+                                        {% if profile.is_doctor_role %}
+                                        {# Doctor: locked to their assigned OT room from the database #}
+                                        <div class="form-control" style="background: var(--surface-2, #1e293b); color: var(--accent, #38bdf8); font-weight: 600; cursor: default; display:flex; align-items:center; gap:8px;">
+                                            <i class="fa-solid fa-door-open"></i>
+                                            {% for val, label in ot_room_choices_surgery %}{% if profile.assigned_ot_room == val %}{{ label }}{% endif %}{% endfor %}
+                                            <span style="margin-left:auto; font-size:0.72rem; color:var(--text-muted); font-weight:400;"><i class="fa-solid fa-lock" style="margin-right:3px;"></i>Locked</span>
+                                        </div>
+                                        <input type="hidden" id="modal_surg_ot_room" name="ot_room" value="{{ profile.assigned_ot_room|escapejs }}">
+                                        {% else %}
+                                        {# Staff: full dropdown to choose any OT room #}
+                                        <select id="modal_surg_ot_room" name="ot_room" class="form-control" onchange="checkOtClash('modal_surg'); refreshOtSlotAvailability('modal_surg');">
+                                            {% for val, label in ot_room_choices_surgery %}
+                                            <option value="{{ val }}" {% if profile.assigned_ot_room == val %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_ot_slot">OT Slot <span
+                                                style="color: var(--danger);">*</span></label>
+                                        <select id="modal_surg_ot_slot" name="ot_slot" class="form-control" onchange="checkOtClash('modal_surg')">
+                                            {% for val, label in ot_slot_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <!-- Per-slot availability hint — updates after date is chosen -->
+                                        <div id="modal_surg_slot_hints" style="margin-top:8px; display:none;"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="modal_surg_outcome">Planned Outcome Status</label>
+                                        <select id="modal_surg_outcome" name="outcome" class="form-control">
+                                            {% for val, label in outcome_choices %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- OT Clash Warning Banner (Modal) -->
+                                <div id="modal_surg_clash_alert" style="display:none; margin-bottom: 14px;
+                                    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+                                    border: 1.5px solid rgba(239,68,68,0.6); border-radius: 10px;
+                                    padding: 12px 16px; color: #fca5a5; font-size: 0.85rem;
+                                    animation: clashPulse 1.5s ease-in-out infinite;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color:#f87171; margin-right:8px;"></i>
+                                    <strong id="modal_surg_clash_msg"></strong>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="modal_surg_med_hist">Patient Medical History &amp; Pre-Op
+                                        Notes</label>
+                                    <textarea id="modal_surg_med_hist" name="medical_history" class="form-control" rows="2"
+                                        placeholder="e.g. Type-2 Diabetes on insulin, Hypertension controlled, no known drug allergies. Pre-op IOP normal."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="modal_surg_notes">Operative Notes / IOL Details /
+                                        Remarks</label>
+                                    <textarea id="modal_surg_notes" name="notes" class="form-control" rows="2"
+                                        placeholder="e.g. Phacoemulsification with Foldable IOL. Clear cornea incision."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer"
+                                style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" class="nav-btn" onclick="closeSchedulePatientModal()">Cancel</button>
+                                <button type="submit" id="modal_surg_submit_btn" class="btn-teal" style="margin-top: 0; padding: 10px 22px;">
+                                    <i class="fa-solid fa-file-medical"></i> Submit Surgery Application
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Django data injection (must stay inline — uses template tags) -->
                 <script>
                     const diagnosticRecordsData = {
@@ -1707,6 +1913,15 @@
                     },
                     {% endfor %}
         };
+
+                    // ── Current Doctor Context ────────────────────────────────────────
+                    const currentDoctorAssignedRoom = "{{ profile.assigned_ot_room|escapejs }}";
+                    const currentDoctorDisplayName = "{{ doctor_display_name|escapejs }}";
+                    const currentDoctorKwLower = "{{ doctor_kw_lower|escapejs }}";
+                    // True when the logged-in user is a doctor role — surgeon + OT room are locked
+                    const currentUserIsDoctorRole = {{ profile.is_doctor_role|yesno:'true,false' }};
+                    // OT slot availability API URL
+                    const otSlotAvailabilityApiUrl = "{% url 'users_naimul:ot_slot_availability_api' %}";
 
                     // ── OT Slot Clash Data ────────────────────────────────────────────
                     // Map: "OT-1||Slot 1 (08:30 - 10:00 AM)" -> {patient_name, patient_mrn, id}
@@ -1721,22 +1936,35 @@
                      * Auto-populate the OT room dropdown based on the selected doctor.
                      * Uses the database-derived doctorOtRoomMap. If the doctor has no
                      * assigned OT room, the field is left unchanged (graceful handling).
-                     * @param {string} prefix - 'surg' for Apply form, 'edit' for Edit modal
+                     * @param {string} prefix - 'surg' for Apply form, 'edit' for Edit modal, 'modal_surg' for Schedule modal
                      */
                     function autoPopulateDoctorOtRoom(prefix) {
-                        const surgeonEl = document.getElementById(prefix === 'surg' ? 'surg_surgeon' : 'edit_surgeon_name');
-                        const roomEl    = document.getElementById(prefix === 'surg' ? 'surg_ot_room' : 'edit_ot_room');
+                        let surgeonId, roomId;
+                        if (prefix === 'surg') {
+                            surgeonId = 'surg_surgeon';
+                            roomId = 'surg_ot_room';
+                        } else if (prefix === 'edit') {
+                            surgeonId = 'edit_surgeon_name';
+                            roomId = 'edit_ot_room';
+                        } else if (prefix === 'modal_surg') {
+                            surgeonId = 'modal_surg_surgeon';
+                            roomId = 'modal_surg_ot_room';
+                        }
+                        const surgeonEl = document.getElementById(surgeonId);
+                        const roomEl    = document.getElementById(roomId);
                         if (!surgeonEl || !roomEl) return;
                         const selectedDoctor = surgeonEl.value;
                         const assignedRoom = doctorOtRoomMap[selectedDoctor];
                         if (assignedRoom) {
                             roomEl.value = assignedRoom;
-                            // Trigger clash check after auto-population so warnings update
+                            // Trigger clash check & slot refresh after auto-population so warnings update
                             if (typeof checkOtClash === 'function') {
                                 checkOtClash(prefix);
                             }
+                            if (typeof refreshOtSlotAvailability === 'function' && prefix !== 'edit') {
+                                refreshOtSlotAvailability(prefix);
+                            }
                         }
-                        // If no assigned room found, leave the field as-is (graceful)
                     }
 
                     // Current surgery ID being edited (set by openEditSurgeryModal)
@@ -1744,34 +1972,84 @@
 
                     /**
                      * Check for an OT slot clash and show/hide the warning banner.
-                     * @param {string} prefix  - 'surg' for the Apply form, 'edit' for the Edit modal
+                     * @param {string} prefix  - 'surg' for Apply form, 'edit' for Edit modal, 'modal_surg' for Schedule modal
+                     */
+                    // Per-date booked slot cache: { prefix: { slotVal: true/false } }
+                    const _perDateBookedSlots = {};
+
+                    /**
+                     * Check for an OT slot clash and show/hide the warning banner.
+                     * For 'surg' and 'modal_surg' prefixes this checks the per-date
+                     * cache populated by refreshOtSlotAvailability; for 'edit' it
+                     * falls back to the global bookedOtSlots map (existing logic).
+                     * @param {string} prefix  - 'surg' | 'edit' | 'modal_surg'
                      */
                     function checkOtClash(prefix) {
-                        const roomEl  = document.getElementById(prefix === 'surg' ? 'surg_ot_room' : 'edit_ot_room');
-                        const slotEl  = document.getElementById(prefix === 'surg' ? 'surg_ot_slot' : 'edit_ot_slot');
-                        const alertEl = document.getElementById(prefix + '_clash_alert');
-                        const msgEl   = document.getElementById(prefix + '_clash_msg');
-                        const submitBtn = document.getElementById(prefix === 'surg' ? 'surg_submit_btn' : 'edit_submit_btn');
+                        let roomId, slotId, alertId, msgId, submitId, dateId;
+                        if (prefix === 'surg') {
+                            roomId   = 'surg_ot_room';
+                            slotId   = 'surg_ot_slot';
+                            alertId  = 'surg_clash_alert';
+                            msgId    = 'surg_clash_msg';
+                            submitId = 'surg_submit_btn';
+                            dateId   = 'surg_ot_date';
+                        } else if (prefix === 'edit') {
+                            roomId   = 'edit_ot_room';
+                            slotId   = 'edit_ot_slot';
+                            alertId  = 'edit_clash_alert';
+                            msgId    = 'edit_clash_msg';
+                            submitId = 'edit_submit_btn';
+                            dateId   = null;
+                        } else if (prefix === 'modal_surg') {
+                            roomId   = 'modal_surg_ot_room';
+                            slotId   = 'modal_surg_ot_slot';
+                            alertId  = 'modal_surg_clash_alert';
+                            msgId    = 'modal_surg_clash_msg';
+                            submitId = 'modal_surg_submit_btn';
+                            dateId   = 'modal_surg_ot_date';
+                        }
 
-                        if (!roomEl || !slotEl || !alertEl) return;
+                        const roomEl    = document.getElementById(roomId);
+                        const slotEl    = document.getElementById(slotId);
+                        const alertEl   = document.getElementById(alertId);
+                        const msgEl     = document.getElementById(msgId);
+                        const submitBtn = document.getElementById(submitId);
 
-                        const key = roomEl.value + '||' + slotEl.value;
-                        const booked = bookedOtSlots[key];
+                        if (!roomEl || !slotEl || !alertEl) return false;
 
-                        // For the edit modal, the current record's own slot is never a clash
-                        const isSelf = prefix === 'edit' && booked && String(booked.id) === String(currentEditSurgeryId);
+                        let isClash = false;
 
-                        if (booked && !isSelf) {
-                            msgEl.textContent =
-                                `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked for ` +
-                                `${booked.patient_name} (${booked.patient_mrn}). ` +
-                                `Please select a different OT room or time slot.`;
+                        if (prefix === 'edit') {
+                            // Edit modal: use the global date-unscoped map (no date picker there)
+                            const key = roomEl.value + '||' + slotEl.value;
+                            const booked = bookedOtSlots[key];
+                            const isSelf = booked && String(booked.id) === String(currentEditSurgeryId);
+                            isClash = !!(booked && !isSelf);
+                            if (isClash && msgEl) {
+                                msgEl.textContent =
+                                    `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked for ` +
+                                    `${booked.patient_name} (${booked.patient_mrn}). ` +
+                                    `Please select a different OT room or time slot.`;
+                            }
+                        } else {
+                            // New booking forms: use the per-date cache
+                            const cache = _perDateBookedSlots[prefix] || {};
+                            isClash = !!cache[slotEl.value];
+                            if (isClash && msgEl) {
+                                msgEl.textContent =
+                                    `Slot Clash! ${roomEl.value} / ${slotEl.value} is already booked on this date. ` +
+                                    `Please select a different OT slot.`;
+                            }
+                        }
+
+                        if (isClash) {
                             alertEl.style.display = 'block';
                             if (submitBtn) {
                                 submitBtn.disabled = true;
                                 submitBtn.style.opacity = '0.45';
                                 submitBtn.style.cursor = 'not-allowed';
                             }
+                            return true;
                         } else {
                             alertEl.style.display = 'none';
                             if (submitBtn) {
@@ -1779,7 +2057,656 @@
                                 submitBtn.style.opacity = '';
                                 submitBtn.style.cursor = '';
                             }
+                            return false;
                         }
+                    }
+
+                    /**
+                     * Fetch booked slots from the API for the selected room + date,
+                     * then visually mark those options in the slot <select> as
+                     * "Booked / Unavailable" and disable them so the doctor can't
+                     * accidentally pick them.
+                     * @param {string} prefix - 'surg' | 'modal_surg'
+                     */
+                    async function refreshOtSlotAvailability(prefix) {
+                        let roomId, slotId, dateId, hintsId;
+                        if (prefix === 'surg') {
+                            roomId  = 'surg_ot_room';
+                            slotId  = 'surg_ot_slot';
+                            dateId  = 'surg_ot_date';
+                            hintsId = 'surg_slot_hints';
+                        } else if (prefix === 'modal_surg') {
+                            roomId  = 'modal_surg_ot_room';
+                            slotId  = 'modal_surg_ot_slot';
+                            dateId  = 'modal_surg_ot_date';
+                            hintsId = 'modal_surg_slot_hints';
+                        } else {
+                            return;
+                        }
+
+                        const roomEl  = document.getElementById(roomId);
+                        const slotEl  = document.getElementById(slotId);
+                        const dateEl  = document.getElementById(dateId);
+                        const hintsEl = document.getElementById(hintsId);
+
+                        if (!roomEl || !slotEl || !dateEl) return;
+
+                        // Resolve actual room value (hidden input for doctors, select for staff)
+                        const roomVal = roomEl.value || currentDoctorAssignedRoom;
+                        const dateVal = dateEl.value;
+
+                        if (!roomVal || !dateVal) return;
+
+                        const todayStr = (typeof getLocalDateString === 'function') ? getLocalDateString() : new Date().toISOString().slice(0, 10);
+                        if (dateVal < todayStr) {
+                            if (hintsEl) {
+                                hintsEl.style.display = 'block';
+                                hintsEl.innerHTML =
+                                    `<span style="font-size:0.78rem; color:#ef4444;">
+                                        <i class="fa-solid fa-circle-exclamation" style="margin-right:4px;"></i>
+                                        Please select today or a future date. Past dates are not allowed.
+                                    </span>`;
+                            }
+                            return;
+                        }
+
+                        try {
+                            const url = `${otSlotAvailabilityApiUrl}?ot_room=${encodeURIComponent(roomVal)}&ot_date=${encodeURIComponent(dateVal)}`;
+                            const resp = await fetch(url, {
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            });
+                            if (!resp.ok) return;
+                            const data = await resp.json();
+                            const bookedSlots = new Set(data.booked_slots || []);
+
+                            // Store per-date cache for checkOtClash
+                            _perDateBookedSlots[prefix] = {};
+                            for (const s of bookedSlots) {
+                                _perDateBookedSlots[prefix][s] = true;
+                            }
+
+                            // Update each <option> in the slot dropdown
+                            let firstAvailable = null;
+                            for (const opt of slotEl.options) {
+                                if (bookedSlots.has(opt.value)) {
+                                    // Mark as booked
+                                    opt.disabled = true;
+                                    opt.textContent = `❌ Booked/Unavailable — ${opt.value}`;
+                                    opt.style.color = '#ef4444';
+                                    opt.style.fontWeight = '600';
+                                    opt.style.background = 'rgba(239,68,68,0.12)';
+                                } else {
+                                    // Restore original label (strip any previous markup)
+                                    opt.disabled = false;
+                                    // Restore from data-original-label if present
+                                    if (opt.dataset.originalLabel) {
+                                        opt.textContent = opt.dataset.originalLabel;
+                                    }
+                                    opt.style.color = '';
+                                    opt.style.fontWeight = '';
+                                    opt.style.background = '';
+                                    if (!firstAvailable) firstAvailable = opt;
+                                }
+                            }
+
+                            // If the currently selected slot is now booked, auto-select the first free one
+                            const currentOpt = slotEl.options[slotEl.selectedIndex];
+                            if (currentOpt && currentOpt.disabled && firstAvailable) {
+                                slotEl.value = firstAvailable.value;
+                            }
+
+                            // Show summary hint below the dropdown
+                            if (hintsEl) {
+                                if (bookedSlots.size > 0) {
+                                    hintsEl.style.display = 'block';
+                                    hintsEl.innerHTML =
+                                        `<span style="font-size:0.78rem; color:#ef4444;">
+                                            <i class="fa-solid fa-circle-xmark" style="margin-right:4px;"></i>
+                                            ${bookedSlots.size} slot${bookedSlots.size > 1 ? 's' : ''} already booked on this date
+                                        </span>`;
+                                } else {
+                                    hintsEl.style.display = 'block';
+                                    hintsEl.innerHTML =
+                                        `<span style="font-size:0.78rem; color:#22c55e;">
+                                            <i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>
+                                            All slots available on this date
+                                        </span>`;
+                                }
+                            }
+
+                        } catch (e) {
+                            console.warn('OT slot availability fetch failed:', e);
+                        }
+
+                        // Re-run clash check with fresh data
+                        checkOtClash(prefix);
+                    }
+
+                    /**
+                     * Get today's date formatted as YYYY-MM-DD in local time.
+                     */
+                    function getLocalDateString() {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const day = String(now.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    }
+
+                    // Store original option labels before any mutation & initialize default dates and dynamic min constraint
+                    (function initSlotAvailabilityOnLoad() {
+                        ['surg_ot_slot', 'modal_surg_ot_slot'].forEach(id => {
+                            const sel = document.getElementById(id);
+                            if (!sel) return;
+                            for (const opt of sel.options) {
+                                if (!opt.dataset.originalLabel) {
+                                    opt.dataset.originalLabel = opt.textContent;
+                                }
+                            }
+                        });
+
+                        const todayStr = getLocalDateString();
+                        ['surg_ot_date', 'modal_surg_ot_date'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                el.min = todayStr;
+                                if (!el.value || el.value < todayStr) {
+                                    el.value = todayStr;
+                                }
+                                el.addEventListener('input', function () {
+                                    const curToday = getLocalDateString();
+                                    if (this.value && this.value < curToday) {
+                                        this.setCustomValidity("Please select today or a future date. Past dates are not allowed.");
+                                    } else {
+                                        this.setCustomValidity("");
+                                    }
+                                });
+                                el.addEventListener('change', function () {
+                                    const curToday = getLocalDateString();
+                                    if (this.value && this.value < curToday) {
+                                        this.setCustomValidity("Please select today or a future date. Past dates are not allowed.");
+                                    } else {
+                                        this.setCustomValidity("");
+                                    }
+                                });
+                            }
+                        });
+
+                        const surgDateEl = document.getElementById('surg_ot_date');
+                        if (surgDateEl) {
+                            refreshOtSlotAvailability('surg');
+                        }
+                    })();
+
+                    /**
+                     * Open Schedule Patient Modal (from OT Schedule tab or header)
+                     */
+                    function openSchedulePatientModal(slotName, roomName) {
+                        const errorBox = document.getElementById('modal_surg_form_error');
+                        if (errorBox) errorBox.style.display = 'none';
+
+                        const nameEl = document.getElementById('modal_surg_name');
+                        if (nameEl) nameEl.value = '';
+
+                        const ageEl = document.getElementById('modal_surg_age');
+                        if (ageEl) ageEl.value = '50';
+
+                        const genderEl = document.getElementById('modal_surg_gender');
+                        if (genderEl) genderEl.value = 'Male';
+
+                        const eyeEl = document.getElementById('modal_surg_eye');
+                        if (eyeEl) eyeEl.value = 'RE';
+
+                        const typeEl = document.getElementById('modal_surg_type');
+                        if (typeEl && typeEl.options.length > 0) typeEl.selectedIndex = 0;
+
+                        const surgeonEl = document.getElementById('modal_surg_surgeon');
+                        if (surgeonEl && surgeonEl.tagName === 'SELECT') {
+                            // Only for staff (doctors have a hidden input instead)
+                            for (let opt of surgeonEl.options) {
+                                if (opt.value && currentDoctorKwLower && opt.value.toLowerCase().includes(currentDoctorKwLower)) {
+                                    opt.selected = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        const roomEl = document.getElementById('modal_surg_ot_room');
+                        if (roomEl && roomEl.tagName === 'SELECT') {
+                            // Only for staff (doctors have a hidden input instead)
+                            if (roomName) {
+                                roomEl.value = roomName;
+                            } else {
+                                autoPopulateDoctorOtRoom('modal_surg');
+                            }
+                        }
+
+                        // ── Reset OT date to today & dynamically set minimum date to today ──
+                        const dateEl = document.getElementById('modal_surg_ot_date');
+                        if (dateEl) {
+                            const todayStr = getLocalDateString();
+                            dateEl.min = todayStr;
+                            dateEl.value = todayStr;
+                            dateEl.setCustomValidity("");
+                        }
+
+                        // ── Clear slot option styling & hints from any prior session ─────
+                        const slotEl = document.getElementById('modal_surg_ot_slot');
+                        if (slotEl) {
+                            for (const opt of slotEl.options) {
+                                opt.disabled = false;
+                                if (opt.dataset.originalLabel) opt.textContent = opt.dataset.originalLabel;
+                                opt.style.color = '';
+                                opt.style.fontWeight = '';
+                                opt.style.background = '';
+                            }
+                            if (slotName) {
+                                slotEl.value = slotName;
+                            } else if (slotEl.options.length > 0) {
+                                slotEl.selectedIndex = 0;
+                            }
+                        }
+                        const hintsEl = document.getElementById('modal_surg_slot_hints');
+                        if (hintsEl) { hintsEl.style.display = 'none'; hintsEl.innerHTML = ''; }
+
+                        // ── Clear per-date cache so fresh data is fetched ─────────────────
+                        delete _perDateBookedSlots['modal_surg'];
+
+                        const outcomeEl = document.getElementById('modal_surg_outcome');
+                        if (outcomeEl) outcomeEl.value = 'Successful';
+
+                        const medHistEl = document.getElementById('modal_surg_med_hist');
+                        if (medHistEl) medHistEl.value = '';
+
+                        const notesEl = document.getElementById('modal_surg_notes');
+                        if (notesEl) notesEl.value = '';
+
+                        // ── Trigger slot availability refresh for today ───────────────────
+                        refreshOtSlotAvailability('modal_surg');
+
+                        const modal = document.getElementById('schedulePatientModal');
+                        if (modal) {
+                            modal.style.display = 'flex';
+                            setTimeout(() => {
+                                if (nameEl) nameEl.focus();
+                            }, 50);
+                        }
+                    }
+                    window.openSchedulePatientModal = openSchedulePatientModal;
+
+                    function closeSchedulePatientModal() {
+                        const modal = document.getElementById('schedulePatientModal');
+                        if (modal) modal.style.display = 'none';
+                    }
+                    window.closeSchedulePatientModal = closeSchedulePatientModal;
+
+                    /**
+                     * Handle Schedule Patient AJAX Submission
+                     */
+                    async function handleSchedulePatientSubmit(event) {
+                        event.preventDefault();
+                        const form = event.target;
+                        const errorBox = document.getElementById('modal_surg_form_error');
+                        const errorMsg = document.getElementById('modal_surg_form_error_msg');
+                        if (errorBox) errorBox.style.display = 'none';
+
+                        if (checkOtClash('modal_surg')) {
+                            return;
+                        }
+
+                        const dateInput = document.getElementById('modal_surg_ot_date');
+                        if (dateInput) {
+                            const todayStr = getLocalDateString();
+                            if (!dateInput.value) {
+                                if (errorBox && errorMsg) {
+                                    errorMsg.textContent = "Please select a date for the surgery.";
+                                    errorBox.style.display = 'block';
+                                }
+                                dateInput.focus();
+                                return;
+                            }
+                            if (dateInput.value < todayStr) {
+                                if (errorBox && errorMsg) {
+                                    errorMsg.textContent = "Please select today or a future date. Past dates are not allowed.";
+                                    errorBox.style.display = 'block';
+                                }
+                                dateInput.focus();
+                                return;
+                            }
+                        }
+
+                        const nameInput = document.getElementById('modal_surg_name');
+                        if (!nameInput || !nameInput.value.trim()) {
+                            if (errorBox && errorMsg) {
+                                errorMsg.textContent = "Please provide the Patient's Full Name.";
+                                errorBox.style.display = 'block';
+                            }
+                            if (nameInput) nameInput.focus();
+                            return;
+                        }
+
+                        const submitBtn = document.getElementById('modal_surg_submit_btn');
+                        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Registration...';
+                        }
+
+                        try {
+                            const formData = new FormData(form);
+                            formData.set('apply_surgery', '1');
+                            formData.set('ajax', '1');
+
+                            const response = await fetch(form.action || window.location.href, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+
+                            const data = await response.json();
+
+                            if (data && data.success) {
+                                closeSchedulePatientModal();
+
+                                const key = data.patient.ot_room + '||' + data.patient.ot_slot;
+                                bookedOtSlots[key] = {
+                                    patient_name: data.patient.patient_name,
+                                    patient_mrn: data.patient.patient_mrn,
+                                    id: data.patient.id
+                                };
+
+                                // Invalidate per-date cache so fresh availability is fetched
+                                delete _perDateBookedSlots['modal_surg'];
+                                delete _perDateBookedSlots['surg'];
+
+                                // Refresh availability on the apply surgery tab if date matches
+                                const surgDateEl = document.getElementById('surg_ot_date');
+                                if (surgDateEl && surgDateEl.value === data.patient.ot_date) {
+                                    refreshOtSlotAvailability('surg');
+                                }
+
+                                updateOtSlotCardInDom(data.patient);
+                                updatePatientListInDom(data.patient);
+                                showScheduleSuccessToast(data.message || `Surgery application for ${data.patient.patient_name} submitted successfully.`);
+                                form.reset();
+                            } else {
+                                const msg = (data && data.error) ? data.error : 'An error occurred during registration. Please check all fields.';
+                                if (errorBox && errorMsg) {
+                                    errorMsg.textContent = msg;
+                                    errorBox.style.display = 'block';
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Registration submit error:', err);
+                            if (errorBox && errorMsg) {
+                                errorMsg.textContent = 'Network or server error occurred. Please try again.';
+                                errorBox.style.display = 'block';
+                            }
+                        } finally {
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnHtml;
+                            }
+                        }
+                    }
+                    window.handleSchedulePatientSubmit = handleSchedulePatientSubmit;
+
+                    function escapeHtml(str) {
+                        if (!str) return '';
+                        return String(str)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#039;');
+                    }
+
+                    function escapeJs(str) {
+                        if (!str) return '';
+                        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '');
+                    }
+
+                    /**
+                     * Update OT Slot card dynamically in the DOM
+                     */
+                    function updateOtSlotCardInDom(patient) {
+                        const slotCards = document.querySelectorAll('#pane-ot-slots .slot-card');
+                        slotCards.forEach(card => {
+                            const timeEl = card.querySelector('.slot-time');
+                            const slotName = timeEl ? timeEl.textContent.trim() : '';
+                            if (slotName === patient.ot_slot) {
+                                const badge = card.querySelector('.slot-status-badge');
+                                if (badge) {
+                                    badge.className = 'slot-status-badge status-booked';
+                                    badge.innerHTML = '<i class="fa-solid fa-check"></i> Booked';
+                                }
+
+                                const removable = card.querySelectorAll('p, div:not(.slot-header):not(.slot-time)');
+                                removable.forEach(el => el.remove());
+
+                                const infoDiv = document.createElement('div');
+                                infoDiv.className = 'slot-patient-info';
+                                infoDiv.innerHTML = `<strong>${escapeHtml(patient.patient_name)}</strong><span class="badge-mrn" style="font-size: 0.74rem; margin-left: 6px;">${escapeHtml(patient.patient_mrn)}</span>`;
+
+                                const procDiv = document.createElement('div');
+                                procDiv.className = 'slot-procedure';
+                                procDiv.innerHTML = `<i class="fa-solid fa-eye" style="color: var(--primary-light);"></i> ${escapeHtml(patient.surgery_type)} (${escapeHtml(patient.eye)}) &bull; ${escapeHtml(patient.surgeon_name)}`;
+
+                                const histDiv = document.createElement('div');
+                                histDiv.className = 'slot-history-preview';
+                                const histText = patient.medical_history || 'No systemic comorbidities reported. Pre-op IOP normal.';
+                                const truncatedHist = histText.length > 75 ? (histText.slice(0, 75) + '...') : histText;
+                                histDiv.innerHTML = `<strong>Medical History:</strong> ${escapeHtml(truncatedHist)}`;
+
+                                const actionDiv = document.createElement('div');
+                                actionDiv.style.marginTop = '12px';
+                                actionDiv.style.display = 'flex';
+                                actionDiv.style.justifyContent = 'flex-end';
+
+                                const viewBtn = document.createElement('button');
+                                viewBtn.type = 'button';
+                                viewBtn.className = 'btn-action-view';
+                                viewBtn.innerHTML = '<i class="fa-solid fa-eye"></i> View Full Details';
+                                viewBtn.onclick = function() {
+                                    viewPatientDossier(
+                                        patient.patient_mrn,
+                                        patient.patient_name,
+                                        patient.patient_age,
+                                        patient.patient_gender,
+                                        patient.eye,
+                                        patient.surgery_type,
+                                        patient.ot_room,
+                                        patient.ot_slot,
+                                        patient.outcome,
+                                        patient.medical_history,
+                                        patient.notes
+                                    );
+                                };
+                                actionDiv.appendChild(viewBtn);
+
+                                card.appendChild(infoDiv);
+                                card.appendChild(procDiv);
+                                card.appendChild(histDiv);
+                                card.appendChild(actionDiv);
+                            }
+                        });
+
+                        // Also update OT Matrix mini-cards if present
+                        const matrixCards = document.querySelectorAll('.slot-mini-card');
+                        matrixCards.forEach(miniCard => {
+                            const timeEl = miniCard.querySelector('.slot-mini-time');
+                            const suiteHeader = miniCard.closest('.ot-matrix-suite');
+                            const suiteTitle = suiteHeader ? suiteHeader.querySelector('.ot-matrix-suite-title') : null;
+                            if (timeEl && suiteTitle) {
+                                const timeText = timeEl.textContent.trim();
+                                const suiteText = suiteTitle.textContent.trim();
+                                if (timeText.includes(patient.ot_slot) && suiteText.includes(patient.ot_room)) {
+                                    miniCard.classList.remove('is-available');
+                                    miniCard.classList.add('is-booked');
+                                    miniCard.innerHTML = `
+                                        <div class="slot-mini-time"><i class="fa-regular fa-clock"></i> ${escapeHtml(patient.ot_slot)}</div>
+                                        <div class="slot-mini-patient">${escapeHtml(patient.patient_name)}</div>
+                                        <div class="slot-mini-type">${escapeHtml(patient.surgery_type)} &bull; ${escapeHtml(patient.eye)}<br>${escapeHtml(patient.surgeon_name)}</div>
+                                        <div style="margin-top: 8px;">
+                                            <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i> Booked</span>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        });
+                    }
+
+                    /**
+                     * Update Patient list & tables in the DOM
+                     */
+                    function updatePatientListInDom(patient) {
+                        if (!patient) return;
+                        const surgeonLower = (patient.surgeon_name || '').toLowerCase();
+                        const isOwnPatient = (currentDoctorKwLower && surgeonLower.includes(currentDoctorKwLower)) ||
+                                             (currentDoctorDisplayName && surgeonLower.includes(currentDoctorDisplayName.toLowerCase()));
+
+                        if (isOwnPatient) {
+                            const tabBtns = document.querySelectorAll('.tab-btn span');
+                            tabBtns.forEach(span => {
+                                const match = span.textContent.match(/Patient Details \((\d+)\)/);
+                                if (match) {
+                                    const newCount = parseInt(match[1], 10) + 1;
+                                    span.textContent = `Patient Details (${newCount})`;
+                                }
+                            });
+
+                            const countBadge = document.querySelector('#pane-patients .badge-pill.badge-slot');
+                            if (countBadge && countBadge.textContent.includes('Showing')) {
+                                const countMatch = countBadge.textContent.match(/\d+/);
+                                if (countMatch) {
+                                    const newCount = parseInt(countMatch[0], 10) + 1;
+                                    countBadge.textContent = `Showing ${newCount} Patient Case${newCount !== 1 ? 's' : ''}`;
+                                }
+                            }
+
+                            const tbody = document.querySelector('#pane-patients tbody');
+                            if (tbody) {
+                                const emptyRow = tbody.querySelector('td[colspan="8"]');
+                                if (emptyRow && emptyRow.closest('tr')) {
+                                    emptyRow.closest('tr').remove();
+                                }
+
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td>
+                                        <span class="badge-mrn">${escapeHtml(patient.patient_mrn)}</span>
+                                    </td>
+                                    <td>
+                                        <strong>${escapeHtml(patient.patient_name)}</strong>
+                                        <div style="font-size: 0.76rem; color: var(--text-muted);">${escapeHtml(patient.patient_age)} yrs &bull; ${escapeHtml(patient.patient_gender)}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-pill badge-slot">${escapeHtml(patient.eye)}</span>
+                                    </td>
+                                    <td>
+                                        <strong>${escapeHtml(patient.surgery_type)}</strong>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <i class="fa-solid fa-user-doctor" style="color: var(--primary-light); font-size: 0.82rem;"></i>
+                                            <span style="font-size: 0.84rem; font-weight: 600;">${escapeHtml(patient.surgeon_name)}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style="font-weight: 600; color: var(--primary-light);">${escapeHtml(patient.ot_room)}</span>
+                                        <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(patient.ot_slot)}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-pill badge-outcome">${escapeHtml(patient.outcome)}</span>
+                                    </td>
+                                    <td style="white-space: nowrap;">
+                                        <button type="button" class="btn-action-report" onclick="viewOcularReportByMRN('${escapeJs(patient.patient_mrn)}', '${escapeJs(patient.patient_name)}', '${escapeJs(patient.patient_age)}', '${escapeJs(patient.patient_gender)}', '${escapeJs(patient.eye)}')" title="Ocular Diagnostic Report">
+                                            <i class="fa-solid fa-eye"></i> Report
+                                        </button>
+                                        <button type="button" class="btn-action-edit" onclick="openEditSurgeryModal('${escapeJs(patient.id)}', '${escapeJs(patient.patient_mrn)}', '${escapeJs(patient.patient_name)}', '${escapeJs(patient.patient_age)}', '${escapeJs(patient.patient_gender)}', '${escapeJs(patient.eye)}', '${escapeJs(patient.surgery_type)}', '${escapeJs(patient.surgeon_name)}', '${escapeJs(patient.ot_room)}', '${escapeJs(patient.ot_slot)}', '${escapeJs(patient.outcome)}', '${escapeJs(patient.medical_history)}', '${escapeJs(patient.notes)}', 'patients')" title="Edit Surgery Record">
+                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                        </button>
+                                    </td>
+                                `;
+                                tbody.insertBefore(tr, tbody.firstChild);
+                            }
+                        }
+
+                        const surgTbody = document.querySelector('#pane-surgery-history tbody');
+                        if (surgTbody) {
+                            const emptyRow = surgTbody.querySelector('td[colspan="10"]');
+                            if (emptyRow && emptyRow.closest('tr')) {
+                                emptyRow.closest('tr').remove();
+                            }
+
+                            const dateStr = patient.date || 'Today';
+                            const notesStr = patient.notes || 'Uneventful surgical course.';
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td data-label="Date" style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(dateStr)}</td>
+                                <td data-label="Patient MRN"><span class="badge-mrn">${escapeHtml(patient.patient_mrn)}</span></td>
+                                <td data-label="Patient Name">
+                                    <strong>${escapeHtml(patient.patient_name)}</strong>
+                                    <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(patient.patient_age)} yrs &bull; ${escapeHtml(patient.patient_gender)}</div>
+                                </td>
+                                <td data-label="Eye"><span class="badge-pill badge-slot">${escapeHtml(patient.eye)}</span></td>
+                                <td data-label="Surgery Type"><strong>${escapeHtml(patient.surgery_type)}</strong></td>
+                                <td data-label="Surgeon">
+                                    <span style="font-size: 0.84rem; font-weight: 600;">${escapeHtml(patient.surgeon_name)}</span>
+                                </td>
+                                <td data-label="OT Room & Slot">
+                                    <span style="font-weight: 600; color: var(--primary-light);">${escapeHtml(patient.ot_room)}</span>
+                                    <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(patient.ot_slot)}</div>
+                                </td>
+                                <td data-label="Outcome">
+                                    <span class="badge-pill badge-outcome">${escapeHtml(patient.outcome)}</span>
+                                </td>
+                                <td data-label="Operative Notes" style="max-width: 220px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                                    ${escapeHtml(notesStr)}
+                                </td>
+                                <td data-label="Actions" class="surgery-history-actions">
+                                    <button type="button" class="btn-action-view" onclick="viewPatientDossier('${escapeJs(patient.patient_mrn)}', '${escapeJs(patient.patient_name)}', '${escapeJs(patient.patient_age)}', '${escapeJs(patient.patient_gender)}', '${escapeJs(patient.eye)}', '${escapeJs(patient.surgery_type)}', '${escapeJs(patient.ot_room)}', '${escapeJs(patient.ot_slot)}', '${escapeJs(patient.outcome)}', '${escapeJs(patient.medical_history)}', '${escapeJs(patient.notes)}')" title="View Details">
+                                        <i class="fa-solid fa-clipboard-user"></i> View Details
+                                    </button>
+                                    <button type="button" class="btn-action-edit" onclick="openEditSurgeryModal('${escapeJs(patient.id)}', '${escapeJs(patient.patient_mrn)}', '${escapeJs(patient.patient_name)}', '${escapeJs(patient.patient_age)}', '${escapeJs(patient.patient_gender)}', '${escapeJs(patient.eye)}', '${escapeJs(patient.surgery_type)}', '${escapeJs(patient.surgeon_name)}', '${escapeJs(patient.ot_room)}', '${escapeJs(patient.ot_slot)}', '${escapeJs(patient.outcome)}', '${escapeJs(patient.medical_history)}', '${escapeJs(patient.notes)}', 'surgery-history')" title="Edit Surgery Record">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                </td>
+                            `;
+                            surgTbody.insertBefore(tr, surgTbody.firstChild);
+                        }
+                    }
+
+                    /**
+                     * Show inline notification alert styled like Django messages
+                     */
+                    function showScheduleSuccessToast(message) {
+                        const alertEl = document.createElement('div');
+                        alertEl.className = 'profile-alert';
+                        alertEl.setAttribute('role', 'alert');
+                        alertEl.innerHTML = `
+                            <div class="profile-alert-content">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>${escapeHtml(message)}</span>
+                            </div>
+                            <button type="button" class="profile-alert-close" onclick="dismissProfileAlert(this.closest('.profile-alert'))" aria-label="Dismiss alert">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="profile-alert-progress"></div>
+                        `;
+                        const container = document.querySelector('.container');
+                        const profileGrid = document.querySelector('.profile-grid');
+                        if (container && profileGrid) {
+                            container.insertBefore(alertEl, profileGrid);
+                        } else {
+                            document.body.prepend(alertEl);
+                        }
+                        setTimeout(() => {
+                            dismissProfileAlert(alertEl);
+                        }, 5000);
                     }
                 </script>
                 <!-- External JavaScript -->

@@ -3,6 +3,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from datetime import date, timedelta
 from .models import NaimulProfile
 
 class UsersNaimulStaticFilesSeparationTest(TestCase):
@@ -221,8 +222,15 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         self.assertIn('<option value="Dr. Akib Ashfaq"', content)
 
     def test_patient_registration_saves_selected_doctor(self):
+        """
+        When a doctor registers a patient via the OT Schedule modal, the saved record
+        must always carry the logged-in doctor's own canonical name and assigned OT room
+        (not whatever was submitted in the form). This is the core doctor-restriction test.
+        """
         from .models import SurgeryRecord
         self.client.login(username='naimul', password='pass@123')
+
+        # Attempt to submit with a different surgeon name and OT room — both must be overridden
         response = self.client.post(reverse('users_naimul:profile'), {
             'apply_surgery': '1',
             'patient_name': 'Test Registered Patient',
@@ -230,8 +238,8 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
             'patient_gender': 'Male',
             'eye': 'RE',
             'surgery_type': 'Cataract',
-            'surgeon_name': 'Dr. Akib Ashfaq',
-            'ot_room': 'OT-3',
+            'surgeon_name': 'Dr. Akib Ashfaq',   # attempted spoof — must be ignored
+            'ot_room': 'OT-3',                    # attempted spoof — must be ignored
             'ot_slot': 'Slot 4 (02:00 - 03:30 PM)',
             'outcome': 'Successful',
             'medical_history': 'No comorbidities.',
@@ -241,15 +249,22 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
 
         saved_record = SurgeryRecord.objects.filter(patient_name='Test Registered Patient').first()
         self.assertIsNotNone(saved_record)
-        self.assertEqual(saved_record.surgeon_name, 'Dr. Akib Ashfaq')
 
+        # The record must carry the logged-in doctor's own identity (from DB profile)
+        expected_surgeon = self.profile.get_surgeon_display_name()
+        expected_room = self.profile.assigned_ot_room
+        self.assertEqual(
+            saved_record.surgeon_name, expected_surgeon,
+            f"Doctor restriction failed: expected '{expected_surgeon}', got '{saved_record.surgeon_name}'"
+        )
+        self.assertEqual(
+            saved_record.ot_room, expected_room,
+            f"Doctor OT room restriction failed: expected '{expected_room}', got '{saved_record.ot_room}'"
+        )
+
+        # The record should appear in the doctor's own patient list
         resp_naimul = self.client.get(reverse('users_naimul:profile') + '?tab=patients')
-        self.assertNotIn(saved_record, resp_naimul.context['user_surgeries'])
-
-        resp_search = self.client.get(reverse('users_naimul:profile') + f'?tab=patients&patient_mrn={saved_record.patient_mrn}')
-        self.assertEqual(resp_search.status_code, 200)
-        self.assertTrue(resp_search.context['is_cross_doctor_lookup'])
-        self.assertEqual(resp_search.context['searched_doctor_name'], 'Dr. Akib Ashfaq')
+        self.assertIn(saved_record, resp_naimul.context['user_surgeries'])
 
     def test_doctor_roles_display_dr_prefix(self):
         doctor_roles = ['Surgeon', 'Consultant', 'Associate', 'Resident']
@@ -299,7 +314,594 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         doctors = get_available_doctors()
         self.assertFalse(any("Sadia" in d or "lab_tech" in d for d in doctors), "Technicians must not appear in available doctors list")
 
+    def test_doctor_ot_schedule_contains_schedule_modal_and_no_redirect_links(self):
+        """
+        Verify that in the doctor dashboard OT Schedule tab, clicking to schedule a patient
+        triggers the modal and does not redirect to another URL like /surgeries/.
+        """
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.get(reverse('users_naimul:profile') + '?tab=ot-slots')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
 
+        # Verify schedulePatientModal is present in the DOM
+        self.assertIn('id="schedulePatientModal"', content)
+        self.assertIn('id="modal_surg_name"', content)
+        self.assertIn('id="modal_surg_surgeon"', content)
+        self.assertIn('id="modal_surg_ot_room"', content)
+        self.assertIn('id="modal_surg_ot_slot"', content)
+        self.assertIn('id="modal_surg_form_error"', content)
+        self.assertIn('id="modal_surg_clash_alert"', content)
+
+        # Verify buttons invoke openSchedulePatientModal instead of linking to /surgeries/
+        self.assertIn('onclick="openSchedulePatientModal(', content)
+        self.assertNotIn('<a href="/surgeries/" class="btn-action-view">', content)
+
+    def test_ajax_patient_registration_successful(self):
+        """
+        Verify that registering a patient via AJAX successfully saves to DB,
+        returns JSON with success=True and patient data, and does not redirect.
+        """
+        from .models import SurgeryRecord
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Anowar Hossain',
+                'patient_age': '56',
+                'patient_gender': 'Male',
+                'eye': 'LE',
+                'surgery_type': 'Phacoemulsification',
+                'surgeon_name': 'Dr. Naimul Islam',
+                'ot_room': 'OT-1',
+                'ot_slot': 'Slot 2 (10:15 - 11:45 AM)',
+                'outcome': 'Successful',
+                'medical_history': 'Asthma controlled.',
+                'notes': 'Monofocal IOL implanted.',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['patient']['patient_name'], 'Anowar Hossain')
+        self.assertEqual(data['patient']['ot_room'], 'OT-1')
+        self.assertEqual(data['patient']['ot_slot'], 'Slot 2 (10:15 - 11:45 AM)')
+
+        record = SurgeryRecord.objects.filter(patient_name='Anowar Hossain').first()
+        self.assertIsNotNone(record)
+        self.assertEqual(record.surgeon_name, 'Dr. Naimul Islam')
+        self.assertEqual(record.ot_room, 'OT-1')
+        self.assertEqual(record.ot_slot, 'Slot 2 (10:15 - 11:45 AM)')
+
+    def test_ajax_patient_registration_validation_error_no_redirect(self):
+        """
+        Verify that missing required patient name returns an error in JSON without redirecting.
+        """
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': '   ',  # Empty name
+                'patient_age': '50',
+                'ot_room': 'OT-1',
+                'ot_slot': 'Slot 1 (08:30 - 10:00 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn("Please provide the Patient's Full Name", data['error'])
+
+    def test_ajax_patient_registration_slot_clash_no_redirect(self):
+        """
+        Verify that an OT slot clash returns an error in JSON without redirecting.
+        The clash must be on the doctor's own assigned OT room since the backend
+        enforces that doctors can only book in their assigned room.
+        """
+        from .models import SurgeryRecord
+        # The logged-in doctor (naimul) has assigned_ot_room = 'OT-1' (setUp default)
+        doctor_room = self.profile.assigned_ot_room  # dynamic, no hardcode
+
+        # Pre-book a slot in the doctor's own OT room
+        SurgeryRecord.objects.create(
+            date=date.today(),
+            patient_name='Existing Booked Patient',
+            patient_age=60,
+            patient_gender='Female',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name=self.profile.get_surgeon_display_name(),
+            ot_room=doctor_room,
+            ot_slot='Slot 3 (12:00 - 01:30 PM)',
+            outcome='Successful'
+        )
+
+        self.client.login(username='naimul', password='pass@123')
+        # Attempt to book the exact same room and slot — backend overrides ot_room to doctor's own room
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Clashing Patient',
+                'patient_age': '52',
+                'surgeon_name': self.profile.get_surgeon_display_name(),
+                'ot_room': doctor_room,
+                'ot_slot': 'Slot 3 (12:00 - 01:30 PM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn("OT Slot Clash!", data['error'])
+        self.assertIn("Existing Booked Patient", data['error'])
+
+
+
+    def test_doctor_cannot_override_surgeon_name_or_ot_room_via_post(self):
+        """
+        Backend enforcement: even if a doctor submits a different surgeon_name or ot_room,
+        the saved record must use the logged-in doctor's own profile values.
+        All assertions use DB relationships — no hardcoded names or IDs.
+        """
+        from .models import SurgeryRecord
+        # Ensure the doctor profile has a distinct assigned OT room
+        self.profile.assigned_ot_room = 'OT-1'
+        self.profile.save()
+
+        # Create a second doctor whose name/room the logged-in doctor tries to spoof
+        other_user = User.objects.create_user(
+            username='other_doc', password='pass@123', first_name='Other', last_name='Doctor'
+        )
+        NaimulProfile.objects.create(user=other_user, role='Consultant', assigned_ot_room='OT-2')
+
+        self.client.login(username='naimul', password='pass@123')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Restriction Test Patient',
+                'patient_age': '45',
+                'patient_gender': 'Female',
+                'eye': 'LE',
+                'surgery_type': 'Glaucoma',
+                # Attempt to spoof another doctor's name and room
+                'surgeon_name': 'Dr. Other Doctor',
+                'ot_room': 'OT-2',
+                'ot_slot': 'Slot 1 (08:30 - 10:00 AM)',
+                'outcome': 'Successful',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'], f"Expected success but got: {data.get('error')}")
+
+        record = SurgeryRecord.objects.filter(patient_name='Restriction Test Patient').first()
+        self.assertIsNotNone(record)
+
+        # Surgeon must be the logged-in doctor's own canonical name (from profile)
+        expected_surgeon = self.profile.get_surgeon_display_name()
+        self.assertEqual(
+            record.surgeon_name, expected_surgeon,
+            f"Expected surgeon '{expected_surgeon}' but got '{record.surgeon_name}'"
+        )
+        # OT room must be the doctor's own assigned room (from profile)
+        self.assertEqual(
+            record.ot_room, self.profile.assigned_ot_room,
+            f"Expected OT room '{self.profile.assigned_ot_room}' but got '{record.ot_room}'"
+        )
+
+    def test_staff_user_can_choose_any_surgeon_and_ot_room(self):
+        """
+        Staff (non-doctor) roles retain full freedom to pick any surgeon name and OT room.
+        The restriction only applies to doctor roles.
+        """
+        from .models import SurgeryRecord
+        staff_user = User.objects.create_user(
+            username='ot_staff', password='pass@123', first_name='Kamal', last_name='Staff'
+        )
+        NaimulProfile.objects.create(user=staff_user, role='Staff', assigned_ot_room='OT-3')
+
+        self.client.login(username='ot_staff', password='pass@123')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Staff Booked Patient',
+                'patient_age': '60',
+                'patient_gender': 'Male',
+                'eye': 'RE',
+                'surgery_type': 'Cataract',
+                'surgeon_name': 'Dr. Naimul Islam',
+                'ot_room': 'OT-4',
+                'ot_slot': 'Slot 2 (10:15 - 11:45 AM)',
+                'outcome': 'Successful',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'], f"Expected success but got: {data.get('error')}")
+
+        record = SurgeryRecord.objects.filter(patient_name='Staff Booked Patient').first()
+        self.assertIsNotNone(record)
+        # Staff submission must be respected as-is
+        self.assertEqual(record.surgeon_name, 'Dr. Naimul Islam')
+        self.assertEqual(record.ot_room, 'OT-4')
+
+
+class OtSlotAvailabilityAndClashTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.doctor_user = User.objects.create_user(
+            username='doctor_test',
+            password='pass@123',
+            first_name='Naimul',
+            last_name='Islam'
+        )
+        self.profile = NaimulProfile.objects.create(
+            user=self.doctor_user,
+            role='Surgeon',
+            specialty='Retina',
+            assigned_ot_room='OT-1',
+            surgeon_display_name='Dr. Naimul Islam'
+        )
+        self.client.login(username='doctor_test', password='pass@123')
+
+    def test_ot_slot_availability_api_requires_login(self):
+        anon_client = Client()
+        url = reverse('users_naimul:ot_slot_availability_api')
+        response = anon_client.get(f"{url}?ot_room=OT-1&ot_date=2026-10-25")
+        self.assertEqual(response.status_code, 302)
+
+    def test_ot_slot_availability_api_returns_booked_slots(self):
+        from .models import SurgeryRecord
+        from datetime import date
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 25),
+            patient_name='Existing Patient 1',
+            patient_age=55,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            ot_slot='Slot 1 (08:30 - 10:00 AM)',
+            outcome='Successful'
+        )
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 25),
+            patient_name='Existing Patient 2',
+            patient_age=48,
+            patient_gender='Female',
+            eye='LE',
+            surgery_type='Vitrectomy',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            ot_slot='Slot 3 (12:00 - 01:30 PM)',
+            outcome='Successful'
+        )
+        # Different room on same date
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 25),
+            patient_name='Other Room Patient',
+            patient_age=50,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Glaucoma',
+            surgeon_name='Dr. Other',
+            ot_room='OT-2',
+            ot_slot='Slot 1 (08:30 - 10:00 AM)',
+            outcome='Successful'
+        )
+        # Different date in same room
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 26),
+            patient_name='Tomorrow Patient',
+            patient_age=60,
+            patient_gender='Female',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            ot_slot='Slot 2 (10:15 - 11:45 AM)',
+            outcome='Successful'
+        )
+
+        url = reverse('users_naimul:ot_slot_availability_api')
+        response = self.client.get(f"{url}?ot_room=OT-1&ot_date=2026-10-25", HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('booked_slots', data)
+        self.assertEqual(len(data['booked_slots']), 2)
+        self.assertIn('Slot 1 (08:30 - 10:00 AM)', data['booked_slots'])
+        self.assertIn('Slot 3 (12:00 - 01:30 PM)', data['booked_slots'])
+        self.assertNotIn('Slot 2 (10:15 - 11:45 AM)', data['booked_slots'])
+
+    def test_backend_prevents_booking_occupied_slot_on_same_date(self):
+        from .models import SurgeryRecord
+        from datetime import date
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 25),
+            patient_name='First Booking',
+            patient_age=55,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            ot_slot='Slot 1 (08:30 - 10:00 AM)',
+            outcome='Successful'
+        )
+
+        # Attempt to book the same slot on the same date via AJAX
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Clash Attempt Patient',
+                'patient_age': '40',
+                'patient_gender': 'Male',
+                'eye': 'LE',
+                'surgery_type': 'Glaucoma',
+                'ot_date': '2026-10-25',
+                'ot_slot': 'Slot 1 (08:30 - 10:00 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn('OT Slot Clash', data['error'])
+
+    def test_booking_same_slot_on_different_date_succeeds(self):
+        from .models import SurgeryRecord
+        from datetime import date
+        SurgeryRecord.objects.create(
+            date=date(2026, 10, 25),
+            patient_name='Day 1 Booking',
+            patient_age=55,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Naimul Islam',
+            ot_room='OT-1',
+            ot_slot='Slot 1 (08:30 - 10:00 AM)',
+            outcome='Successful'
+        )
+
+        # Attempt to book the same slot on a different date (2026-10-26)
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Day 2 Patient',
+                'patient_age': '42',
+                'patient_gender': 'Female',
+                'eye': 'RE',
+                'surgery_type': 'Cataract',
+                'ot_date': '2026-10-26',
+                'ot_slot': 'Slot 1 (08:30 - 10:00 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertIn('Day 2 Patient', data['message'])
+
+
+class PatientRegistrationFormFieldsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.doctor_user = User.objects.create_user(
+            username='doctor_naimul',
+            password='pass@123',
+            first_name='Naimul',
+            last_name='Islam'
+        )
+        self.profile = NaimulProfile.objects.create(
+            user=self.doctor_user,
+            role='Surgeon',
+            specialty='Retina',
+            assigned_ot_room='OT-1',
+            surgeon_display_name='Dr. Naimul Islam'
+        )
+        self.client.login(username='doctor_naimul', password='pass@123')
+
+    def test_registration_form_displays_date_field_in_place_of_mrn(self):
+        """
+        Verify that in the patient registration form, the Date field is displayed
+        in place of the Patient MRN field, and MRN is hidden.
+        """
+        response = self.client.get(reverse('users_naimul:profile') + '?tab=ot-slots')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+
+        # Check modal form:
+        # Date field should be present with modal_surg_ot_date id and Date label
+        self.assertIn('for="modal_surg_ot_date"', content)
+        self.assertIn('id="modal_surg_ot_date"', content)
+        # MRN input is hidden
+        self.assertIn('<input type="hidden" name="patient_mrn" id="modal_surg_mrn" value="">', content)
+        # The visible auto-assigned MRN label and display box should not be present in modal form
+        self.assertNotIn('for="modal_surg_mrn"', content)
+
+        # Check staff pane form:
+        self.assertIn('for="surg_ot_date"', content)
+        self.assertIn('id="surg_ot_date"', content)
+        self.assertIn('<input type="hidden" name="patient_mrn" id="surg_mrn" value="">', content)
+        self.assertNotIn('for="surg_mrn"', content)
+
+    def test_mrn_auto_generation_preserved_on_save(self):
+        """
+        Verify that submitting the patient registration form without supplying an MRN
+        still automatically assigns a valid P26XXXXX MRN upon database save.
+        """
+        from .models import SurgeryRecord
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Automated MRN Patient',
+                'patient_age': '52',
+                'patient_gender': 'Female',
+                'eye': 'LE',
+                'surgery_type': 'Phacoemulsification',
+                'ot_date': '2026-10-28',
+                'ot_slot': 'Slot 2 (10:15 - 11:45 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+
+        record = SurgeryRecord.objects.filter(patient_name='Automated MRN Patient').first()
+        self.assertIsNotNone(record)
+        self.assertTrue(record.patient_mrn.startswith('P26'))
+        self.assertEqual(len(record.patient_mrn), 8)
+        self.assertEqual(record.date.strftime('%Y-%m-%d'), '2026-10-28')
+
+    def test_date_picker_minimum_date_set_to_today(self):
+        """
+        Verify that the date picker input fields have the minimum date attribute set to today
+        and dynamic JavaScript logic enforces today's date dynamically.
+        """
+        response = self.client.get(reverse('users_naimul:profile') + '?tab=ot-slots')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        today_iso = date.today().strftime('%Y-%m-%d')
+
+        # Check modal date picker has min set to today
+        self.assertIn('id="modal_surg_ot_date"', content)
+        self.assertIn(f'min="{today_iso}"', content)
+        # Check staff pane date picker has min set to today
+        self.assertIn('id="surg_ot_date"', content)
+        # Verify dynamic JS min date logic is present
+        self.assertIn('getLocalDateString', content)
+        self.assertIn('el.min = todayStr;', content)
+
+    def test_date_selection_allows_today_date(self):
+        """
+        Verify that registering a patient with today's date is allowed and succeeds.
+        """
+        from .models import SurgeryRecord
+        today_iso = date.today().strftime('%Y-%m-%d')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Today Date Patient',
+                'patient_age': '40',
+                'patient_gender': 'Male',
+                'eye': 'RE',
+                'surgery_type': 'Cataract',
+                'ot_date': today_iso,
+                'ot_slot': 'Slot 4 (02:00 - 03:30 PM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+
+        record = SurgeryRecord.objects.filter(patient_name='Today Date Patient').first()
+        self.assertIsNotNone(record)
+        self.assertEqual(record.date, date.today())
+
+    def test_date_selection_allows_future_date(self):
+        """
+        Verify that registering a patient with a future date is allowed and succeeds.
+        """
+        from .models import SurgeryRecord
+        future_day = date.today() + timedelta(days=10)
+        future_iso = future_day.strftime('%Y-%m-%d')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Future Date Patient',
+                'patient_age': '35',
+                'patient_gender': 'Female',
+                'eye': 'LE',
+                'surgery_type': 'Glaucoma',
+                'ot_date': future_iso,
+                'ot_slot': 'Slot 1 (08:30 - 10:00 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+
+        record = SurgeryRecord.objects.filter(patient_name='Future Date Patient').first()
+        self.assertIsNotNone(record)
+        self.assertEqual(record.date, future_day)
+
+    def test_date_selection_prevents_past_date_ajax(self):
+        """
+        Backend validation: verify that submitting a past date via AJAX is rejected
+        and does not create a database record.
+        """
+        from .models import SurgeryRecord
+        past_day = date.today() - timedelta(days=1)
+        past_iso = past_day.strftime('%Y-%m-%d')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Past Date Patient AJAX',
+                'patient_age': '60',
+                'patient_gender': 'Male',
+                'eye': 'RE',
+                'surgery_type': 'Cataract',
+                'ot_date': past_iso,
+                'ot_slot': 'Slot 2 (10:15 - 11:45 AM)',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn("Past dates are not allowed", data['error'])
+
+        record = SurgeryRecord.objects.filter(patient_name='Past Date Patient AJAX').first()
+        self.assertIsNone(record)
+
+    def test_date_selection_prevents_past_date_post_redirect(self):
+        """
+        Backend validation: verify that submitting a past date via standard POST
+        sets an error message, redirects, and does not create a database record.
+        """
+        from .models import SurgeryRecord
+        past_day = date.today() - timedelta(days=5)
+        past_iso = past_day.strftime('%Y-%m-%d')
+        response = self.client.post(
+            reverse('users_naimul:profile'),
+            {
+                'apply_surgery': '1',
+                'patient_name': 'Past Date Patient POST',
+                'patient_age': '65',
+                'patient_gender': 'Female',
+                'eye': 'LE',
+                'surgery_type': 'Retina',
+                'ot_date': past_iso,
+                'ot_slot': 'Slot 3 (12:00 - 01:30 PM)',
+            },
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        messages_list = list(response.context['messages'])
+        self.assertTrue(any("Past dates are not allowed" in str(m) for m in messages_list))
+
+        record = SurgeryRecord.objects.filter(patient_name='Past Date Patient POST').first()
+        self.assertIsNone(record)
 
 
 

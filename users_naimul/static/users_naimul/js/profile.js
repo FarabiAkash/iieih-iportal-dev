@@ -162,10 +162,12 @@ window.onclick = function (e) {
     const ocular = document.getElementById('ocularReportModal');
     const editModal = document.getElementById('editSurgeryModal');
     const searchModal = document.getElementById('searchErrorModal');
+    const scheduleModal = document.getElementById('schedulePatientModal');
     if (e.target === dossier) closePatientDossier();
     if (e.target === ocular) closeOcularReport();
     if (e.target === editModal) closeEditSurgeryModal();
     if (e.target === searchModal) closeSearchErrorModal();
+    if (e.target === scheduleModal && typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
 };
 
 // Close modals on Escape key
@@ -175,6 +177,7 @@ document.addEventListener('keydown', function (e) {
         closePatientDossier();
         closeOcularReport();
         closeEditSurgeryModal();
+        if (typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
     }
 });
 
