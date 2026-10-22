@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from datetime import date
+from django.views.decorators.http import require_GET
 from .models import (
     NaimulProfile,
     SurgeryRecord,
@@ -106,19 +107,57 @@ def profile_view(request):
         medical_history = request.POST.get('medical_history', '').strip() or 'No systemic comorbidities reported. Pre-op IOP normal.'
         notes = request.POST.get('notes', '').strip()
 
-        if name:
-            # ── OT Slot Clash Detection ──────────────────────────────────────
-            clash = SurgeryRecord.objects.filter(ot_room=ot_room, ot_slot=ot_slot).first()
+        # ── Doctor restriction: always use the logged-in doctor's own identity ──
+        # Derived purely from DB relationships — no hardcoded names/IDs.
+        # Non-doctor roles (staff) may book any surgeon/room.
+        if profile.is_doctor_role:
+            surgeon_name = profile.get_surgeon_display_name()
+            ot_room = profile.assigned_ot_room
+
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1'
+
+        # ── OT Date ─────────────────────────────────────────────────────────
+        ot_date_raw = (request.POST.get('ot_date') or request.POST.get('date') or '').strip()
+        ot_date_val = None
+        if ot_date_raw:
+            try:
+                from datetime import datetime
+                ot_date_val = datetime.strptime(ot_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                ot_date_val = None
+        record_date = ot_date_val or date.today()
+
+        if ot_date_raw and ot_date_val is None:
+            err_msg = "Invalid date format. Please select a valid date (YYYY-MM-DD)."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': err_msg})
+            messages.error(request, err_msg)
+        elif not name:
+            err_msg = "Please provide the Patient's Full Name."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': err_msg})
+            messages.error(request, err_msg)
+        elif record_date < date.today():
+            err_msg = "Please select today or a future date. Past dates are not allowed."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': err_msg})
+            messages.error(request, err_msg)
+        else:
+            # ── OT Slot Clash Detection (scoped to ot_room + ot_slot + date) ─
+            clash_qs = SurgeryRecord.objects.filter(ot_room=ot_room, ot_slot=ot_slot, date=record_date)
+            clash = clash_qs.first()
             if clash:
-                messages.error(
-                    request,
+                err_msg = (
                     f"⚠ OT Slot Clash! {ot_room} / {ot_slot} is already booked for "
                     f"{clash.patient_name} ({clash.patient_mrn}). "
                     f"Please choose a different room or slot."
                 )
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': err_msg})
+                messages.error(request, err_msg)
             else:
                 record = SurgeryRecord.objects.create(
-                    date=date.today(),
+                    date=record_date,
                     patient_name=name,
                     patient_age=int(age) if str(age).isdigit() else 45,
                     patient_gender=gender,
@@ -132,9 +171,30 @@ def profile_view(request):
                     notes=notes,
                     # created_by=request.user,
                 )
-                messages.success(request, f"Surgery application for {name} ({record.patient_mrn}) submitted. Booked: {ot_room} — {ot_slot}.")
-        else:
-            messages.error(request, "Please provide the Patient's Full Name.")
+                succ_msg = f"Surgery application for {name} ({record.patient_mrn}) submitted. Booked: {ot_room} — {ot_slot}."
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': succ_msg,
+                        'patient': {
+                            'id': record.id,
+                            'patient_mrn': record.patient_mrn,
+                            'patient_name': record.patient_name,
+                            'patient_age': record.patient_age,
+                            'patient_gender': record.patient_gender,
+                            'eye': record.eye,
+                            'surgery_type': record.surgery_type,
+                            'surgeon_name': record.surgeon_name,
+                            'ot_room': record.ot_room,
+                            'ot_slot': record.ot_slot,
+                            'outcome': record.outcome,
+                            'medical_history': record.medical_history,
+                            'notes': record.notes,
+                            'date': record.date.strftime('%d %b %Y'),
+                            'ot_date': record.date.strftime('%Y-%m-%d'),
+                        }
+                    })
+                messages.success(request, succ_msg)
         redirect_tab = request.POST.get('active_tab', 'ot-matrix')
         return redirect(f"{request.path}?tab={redirect_tab}")
 
@@ -180,9 +240,9 @@ def profile_view(request):
             new_ot_room = request.POST.get('ot_room', surg.ot_room)
             new_ot_slot = request.POST.get('ot_slot', surg.ot_slot)
 
-            # ── OT Slot Clash Detection (exclude current record) ─────────────
+            # ── OT Slot Clash Detection (scoped to room + slot + date, exclude current record) ──
             clash = SurgeryRecord.objects.filter(
-                ot_room=new_ot_room, ot_slot=new_ot_slot
+                ot_room=new_ot_room, ot_slot=new_ot_slot, date=surg.date
             ).exclude(pk=surg.pk).first()
 
             if clash:
@@ -488,4 +548,37 @@ def profile_view(request):
         'doctor_display_name': doctor_display_name,
     }
     return render(request, 'users_naimul/profile.html', context)
+
+
+@require_GET
+@login_required(login_url='users_naimul:login')
+def ot_slot_availability_api(request):
+    """
+    AJAX API: Return the list of booked OT slots for a given OT room and date.
+    Query params:
+        ot_room  - e.g. 'OT-1'
+        ot_date  - ISO date string 'YYYY-MM-DD'
+    Response JSON:
+        { "booked_slots": ["Slot 1 (08:30 - 10:00 AM)", ...] }
+    """
+    ot_room = request.GET.get('ot_room', '').strip()
+    ot_date_raw = request.GET.get('ot_date', '').strip()
+
+    if not ot_room or not ot_date_raw:
+        return JsonResponse({'booked_slots': []})
+
+    try:
+        from datetime import datetime
+        ot_date = datetime.strptime(ot_date_raw, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+    booked = list(
+        SurgeryRecord.objects
+        .filter(ot_room=ot_room, date=ot_date)
+        .exclude(ot_slot__isnull=True)
+        .exclude(ot_slot='')
+        .values_list('ot_slot', flat=True)
+    )
+    return JsonResponse({'booked_slots': booked})
 
