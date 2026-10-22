@@ -47,19 +47,37 @@ def get_available_doctors():
     Fetches distinct doctor/surgeon names from the existing database:
     - Existing SurgeryRecord entries
     - Existing Appointment entries
-    - Registered User accounts with Doctor/Surgeon roles in NaimulProfile
+    - Registered User accounts with Doctor roles (Surgeon, Consultant, Associate, Resident) in NaimulProfile
     Returns a sorted list of unique formatted doctor names (e.g. 'Dr. ...').
+    Accounts with non-doctor roles (Technician, OT Nurse, Staff, Admin, Other) are excluded.
     """
     from django.apps import apps
+    import re
     doctors = []
     try:
         SurgeryRecord = apps.get_model('users_naimul', 'SurgeryRecord')
         Appointment = apps.get_model('users_naimul', 'Appointment')
         NaimulProfile = apps.get_model('users_naimul', 'NaimulProfile')
 
+        # Collect non-doctor identifiers to ensure non-doctor accounts are never included
+        non_doctor_names = set()
+        for p in NaimulProfile.objects.exclude(role__in=NaimulProfile.DOCTOR_ROLES).select_related('user'):
+            u = p.user
+            for n in [p.surgeon_display_name, u.get_full_name(), u.username]:
+                if n and n.strip():
+                    bare = re.sub(r'^(Dr\.|Dr\b|Prof\.)\s*', '', n.strip(), flags=re.IGNORECASE).strip().lower()
+                    if bare:
+                        non_doctor_names.add(bare)
+
+        def is_non_doctor(name_str):
+            if not name_str:
+                return True
+            bare = re.sub(r'^(Dr\.|Dr\b|Prof\.)\s*', '', name_str.strip(), flags=re.IGNORECASE).strip().lower()
+            return bare in non_doctor_names
+
         # 1. Doctors from existing SurgeryRecord entries in DB
         for name in SurgeryRecord.objects.values_list('surgeon_name', flat=True).distinct():
-            if name and name.strip():
+            if name and name.strip() and not is_non_doctor(name):
                 clean = name.strip()
                 doc_name = clean if clean.lower().startswith(('dr.', 'prof.')) else f"Dr. {clean}"
                 if doc_name not in doctors:
@@ -67,30 +85,20 @@ def get_available_doctors():
 
         # 2. Doctors from existing Appointment entries in DB
         for name in Appointment.objects.values_list('doctor_name', flat=True).distinct():
-            if name and name.strip():
+            if name and name.strip() and not is_non_doctor(name):
                 clean = name.strip()
                 doc_name = clean if clean.lower().startswith(('dr.', 'prof.')) else f"Dr. {clean}"
                 if doc_name not in doctors:
                     doctors.append(doc_name)
 
-        # 3. Doctors from registered User accounts with clinical roles in NaimulProfile
+        # 3. Doctors from registered User accounts with clinical doctor roles in NaimulProfile
         doc_profiles = NaimulProfile.objects.select_related('user').filter(
-            role__in=['Surgeon', 'Consultant', 'Associate', 'Resident']
+            role__in=NaimulProfile.DOCTOR_ROLES
         )
         for p in doc_profiles:
-            u = p.user
-            full_name = u.get_full_name().strip()
-            if full_name:
-                doc_name = full_name if full_name.lower().startswith(('dr.', 'prof.')) else f"Dr. {full_name}"
-                if doc_name not in doctors:
-                    doctors.append(doc_name)
-            else:
-                uname = u.username.strip()
-                if uname and uname.lower() != 'admin':
-                    if not any(uname.lower() in d.lower() for d in doctors):
-                        doc_name = f"Dr. {uname.title()}"
-                        if doc_name not in doctors:
-                            doctors.append(doc_name)
+            doc_name = p.get_surgeon_display_name()
+            if doc_name and doc_name not in doctors:
+                doctors.append(doc_name)
     except Exception:
         pass
 
@@ -328,6 +336,8 @@ class NaimulProfile(models.Model):
         ('OT-4', 'OT Room 4 (Pediatric OT)'),
     ]
     
+    DOCTOR_ROLES = ['Surgeon', 'Consultant', 'Associate', 'Resident']
+
     Role_Choices = [
         ('Surgeon', 'Surgeon'),
         ('Technician', 'Technician'),
@@ -365,25 +375,53 @@ class NaimulProfile(models.Model):
     can_apply_surgery = models.BooleanField(default=True, help_text="Staff Role Permission: Submit Surgery Applications & Book OT Slots")
     can_make_appointments = models.BooleanField(default=True, help_text="Staff Role Permission: Schedule & Manage Patient Appointments")
 
-    def get_surgeon_display_name(self):
+    @property
+    def is_doctor_role(self):
         """
-        Returns the canonical name for this doctor as it appears in SurgeryRecord /
-        Appointment records.  Priority order:
-          1. surgeon_display_name (explicit DB field, most reliable)
-          2. user.get_full_name()  (set via profile-settings form)
-          3. 'Dr. <username.title()>'  (last-resort fallback)
+        True only if the role is Surgeon, Consultant, Associate, or Resident.
+        Only these roles represent clinical doctors and display 'Dr.'.
         """
-        if self.surgeon_display_name.strip():
-            return self.surgeon_display_name.strip()
-        full = self.user.get_full_name().strip()
-        if full:
-            return full if full.lower().startswith(('dr.', 'prof.')) else f'Dr. {full}'
-        uname = self.user.username.strip()
-        return f'Dr. {uname.title()}' if uname else ''
+        return self.role in self.DOCTOR_ROLES
 
     @property
     def is_staff_role(self):
-        return self.role in ['Staff', 'OT Nurse', 'Admin', 'Technician']
+        """
+        Returns True for non-doctor roles (Technician, OT Nurse, Staff, Admin, Other, etc.).
+        """
+        return not self.is_doctor_role
+
+    def get_surgeon_display_name(self):
+        """
+        Returns the formatted display name.
+        If role is Surgeon, Consultant, Associate, or Resident:
+          Displays 'Dr.' (e.g. 'Dr. <Name>').
+        Except these roles (all other roles like Technician, OT Nurse, Staff, Admin, Other):
+          Will NOT display 'Dr.' (strips any existing 'Dr.' prefix).
+        """
+        import re
+        if self.surgeon_display_name and self.surgeon_display_name.strip():
+            raw = self.surgeon_display_name.strip()
+        else:
+            full = self.user.get_full_name().strip() if self.user else ''
+            if full:
+                raw = full
+            else:
+                uname = self.user.username.strip() if self.user else ''
+                raw = uname.title() if uname else ''
+
+        if not raw:
+            return ''
+
+        if self.is_doctor_role:
+            if raw.lower().startswith(('dr.', 'prof.')):
+                return raw
+            return f'Dr. {raw}'
+        else:
+            clean = re.sub(r'^(Dr\.|Dr\b|Prof\.)\s*', '', raw, flags=re.IGNORECASE).strip()
+            return clean
+
+    def get_display_name(self):
+        return self.get_surgeon_display_name()
     
 class Appointment(models.Model): 
 
@@ -456,9 +494,4 @@ class Appointment(models.Model):
         if not self.patient_mrn:
             self.patient_mrn = generate_mrn()
         super().save(*args, **kwargs)
-
-# role = models.CharField(
-#     max_length=30,
-#     choices=ROLE_CHOICES,
-#     default='Doctor'
-# )
+# 

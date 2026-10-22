@@ -251,6 +251,55 @@ class UsersNaimulStaticFilesSeparationTest(TestCase):
         self.assertTrue(resp_search.context['is_cross_doctor_lookup'])
         self.assertEqual(resp_search.context['searched_doctor_name'], 'Dr. Akib Ashfaq')
 
+    def test_doctor_roles_display_dr_prefix(self):
+        doctor_roles = ['Surgeon', 'Consultant', 'Associate', 'Resident']
+        for r in doctor_roles:
+            u = User.objects.create_user(username=f'user_{r.lower()}', password='password123', first_name='Test', last_name=r)
+            p = NaimulProfile.objects.create(user=u, role=r)
+            self.assertTrue(p.is_doctor_role, f"Role {r} should be identified as doctor role")
+            self.assertFalse(p.is_staff_role, f"Role {r} should not be identified as staff role")
+            display_name = p.get_surgeon_display_name()
+            self.assertTrue(display_name.startswith('Dr. '), f"Role {r} display name should start with 'Dr. ', got: {display_name}")
+            self.assertEqual(display_name, f"Dr. Test {r}")
+
+    def test_non_doctor_roles_do_not_display_dr_prefix(self):
+        non_doctor_roles = ['Technician', 'OT Nurse', 'Staff', 'Admin', 'Other']
+        for r in non_doctor_roles:
+            uname = f'user_{r.lower().replace(" ", "_")}'
+            u = User.objects.create_user(username=uname, password='password123', first_name='Staff', last_name=r)
+            p = NaimulProfile.objects.create(user=u, role=r, surgeon_display_name=f"Dr. Staff {r}")
+            self.assertFalse(p.is_doctor_role, f"Role {r} should not be identified as doctor role")
+            self.assertTrue(p.is_staff_role, f"Role {r} should be identified as staff role")
+            display_name = p.get_surgeon_display_name()
+            self.assertFalse(display_name.lower().startswith('dr.'), f"Role {r} display name should NOT start with 'Dr.', got: {display_name}")
+            self.assertEqual(display_name, f"Staff {r}")
+
+    def test_login_welcome_message_respects_doctor_role(self):
+        # Doctor role
+        doc_user = User.objects.create_user(username='doc_consultant', password='pass@123', first_name='Farabi', last_name='Consultant')
+        NaimulProfile.objects.create(user=doc_user, role='Consultant')
+        resp = self.client.post(reverse('users_naimul:login'), {'username': 'doc_consultant', 'password': 'pass@123'}, follow=True)
+        messages = list(resp.context['messages'])
+        self.assertTrue(any("Dr. Farabi Consultant" in str(m) for m in messages))
+
+        # Logout first so login_view executes the POST branch
+        self.client.logout()
+
+        # Non-doctor role
+        tech_user = User.objects.create_user(username='tech_user', password='pass@123', first_name='Kamal', last_name='Technician')
+        NaimulProfile.objects.create(user=tech_user, role='Technician')
+        resp_tech = self.client.post(reverse('users_naimul:login'), {'username': 'tech_user', 'password': 'pass@123'}, follow=True)
+        tech_messages = list(resp_tech.context['messages'])
+        self.assertTrue(any("Kamal Technician" in str(m) and "Dr." not in str(m) for m in tech_messages))
+
+    def test_non_doctor_not_in_available_doctors(self):
+        from .models import get_available_doctors
+        tech_user = User.objects.create_user(username='lab_tech', password='pass@123', first_name='Sadia', last_name='Technician')
+        NaimulProfile.objects.create(user=tech_user, role='Technician')
+        doctors = get_available_doctors()
+        self.assertFalse(any("Sadia" in d or "lab_tech" in d for d in doctors), "Technicians must not appear in available doctors list")
+
+
 
 
 
