@@ -1,6 +1,15 @@
+# ==========================================
+# Developer: Naimul
+# Task: Design your user profile, roles, and fields below.
+# ==========================================
+
+# Example:
+# class NaimulProfile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     ...
+
 from django.db import models
 from django.contrib.auth.models import User
-
 
 def generate_mrn():
     """
@@ -85,9 +94,6 @@ def get_available_doctors():
     except Exception:
         pass
 
-    if not doctors:
-        doctors = ['Dr. Akib Ashfaq', 'Dr. Md. Mridul Ali', 'Dr. Naimul Islam']
-
     return sorted(doctors)
 
 
@@ -154,8 +160,8 @@ def get_doctor_assigned_ot_room(doctor_name):
 def get_doctor_ot_room_map():
     """
     Returns a dictionary mapping each available doctor name to their dedicated OT room
-    fetched dynamically from the database.
-    Example: {'Dr. Akib Ashfaq': 'OT-1', 'Dr. Md. Mridul Ali': 'OT-2', 'Dr. Naimul Islam': 'OT-3'}
+    fetched dynamically from the database via NaimulProfile.assigned_ot_room.
+    Keys are the canonical surgeon names as they appear in SurgeryRecord and Appointment.
     If a doctor has no assigned OT room, maps to None.
     """
     doctors = get_available_doctors()
@@ -163,16 +169,6 @@ def get_doctor_ot_room_map():
     for doc in doctors:
         mapping[doc] = get_doctor_assigned_ot_room(doc)
     return mapping
-
-# ==========================================
-# Developer: Naimul
-# Task: Design your user profile, roles, and fields below.
-# ==========================================
-
-# Example:
-# class NaimulProfile(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE)
-#     ...
 
 class SurgeryRecord(models.Model):
     
@@ -348,6 +344,16 @@ class NaimulProfile(models.Model):
     role = models.CharField(max_length=30, choices=Role_Choices, default='Surgeon')
     specialty = models.CharField(max_length=50, choices=Specialty_Choices, default='Cataract')
     assigned_ot_room = models.CharField(max_length=20, choices=OT_Room_Choices, default='OT-1')
+    surgeon_display_name = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text=(
+            "Canonical surgeon name exactly as it appears in SurgeryRecord.surgeon_name "
+            "and Appointment.doctor_name. "
+            "Leave blank to fall back to the user's full name or username."
+        )
+    )
     surgeon_code = models.CharField(max_length=30, default='SURG-101', help_text="Hospital Surgeon ID Code")
     license_number = models.CharField(max_length=50, default='BMDC-A-48291', help_text="Medical Council License Number")
     department = models.CharField(max_length=100, default='Department of Ophthalmology & Microsurgery')
@@ -358,6 +364,22 @@ class NaimulProfile(models.Model):
     can_view_ot_slots = models.BooleanField(default=True, help_text="Doctor Role Permission: View Operation Theatre Slot Schedules")
     can_apply_surgery = models.BooleanField(default=True, help_text="Staff Role Permission: Submit Surgery Applications & Book OT Slots")
     can_make_appointments = models.BooleanField(default=True, help_text="Staff Role Permission: Schedule & Manage Patient Appointments")
+
+    def get_surgeon_display_name(self):
+        """
+        Returns the canonical name for this doctor as it appears in SurgeryRecord /
+        Appointment records.  Priority order:
+          1. surgeon_display_name (explicit DB field, most reliable)
+          2. user.get_full_name()  (set via profile-settings form)
+          3. 'Dr. <username.title()>'  (last-resort fallback)
+        """
+        if self.surgeon_display_name.strip():
+            return self.surgeon_display_name.strip()
+        full = self.user.get_full_name().strip()
+        if full:
+            return full if full.lower().startswith(('dr.', 'prof.')) else f'Dr. {full}'
+        uname = self.user.username.strip()
+        return f'Dr. {uname.title()}' if uname else ''
 
     @property
     def is_staff_role(self):

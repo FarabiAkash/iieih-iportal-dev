@@ -98,7 +98,7 @@ def profile_view(request):
         gender = request.POST.get('patient_gender', 'Male')
         eye = request.POST.get('eye', 'RE')
         surgery_type = request.POST.get('surgery_type', 'Cataract')
-        _default_surgeon = f"Dr. {request.user.get_full_name() or request.user.username}"
+        _default_surgeon = profile.get_surgeon_display_name() or f"Dr. {request.user.get_full_name() or request.user.username}"
         surgeon_name = request.POST.get('surgeon_name', '').strip() or _default_surgeon
         ot_room = request.POST.get('ot_room', 'OT-1')
         ot_slot = request.POST.get('ot_slot', 'Slot 1 (08:30 - 10:00 AM)')
@@ -145,7 +145,7 @@ def profile_view(request):
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
         appt_type = request.POST.get('appointment_type', 'Consultant Clinic')
-        _default_doctor = f"Dr. {request.user.get_full_name() or request.user.username}"
+        _default_doctor = profile.get_surgeon_display_name() or f"Dr. {request.user.get_full_name() or request.user.username}"
         doctor = request.POST.get('doctor_name', '').strip() or _default_doctor
         appt_date = request.POST.get('appointment_date', '')
         time_slot = request.POST.get('appointment_time_slot', '09:00 - 10:00 AM')
@@ -222,6 +222,10 @@ def profile_view(request):
         profile.license_number = request.POST.get('license_number', profile.license_number)
         profile.phone = request.POST.get('phone', profile.phone)
         profile.bio = request.POST.get('bio', profile.bio)
+        # surgeon_display_name: save only when explicitly submitted (e.g. from the profile settings form)
+        surgeon_display_name_val = request.POST.get('surgeon_display_name')
+        if surgeon_display_name_val is not None:
+            profile.surgeon_display_name = surgeon_display_name_val.strip()
         role_val = request.POST.get('role', profile.role)
         profile.role = role_val
         profile.save()
@@ -244,26 +248,50 @@ def profile_view(request):
     all_surgeries = SurgeryRecord.objects.all().order_by('-date', '-id')
 
     # ── Logged-in doctor identity — derived entirely from the authenticated user account.
-    # Build a set of keywords from first_name, last_name, full name, and username.
-    # This avoids any hardcoded fallback and works for every registered doctor.
+    # Use profile.get_surgeon_display_name() as the primary, reliable key that maps
+    # this user to their surgery/appointment records in the database.  This reads from
+    # NaimulProfile.surgeon_display_name (explicit DB field) → user.get_full_name() →
+    # 'Dr. <username>' in that priority order, so it works for every doctor without
+    # any hardcoded names or IDs.
     _u = request.user
+    canonical_name = profile.get_surgeon_display_name()  # primary reliable key
+
+    # Build supplementary keyword list from the user's identity fields as a fallback.
+    # This ensures existing records that don't perfectly match the canonical name
     _full_name = _u.get_full_name().strip()
     doctor_keywords = []
+    if canonical_name:
+        doctor_keywords.append(canonical_name)
+        # Also add the name without the 'Dr.' prefix so partial matches still work
+        import re as _re
+        bare = _re.sub(r'^(Dr\.|Prof\.)\s*', '', canonical_name, flags=_re.IGNORECASE).strip()
+        if bare and bare.lower() != canonical_name.lower():
+            doctor_keywords.append(bare)
     if _u.first_name.strip():
         doctor_keywords.append(_u.first_name.strip())
     if _u.last_name.strip() and len(_u.last_name.strip()) >= 3:
         doctor_keywords.append(_u.last_name.strip())
     if _full_name and _full_name not in doctor_keywords:
         doctor_keywords.append(_full_name)
-    # Username is the reliable fallback (it often appears inside the surgeon_name string)
+    # Username is a reliable fallback (often appears inside the surgeon_name string)
     if _u.username.strip() and len(_u.username.strip()) >= 3:
         doctor_keywords.append(_u.username.strip())
+    # De-duplicate while preserving order
+    seen = set()
+    _dedup = []
+    for _k in doctor_keywords:
+        _kl = _k.lower()
+        if _kl not in seen:
+            seen.add(_kl)
+            _dedup.append(_k)
+    doctor_keywords = _dedup
 
-    # Best single display keyword (first_name → full name → username)
-    doctor_kw = _u.first_name.strip() or _full_name or _u.username.strip()
+    # Best single display keyword for template use (canonical → first_name → full_name → username)
+    doctor_kw = canonical_name or _u.first_name.strip() or _full_name or _u.username.strip()
 
     # STRICT PATIENT ISOLATION:
-    # Only load patients whose surgeon_name matches any of the logged-in doctor's identity keywords.
+    # Filter surgery records by ANY of the doctor's identity keywords (icontains).
+    # The canonical_name is always first in doctor_keywords, so it takes priority.
     my_surgeries_q = Q()
     for _kw in doctor_keywords:
         if _kw:
@@ -407,11 +435,9 @@ def profile_view(request):
     # Precompute doctor display name for form defaults and template use
     doctor_display_name = _u.get_full_name() or _u.username
     available_doctors = get_available_doctors()
-    if doctor_display_name:
-        current_doc = f"Dr. {doctor_display_name}" if not doctor_display_name.lower().startswith(('dr.', 'prof.')) else doctor_display_name
-        if not any(doctor_kw.lower() in d.lower() for d in available_doctors) and current_doc not in available_doctors:
-            available_doctors.append(current_doc)
-            available_doctors.sort()
+    if canonical_name and canonical_name not in available_doctors:
+        available_doctors.append(canonical_name)
+        available_doctors.sort()
 
     context = {
         'profile': profile,

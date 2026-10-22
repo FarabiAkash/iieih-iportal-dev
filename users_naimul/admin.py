@@ -13,8 +13,8 @@ from users_naimul.models import NaimulProfile
 
 @admin.register(NaimulProfile)
 class NaimulProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role', 'specialty', 'assigned_ot_room', 'surgeon_code', 'license_number', 'can_apply_surgery', 'can_make_appointments')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'surgeon_code', 'license_number')
+    list_display = ('user', 'role', 'specialty', 'assigned_ot_room', 'surgeon_display_name', 'surgeon_code', 'license_number', 'can_apply_surgery', 'can_make_appointments')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'surgeon_display_name', 'surgeon_code', 'license_number')
     list_filter = ('role', 'specialty', 'assigned_ot_room', 'can_apply_surgery', 'can_make_appointments')
 
 @admin.register(SurgeryRecord)
