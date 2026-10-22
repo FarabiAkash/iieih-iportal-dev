@@ -52,10 +52,10 @@ def login_view(request):
             # Ensure profile exists
             profile, _ = NaimulProfile.objects.get_or_create(user=user)
             
-            if profile.is_staff_role:
-                welcome_msg = f"Welcome, {user.get_full_name() or user.username}! OT Coordinator Console is ready."
+            if profile.is_doctor_role:
+                welcome_msg = f"Welcome back, {profile.get_surgeon_display_name()}! Operation Theatre roster loaded."
             else:
-                welcome_msg = f"Welcome back, Dr. {user.get_full_name() or user.username}! Operation Theatre roster loaded."
+                welcome_msg = f"Welcome, {profile.get_surgeon_display_name()}! OT Coordinator Console is ready."
 
             messages.success(request, welcome_msg)
             
@@ -98,7 +98,7 @@ def profile_view(request):
         gender = request.POST.get('patient_gender', 'Male')
         eye = request.POST.get('eye', 'RE')
         surgery_type = request.POST.get('surgery_type', 'Cataract')
-        _default_surgeon = profile.get_surgeon_display_name() or f"Dr. {request.user.get_full_name() or request.user.username}"
+        _default_surgeon = profile.get_surgeon_display_name() if profile.is_doctor_role else ""
         surgeon_name = request.POST.get('surgeon_name', '').strip() or _default_surgeon
         ot_room = request.POST.get('ot_room', 'OT-1')
         ot_slot = request.POST.get('ot_slot', 'Slot 1 (08:30 - 10:00 AM)')
@@ -145,7 +145,7 @@ def profile_view(request):
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
         appt_type = request.POST.get('appointment_type', 'Consultant Clinic')
-        _default_doctor = profile.get_surgeon_display_name() or f"Dr. {request.user.get_full_name() or request.user.username}"
+        _default_doctor = profile.get_surgeon_display_name() if profile.is_doctor_role else ""
         doctor = request.POST.get('doctor_name', '').strip() or _default_doctor
         appt_date = request.POST.get('appointment_date', '')
         time_slot = request.POST.get('appointment_time_slot', '09:00 - 10:00 AM')
@@ -433,9 +433,9 @@ def profile_view(request):
     }
 
     # Precompute doctor display name for form defaults and template use
-    doctor_display_name = _u.get_full_name() or _u.username
+    doctor_display_name = profile.get_surgeon_display_name()
     available_doctors = get_available_doctors()
-    if canonical_name and canonical_name not in available_doctors:
+    if profile.is_doctor_role and canonical_name and canonical_name not in available_doctors:
         available_doctors.append(canonical_name)
         available_doctors.sort()
 

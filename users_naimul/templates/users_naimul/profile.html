@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Clinical Console & OT Roster | Dr. {{ user.get_full_name|default:user.username }}</title>
+    <title>{% if profile.is_doctor_role %}Doctor Clinical Console &amp; OT Roster | {{ profile.get_surgeon_display_name }}{% else %}Clinical Console &amp; OT Roster | {{ profile.get_surgeon_display_name }}{% endif %}</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,7 +188,7 @@
                                     </div>
                                     {% if slot.is_booked %}
                                     <div class="slot-mini-patient">{{ slot.case.patient_name }}</div>
-                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>Dr. {{ slot.case.surgeon_name }}</div>
+                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>{{ slot.case.surgeon_name }}</div>
                                     <div style="margin-top: 8px;">
                                         <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i>
                                             Booked</span>
@@ -246,7 +246,7 @@
                                     <span class="badge-mrn" style="font-size: 0.74rem; margin-left: 6px;">{{ slot.case.patient_mrn }}</span>
                                 </div>
                                 <div class="slot-procedure">
-                                    <i class="fa-solid fa-eye" style="color: var(--primary-light);"></i> {{ slot.case.surgery_type }} ({{ slot.case.eye }}) &bull; Dr. {{ slot.case.surgeon_name }}
+                                    <i class="fa-solid fa-eye" style="color: var(--primary-light);"></i> {{ slot.case.surgery_type }} ({{ slot.case.eye }}) &bull; {{ slot.case.surgeon_name }}
                                 </div>
                                 <div class="slot-history-preview">
                                     <strong>Medical History:</strong> {{ slot.case.medical_history|truncatechars:75 }}
@@ -633,7 +633,7 @@
                                     style="color: var(--primary-light); font-size: 1.15rem;"></i>
                                 <span>
                                     <strong>Surgeon Isolation Active:</strong> By default, this roster displays
-                                    <strong>only patients assigned to Dr. {{ user.get_full_name|default:user.username|title }}</strong>. Other doctors' patients remain protected.
+                                    <strong>only patients assigned to {% if profile.is_doctor_role %}{{ profile.get_surgeon_display_name }}{% else %}{{ profile.get_surgeon_display_name|title }}{% endif %}</strong>. Other doctors' patients remain protected.
                                 </span>
                             </div>
                             <span style="font-size: 0.78rem; color: var(--success); font-weight: 600; 
@@ -1045,7 +1045,7 @@
                                     </div>
                                     {% if slot.is_booked %}
                                     <div class="slot-mini-patient">{{ slot.case.patient_name }}</div>
-                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>Dr. {{ slot.case.surgeon_name }}</div>
+                                    <div class="slot-mini-type">{{ slot.case.surgery_type }} &bull; {{ slot.case.eye }}<br>{{ slot.case.surgeon_name }}</div>
                                     <div style="margin-top: 8px; display: flex; gap: 6px;">
                                         <span class="slot-status-badge status-booked"><i class="fa-solid fa-check"></i>
                                             Booked</span>

@@ -110,13 +110,13 @@
             </div>
 
             <!-- Bottom Hospital Location & Status -->
-            <div class="hero-content-bottom">
+            {% comment %} <div class="hero-content-bottom">
                 <span class="hero-motto">Better Vision | Brighter Future</span>
                 <span class="hero-security-note">
                     <i class="fa-solid fa-circle-check"></i>
                     <span>IIEI&amp;H Secure Clinical Network</span>
                 </span>
-            </div>
+            </div> {% endcomment %}
         </section>
 
         <!-- ── Right Side: Sleek Glassmorphism Login Form ── -->
@@ -148,7 +148,7 @@
             <div class="form-inner-box">
                 <div class="form-title-group">
                     <h2 class="form-main-title">Surgeon Portal</h2>
-                    <p class="form-sub-title">Enter your medical ID &amp; clinical security password to continue.</p>
+                    <p class="form-sub-title">Enter your username &amp; clinical security password to continue.</p>
                 </div>
 
                 <!-- Django Messages & Alerts -->
@@ -186,12 +186,12 @@
                     <!-- Doctor ID / Username -->
                     <div class="form-group">
                         <label for="username" class="form-label">
-                            <span>Doctor ID / Surgeon Username</span>
+                            <span>Surgeon Username</span>
                         </label>
                         <div class="input-container">
                             <i class="fa-solid fa-user-doctor input-lead-icon" aria-hidden="true"></i>
                             <input type="text" id="username" name="username" class="form-control"
-                                placeholder="e.g. name" autocomplete="username" required autofocus>
+                                placeholder="username" autocomplete="username" required autofocus>
                         </div>
                     </div>
 
@@ -203,7 +203,7 @@
                         <div class="input-container">
                             <i class="fa-solid fa-lock input-lead-icon" aria-hidden="true"></i>
                             <input type="password" id="password" name="password" class="form-control"
-                                placeholder="•••••••••" autocomplete="current-password" required>
+                                placeholder="••••••••" autocomplete="current-password" required>
                             <button type="button" class="btn-password-toggle" id="togglePasswordBtn"
                                 aria-label="Toggle password visibility" title="Show or hide password">
                                 <i class="fa-regular fa-eye" id="passwordEyeIcon"></i>
@@ -223,16 +223,16 @@
                             <input type="checkbox" name="remember_me" id="rememberMe">
                             <span>Keep session active</span>
                         </label>
-                        <a href="/surgeries/" class="quick-nav-link">
+                        {% comment %} <a href="/surgeries/" class="quick-nav-link">
                             View OT Log <i class="fa-solid fa-arrow-up-right-from-square"
                                 style="font-size: 0.72rem; margin-left: 2px;"></i>
-                        </a>
+                        </a> {% endcomment %}
                     </div>
 
                     <!-- Submit Button -->
                     <button type="submit" class="btn-submit-login" id="submitBtn">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                        <span>Authenticate &amp; Launch OT Portal</span>
+                        <span>Login</span>
                     </button>
                 </form>
             </div>
