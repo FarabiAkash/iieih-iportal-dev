@@ -101,12 +101,12 @@
                         <i class="fa-solid fa-syringe"></i> <span>Apply for Surgery</span>
                     </button>
                     {% endif %}
-                    {% if profile.can_make_appointments %}
+                    {% comment %} {% if profile.can_make_appointments %}
                     <button type="button" class="tab-btn {% if active_tab == 'appointments' %}active{% endif %}"
                         onclick="switchClinicalTab('appointments')">
                         <i class="fa-solid fa-calendar-plus"></i> <span>Appointments ({{ appointments.count }})</span>
                     </button>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     <button type="button" class="tab-btn {% if active_tab == 'patients' %}active{% endif %}"
                         onclick="switchClinicalTab('patients')">
                         <i class="fa-solid fa-hospital-user"></i> <span>Patient Roster ({{ all_surgeries.count }})</span>
@@ -452,7 +452,7 @@
                     </div>
                 </div>
 
-                <!-- TAB: APPOINTMENTS (Staff) -->
+                <!-- TAB: APPOINTMENTS (Staff) --> <!--
                 <div class="tab-pane {% if active_tab == 'appointments' %}active{% endif %}" id="pane-appointments">
                     <div class="card">
                         <div class="card-header">
@@ -563,9 +563,9 @@
                             </button>
                         </form>
 
-                        <hr class="section-separator">
+                        <hr class="section-separator"> -->
 
-                        <!-- Appointments List -->
+                        <!-- Appointments List --> <!--
                         <div class="card-header" style="margin-top: 0; padding-top: 0;">
                             <h2 class="card-title" style="font-size: 1rem;">
                                 <i class="fa-solid fa-list-check"></i> Scheduled Appointments Register
@@ -640,7 +640,7 @@
                             </table>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- TAB 2: PATIENT DETAILS VIEW (Isolated with Cross-Doctor MRN Lookup) -->
                 <div class="tab-pane {% if active_tab == 'patients' or not active_tab and not profile.is_staff_role %}active{% endif %}"
