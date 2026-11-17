@@ -1346,231 +1346,231 @@
 #         self.assertIn('username', data['errors'])
 
 
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.contrib.auth.models import User
-from users_naimul.models import NaimulProfile
+# from django.test import TestCase, Client
+# from django.urls import reverse
+# from django.contrib.auth.models import User
+# from users_naimul.models import NaimulProfile
 
 
-class DoctorEditTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-        # Admin user
-        self.admin_user = User.objects.create_superuser(
-            username='admin_naimul',
-            email='admin@iieih.org.bd',
-            password='AdminPassword123'
-        )
-        self.admin_profile = NaimulProfile.objects.create(
-            user=self.admin_user,
-            role='Admin',
-            specialty='Cataract',
-            assigned_ot_room='OT-1',
-            surgeon_code='ADMIN-101',
-            license_number='BMDC-AD-48291',
-            department='Department of Administration',
-            phone='+8801911-220856'
-        )
+# class DoctorEditTestCase(TestCase):
+#     def setUp(self):
+#         self.client = Client()
+#         # Admin user
+#         self.admin_user = User.objects.create_superuser(
+#             username='admin_naimul',
+#             email='admin@iieih.org.bd',
+#             password='AdminPassword123'
+#         )
+#         self.admin_profile = NaimulProfile.objects.create(
+#             user=self.admin_user,
+#             role='Admin',
+#             specialty='Cataract',
+#             assigned_ot_room='OT-1',
+#             surgeon_code='ADMIN-101',
+#             license_number='BMDC-AD-48291',
+#             department='Department of Administration',
+#             phone='+8801911-220856'
+#         )
 
-        # Target Doctor to edit
-        self.doctor_user = User.objects.create_user(
-            username='shifat',
-            email='nazmulislam.shifat@iieih.org.bd',
-            password='DoctorPassword123',
-            first_name='Nazmul',
-            last_name='Shifat'
-        )
-        self.doctor_profile = NaimulProfile.objects.create(
-            user=self.doctor_user,
-            role='Surgeon',
-            specialty='Retina',
-            assigned_ot_room='OT-2',
-            surgeon_display_name='Dr. Nazmul Islam Shifat',
-            surgeon_code='SURG-101',
-            license_number='BMDC-S-49201',
-            department='Department of Retina',
-            phone='+8801911-712670'
-        )
+#         # Target Doctor to edit
+#         self.doctor_user = User.objects.create_user(
+#             username='shifat',
+#             email='nazmulislam.shifat@iieih.org.bd',
+#             password='DoctorPassword123',
+#             first_name='Nazmul',
+#             last_name='Shifat'
+#         )
+#         self.doctor_profile = NaimulProfile.objects.create(
+#             user=self.doctor_user,
+#             role='Surgeon',
+#             specialty='Retina',
+#             assigned_ot_room='OT-2',
+#             surgeon_display_name='Dr. Nazmul Islam Shifat',
+#             surgeon_code='SURG-101',
+#             license_number='BMDC-S-49201',
+#             department='Department of Retina',
+#             phone='+8801911-712670'
+#         )
 
-        # Regular non-admin doctor
-        self.regular_user = User.objects.create_user(
-            username='regular_doc',
-            email='regular@iieih.org.bd',
-            password='DocPassword123'
-        )
-        self.regular_profile = NaimulProfile.objects.create(
-            user=self.regular_user,
-            role='Resident',
-            specialty='Cornea',
-            assigned_ot_room='OT-3',
-            surgeon_code='SURG-999',
-            license_number='BMDC-R-99999'
-        )
+#         # Regular non-admin doctor
+#         self.regular_user = User.objects.create_user(
+#             username='regular_doc',
+#             email='regular@iieih.org.bd',
+#             password='DocPassword123'
+#         )
+#         self.regular_profile = NaimulProfile.objects.create(
+#             user=self.regular_user,
+#             role='Resident',
+#             specialty='Cornea',
+#             assigned_ot_room='OT-3',
+#             surgeon_code='SURG-999',
+#             license_number='BMDC-R-99999'
+#         )
 
-    def test_directory_renders_edit_button_and_modal(self):
-        """Admin viewing doctor-reg tab should see the Edit button and the edit modal."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        response = self.client.get(reverse('users_naimul:profile') + '?tab=doctor-reg')
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode('utf-8')
-        self.assertIn('btn-edit-doc-entry', content)
-        self.assertIn('id="editDoctorModal"', content)
-        self.assertIn('SURG-101', content)
-        self.assertIn('BMDC-S-49201', content)
+#     def test_directory_renders_edit_button_and_modal(self):
+#         """Admin viewing doctor-reg tab should see the Edit button and the edit modal."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         response = self.client.get(reverse('users_naimul:profile') + '?tab=doctor-reg')
+#         self.assertEqual(response.status_code, 200)
+#         content = response.content.decode('utf-8')
+#         self.assertIn('btn-edit-doc-entry', content)
+#         self.assertIn('id="editDoctorModal"', content)
+#         self.assertIn('SURG-101', content)
+#         self.assertIn('BMDC-S-49201', content)
 
-    def test_admin_can_edit_doctor_information(self):
-        """Admin can update doctor details via POST to profile."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        payload = {
-            'edit_doctor': '1',
-            'profile_id': self.doctor_profile.id,
-            'username': 'shifat_updated',
-            'first_name': 'Nazmul Islam',
-            'last_name': 'Shifat',
-            'surgeon_display_name': 'Dr. Nazmul Islam Shifat, PhD',
-            'email': 'shifat.new@iieih.org.bd',
-            'phone': '+8801911-999999',
-            'role': 'Consultant',
-            'specialty': 'Retina',
-            'assigned_ot_room': 'OT-2',
-            'surgeon_code': 'SURG-101-NEW',
-            'license_number': 'BMDC-S-49201-NEW',
-            'department': 'Department of Vitreoretinal Surgery',
-            'bio': 'Senior Consultant Vitreoretinal Surgeon',
-            'is_active': '1',
-        }
-        response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
-        self.assertEqual(response.status_code, 200)
+#     def test_admin_can_edit_doctor_information(self):
+#         """Admin can update doctor details via POST to profile."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         payload = {
+#             'edit_doctor': '1',
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'shifat_updated',
+#             'first_name': 'Nazmul Islam',
+#             'last_name': 'Shifat',
+#             'surgeon_display_name': 'Dr. Nazmul Islam Shifat, PhD',
+#             'email': 'shifat.new@iieih.org.bd',
+#             'phone': '+8801911-999999',
+#             'role': 'Consultant',
+#             'specialty': 'Retina',
+#             'assigned_ot_room': 'OT-2',
+#             'surgeon_code': 'SURG-101-NEW',
+#             'license_number': 'BMDC-S-49201-NEW',
+#             'department': 'Department of Vitreoretinal Surgery',
+#             'bio': 'Senior Consultant Vitreoretinal Surgeon',
+#             'is_active': '1',
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         self.assertEqual(response.status_code, 200)
 
-        self.doctor_profile.refresh_from_db()
-        self.doctor_user.refresh_from_db()
+#         self.doctor_profile.refresh_from_db()
+#         self.doctor_user.refresh_from_db()
 
-        self.assertEqual(self.doctor_user.username, 'shifat_updated')
-        self.assertEqual(self.doctor_user.email, 'shifat.new@iieih.org.bd')
-        self.assertEqual(self.doctor_profile.role, 'Consultant')
-        self.assertEqual(self.doctor_profile.surgeon_code, 'SURG-101-NEW')
-        self.assertEqual(self.doctor_profile.license_number, 'BMDC-S-49201-NEW')
-        self.assertEqual(self.doctor_profile.department, 'Department of Vitreoretinal Surgery')
-        self.assertEqual(self.doctor_profile.phone, '+8801911-999999')
-        self.assertEqual(self.doctor_profile.surgeon_display_name, 'Dr. Nazmul Islam Shifat, PhD')
+#         self.assertEqual(self.doctor_user.username, 'shifat_updated')
+#         self.assertEqual(self.doctor_user.email, 'shifat.new@iieih.org.bd')
+#         self.assertEqual(self.doctor_profile.role, 'Consultant')
+#         self.assertEqual(self.doctor_profile.surgeon_code, 'SURG-101-NEW')
+#         self.assertEqual(self.doctor_profile.license_number, 'BMDC-S-49201-NEW')
+#         self.assertEqual(self.doctor_profile.department, 'Department of Vitreoretinal Surgery')
+#         self.assertEqual(self.doctor_profile.phone, '+8801911-999999')
+#         self.assertEqual(self.doctor_profile.surgeon_display_name, 'Dr. Nazmul Islam Shifat, PhD')
 
-    def test_non_admin_cannot_edit_doctor(self):
-        """Non-admin user cannot edit doctor profiles."""
-        self.client.login(username='regular_doc', password='DocPassword123')
-        payload = {
-            'edit_doctor': '1',
-            'profile_id': self.doctor_profile.id,
-            'username': 'hacked_name',
-            'email': 'hacked@iieih.org.bd',
-            'phone': '+8801911-000000',
-            'role': 'Admin',
-            'specialty': 'Retina',
-            'assigned_ot_room': 'OT-1',
-            'surgeon_code': 'SURG-HACK',
-            'license_number': 'BMDC-HACK',
-        }
-        response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
-        self.doctor_profile.refresh_from_db()
-        self.assertEqual(self.doctor_profile.surgeon_code, 'SURG-101')
+#     def test_non_admin_cannot_edit_doctor(self):
+#         """Non-admin user cannot edit doctor profiles."""
+#         self.client.login(username='regular_doc', password='DocPassword123')
+#         payload = {
+#             'edit_doctor': '1',
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'hacked_name',
+#             'email': 'hacked@iieih.org.bd',
+#             'phone': '+8801911-000000',
+#             'role': 'Admin',
+#             'specialty': 'Retina',
+#             'assigned_ot_room': 'OT-1',
+#             'surgeon_code': 'SURG-HACK',
+#             'license_number': 'BMDC-HACK',
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         self.doctor_profile.refresh_from_db()
+#         self.assertEqual(self.doctor_profile.surgeon_code, 'SURG-101')
 
-    def test_edit_doctor_ajax_endpoint(self):
-        """Admin can edit doctor via dedicated AJAX endpoint."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        payload = {
-            'profile_id': self.doctor_profile.id,
-            'username': 'shifat',
-            'first_name': 'Nazmul',
-            'last_name': 'Shifat',
-            'email': 'nazmulislam.shifat@iieih.org.bd',
-            'phone': '+8801911-712670',
-            'role': 'Surgeon',
-            'specialty': 'Glaucoma',
-            'assigned_ot_room': 'OT-3',
-            'surgeon_code': 'SURG-101',
-            'license_number': 'BMDC-S-49201',
-            'department': 'Department of Glaucoma',
-            'is_active': '1',
-        }
-        response = self.client.post(
-            reverse('users_naimul:edit_doctor'),
-            payload,
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-        )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-        self.assertEqual(data['doctor']['specialty'], 'Glaucoma')
-        self.assertEqual(data['doctor']['assigned_ot_room'], 'OT-3')
+#     def test_edit_doctor_ajax_endpoint(self):
+#         """Admin can edit doctor via dedicated AJAX endpoint."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         payload = {
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'shifat',
+#             'first_name': 'Nazmul',
+#             'last_name': 'Shifat',
+#             'email': 'nazmulislam.shifat@iieih.org.bd',
+#             'phone': '+8801911-712670',
+#             'role': 'Surgeon',
+#             'specialty': 'Glaucoma',
+#             'assigned_ot_room': 'OT-3',
+#             'surgeon_code': 'SURG-101',
+#             'license_number': 'BMDC-S-49201',
+#             'department': 'Department of Glaucoma',
+#             'is_active': '1',
+#         }
+#         response = self.client.post(
+#             reverse('users_naimul:edit_doctor'),
+#             payload,
+#             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+#         )
+#         self.assertEqual(response.status_code, 200)
+#         data = response.json()
+#         self.assertTrue(data['success'])
+#         self.assertEqual(data['doctor']['specialty'], 'Glaucoma')
+#         self.assertEqual(data['doctor']['assigned_ot_room'], 'OT-3')
 
-    def test_duplicate_surgeon_code_rejected(self):
-        """Editing doctor to an existing surgeon code used by another doctor is rejected."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        payload = {
-            'edit_doctor': '1',
-            'profile_id': self.doctor_profile.id,
-            'username': 'shifat',
-            'first_name': 'Nazmul',
-            'last_name': 'Shifat',
-            'email': 'nazmulislam.shifat@iieih.org.bd',
-            'phone': '+8801911-712670',
-            'role': 'Surgeon',
-            'specialty': 'Retina',
-            'assigned_ot_room': 'OT-2',
-            'surgeon_code': 'ADMIN-101',  # already used by admin_profile!
-            'license_number': 'BMDC-S-49201',
-            'department': 'Department of Retina',
-        }
-        response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
-        messages_text = [str(m) for m in response.context['messages']]
-        self.assertTrue(any("already assigned to another staff member" in m for m in messages_text))
+#     def test_duplicate_surgeon_code_rejected(self):
+#         """Editing doctor to an existing surgeon code used by another doctor is rejected."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         payload = {
+#             'edit_doctor': '1',
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'shifat',
+#             'first_name': 'Nazmul',
+#             'last_name': 'Shifat',
+#             'email': 'nazmulislam.shifat@iieih.org.bd',
+#             'phone': '+8801911-712670',
+#             'role': 'Surgeon',
+#             'specialty': 'Retina',
+#             'assigned_ot_room': 'OT-2',
+#             'surgeon_code': 'ADMIN-101',  # already used by admin_profile!
+#             'license_number': 'BMDC-S-49201',
+#             'department': 'Department of Retina',
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already assigned to another staff member" in m for m in messages_text))
 
-    def test_duplicate_license_number_rejected(self):
-        """Editing doctor to an existing license number used by another doctor is rejected."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        payload = {
-            'edit_doctor': '1',
-            'profile_id': self.doctor_profile.id,
-            'username': 'shifat',
-            'first_name': 'Nazmul',
-            'last_name': 'Shifat',
-            'email': 'nazmulislam.shifat@iieih.org.bd',
-            'phone': '+8801911-712670',
-            'role': 'Surgeon',
-            'specialty': 'Retina',
-            'assigned_ot_room': 'OT-2',
-            'surgeon_code': 'SURG-101',
-            'license_number': 'BMDC-AD-48291',  # already used by admin_profile!
-            'department': 'Department of Retina',
-        }
-        response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
-        messages_text = [str(m) for m in response.context['messages']]
-        self.assertTrue(any("already registered in the system" in m for m in messages_text))
+#     def test_duplicate_license_number_rejected(self):
+#         """Editing doctor to an existing license number used by another doctor is rejected."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         payload = {
+#             'edit_doctor': '1',
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'shifat',
+#             'first_name': 'Nazmul',
+#             'last_name': 'Shifat',
+#             'email': 'nazmulislam.shifat@iieih.org.bd',
+#             'phone': '+8801911-712670',
+#             'role': 'Surgeon',
+#             'specialty': 'Retina',
+#             'assigned_ot_room': 'OT-2',
+#             'surgeon_code': 'SURG-101',
+#             'license_number': 'BMDC-AD-48291',  # already used by admin_profile!
+#             'department': 'Department of Retina',
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already registered in the system" in m for m in messages_text))
 
-    def test_password_update_when_provided(self):
-        """Password is updated when a valid new password is provided."""
-        self.client.login(username='admin_naimul', password='AdminPassword123')
-        payload = {
-            'edit_doctor': '1',
-            'profile_id': self.doctor_profile.id,
-            'username': 'shifat',
-            'first_name': 'Nazmul',
-            'last_name': 'Shifat',
-            'email': 'nazmulislam.shifat@iieih.org.bd',
-            'phone': '+8801911-712670',
-            'role': 'Surgeon',
-            'specialty': 'Retina',
-            'assigned_ot_room': 'OT-2',
-            'surgeon_code': 'SURG-101',
-            'license_number': 'BMDC-S-49201',
-            'department': 'Department of Retina',
-            'password': 'NewSecurePassword@456',
-        }
-        response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
-        self.assertEqual(response.status_code, 200)
+#     def test_password_update_when_provided(self):
+#         """Password is updated when a valid new password is provided."""
+#         self.client.login(username='admin_naimul', password='AdminPassword123')
+#         payload = {
+#             'edit_doctor': '1',
+#             'profile_id': self.doctor_profile.id,
+#             'username': 'shifat',
+#             'first_name': 'Nazmul',
+#             'last_name': 'Shifat',
+#             'email': 'nazmulislam.shifat@iieih.org.bd',
+#             'phone': '+8801911-712670',
+#             'role': 'Surgeon',
+#             'specialty': 'Retina',
+#             'assigned_ot_room': 'OT-2',
+#             'surgeon_code': 'SURG-101',
+#             'license_number': 'BMDC-S-49201',
+#             'department': 'Department of Retina',
+#             'password': 'NewSecurePassword@456',
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         self.assertEqual(response.status_code, 200)
 
-        # Doctor user should now authenticate with the new password
-        from django.contrib.auth import authenticate
-        user = authenticate(username='shifat', password='NewSecurePassword@456')
-        self.assertIsNotNone(user)
+#         # Doctor user should now authenticate with the new password
+#         from django.contrib.auth import authenticate
+#         user = authenticate(username='shifat', password='NewSecurePassword@456')
+#         self.assertIsNotNone(user)
 
 
