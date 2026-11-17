@@ -510,4 +510,45 @@ class Appointment(models.Model):
         if not self.patient_mrn:
             self.patient_mrn = generate_mrn()
         super().save(*args, **kwargs)
-# 
+
+
+class Prescription(models.Model):
+
+    Eye_Choices = [
+        ('LE', 'Left Eye'),
+        ('RE', 'Right Eye'),
+        ('BE', 'Both Eyes'),
+    ]
+    Gender_Choices = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ]
+
+    patient_mrn = models.CharField(max_length=12, blank=True)
+    patient_name = models.CharField(max_length=100)
+    patient_age = models.PositiveIntegerField()
+    patient_gender = models.CharField(max_length=10, choices=Gender_Choices)
+    eye = models.CharField(max_length=2, choices=Eye_Choices, blank=True)
+    diagnosis = models.TextField(help_text="Primary diagnosis / impression")
+    medications_json = models.TextField(
+        blank=True,
+        default='[]',
+        help_text="JSON array of medication objects"
+    )
+    notes = models.TextField(blank=True)
+    prescribing_doctor = models.CharField(max_length=100)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    @property
+    def medications(self):
+        import json
+        return json.loads(self.medications_json or '[]')
+
+    def save_medications(self, meds_list):
+        import json
+        self.medications_json = json.dumps(meds_list)
+
+    def __str__(self):
+        return f"Prescription for {self.patient_name} ({self.patient_mrn}) by {self.prescribing_doctor}"
