@@ -1574,3 +1574,277 @@
 #         self.assertIsNotNone(user)
 
 
+# from django.test import TestCase, Client
+# from django.urls import reverse
+# from django.contrib.auth.models import User
+# import json
+# from datetime import date
+# from .models import NaimulProfile, SurgeryRecord, Prescription
+
+# class PatientLoadTabTests(TestCase):
+#     def setUp(self):
+#         self.client = Client()
+#         self.doc_user = User.objects.create_user(
+#             username='dr_test',
+#             password='Password123!',
+#             first_name='Rashidul',
+#             last_name='Hasan'
+#         )
+#         self.doc_profile = NaimulProfile.objects.create(
+#             user=self.doc_user,
+#             role='Surgeon',
+#             specialty='Cataract',
+#             assigned_ot_room='OT-1',
+#             surgeon_display_name='Dr. Rashidul Hasan',
+#             license_number='BMDC-DOC-1234'
+#         )
+#         self.staff_user = User.objects.create_user(
+#             username='staff_test',
+#             password='Password123!',
+#             first_name='OT',
+#             last_name='Nurse'
+#         )
+#         self.staff_profile = NaimulProfile.objects.create(
+#             user=self.staff_user,
+#             role='OT Nurse',
+#             specialty='Cataract',
+#             assigned_ot_room='OT-1',
+#             surgeon_display_name='Nurse Test',
+#             license_number='NURSE-1234'
+#         )
+#         self.patient = SurgeryRecord.objects.create(
+#             date=date.today(),
+#             patient_name='Karim Rahman',
+#             patient_age=58,
+#             patient_gender='Male',
+#             eye='RE',
+#             surgery_type='Cataract',
+#             surgeon_name='Dr. Rashidul Hasan',
+#             ot_room='OT-1',
+#             ot_slot='Slot 1 (08:30 - 10:00 AM)',
+#             outcome='Successful',
+#             medical_history='Mild hypertension controlled. Pre-op IOP 16 mmHg.',
+#             notes='Clear corneal incision phacoemulsification with foldable IOL.'
+#         )
+
+#     def test_doctor_ui_has_patient_load_search_box_and_modal(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         response = self.client.get(reverse('users_naimul:profile'))
+#         self.assertEqual(response.status_code, 200)
+#         content = response.content.decode('utf-8')
+#         self.assertIn("switchClinicalTab('patient-load')", content)
+#         self.assertIn('<span>Patient Load</span>', content)
+#         self.assertIn('id="pane-patient-load"', content)
+#         self.assertIn('id="patientLoadSearchSection"', content)
+#         self.assertIn('id="patientLoadMRNInput"', content)
+#         self.assertIn('id="patientLoadMRNSearchBtn"', content)
+#         self.assertIn('id="patientInfoModal"', content)
+#         self.assertIn('id="btnConfirmOpenPatient"', content)
+#         self.assertIn('Confirm &amp; Open', content)
+#         self.assertIn('id="patientPrescriptionWorkspace"', content)
+#         self.assertIn('id="prescriptionPrintArea"', content)
+
+#     def test_static_files_separation(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         response = self.client.get(reverse('users_naimul:profile'))
+#         self.assertEqual(response.status_code, 200)
+#         content = response.content.decode('utf-8')
+#         self.assertIn('users_naimul/css/profile.css', content)
+#         self.assertIn('users_naimul/js/profile.js', content)
+
+#     def test_patient_lookup_api_by_mrn(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         url = f"{reverse('users_naimul:patient_lookup_api')}?mrn={self.patient.patient_mrn}"
+#         res = self.client.get(url)
+#         self.assertEqual(res.status_code, 200)
+#         data = res.json()
+#         self.assertTrue(data.get('success'))
+#         pat = data['patient']
+#         self.assertEqual(pat['mrn'], self.patient.patient_mrn)
+#         self.assertEqual(pat['name'], 'Karim Rahman')
+#         self.assertEqual(pat['age'], 58)
+#         self.assertEqual(pat['gender'], 'Male')
+#         self.assertEqual(pat['surgery_type'], 'Cataract')
+
+#     def test_patient_lookup_api_not_found(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         url = f"{reverse('users_naimul:patient_lookup_api')}?mrn=NONEXISTENT_MRN"
+#         res = self.client.get(url)
+#         self.assertEqual(res.status_code, 404)
+#         data = res.json()
+#         self.assertFalse(data.get('success'))
+#         self.assertIn('No patient found', data.get('error', ''))
+
+#     def test_patient_lookup_api_empty_mrn(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         url = f"{reverse('users_naimul:patient_lookup_api')}?mrn="
+#         res = self.client.get(url)
+#         self.assertEqual(res.status_code, 400)
+#         data = res.json()
+#         self.assertFalse(data.get('success'))
+
+#     def test_patient_lookup_api_fallback_to_prescription(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         rx = Prescription.objects.create(
+#             patient_mrn='RX_ONLY_001',
+#             patient_name='Outpatient Sara',
+#             patient_age=32,
+#             patient_gender='Female',
+#             eye='LE',
+#             diagnosis='Allergic Conjunctivitis',
+#             prescribing_doctor=self.doc_profile.get_surgeon_display_name(),
+#             medications_json=json.dumps([{'drug': 'Olopatadine 0.1%'}])
+#         )
+#         url = f"{reverse('users_naimul:patient_lookup_api')}?mrn=RX_ONLY_001"
+#         res = self.client.get(url)
+#         self.assertEqual(res.status_code, 200)
+#         data = res.json()
+#         self.assertTrue(data.get('success'))
+#         self.assertEqual(data['patient']['name'], 'Outpatient Sara')
+
+#     def test_staff_cannot_access_patient_lookup_api(self):
+#         self.client.login(username='staff_test', password='Password123!')
+#         url = f"{reverse('users_naimul:patient_lookup_api')}?mrn={self.patient.patient_mrn}"
+#         res = self.client.get(url)
+#         self.assertEqual(res.status_code, 403)
+
+#     def test_staff_cannot_access_prescription_api(self):
+#         self.client.login(username='staff_test', password='Password123!')
+#         response = self.client.get(reverse('users_naimul:prescription_api'))
+#         self.assertEqual(response.status_code, 403)
+#         data = response.json()
+#         self.assertFalse(data.get('success', True))
+
+#     def test_staff_cannot_save_prescription(self):
+#         self.client.login(username='staff_test', password='Password123!')
+#         payload = {
+#             'save_prescription': '1',
+#             'patient_mrn': self.patient.patient_mrn,
+#             'patient_name': self.patient.patient_name,
+#             'diagnosis': 'Post-op examination',
+#             'medications_json': json.dumps([{'drug': 'Moxifloxacin', 'dosage': '1 drop', 'frequency': '4x daily', 'duration': '7 days'}])
+#         }
+#         response = self.client.post(reverse('users_naimul:profile'), payload)
+#         self.assertEqual(response.status_code, 403)
+#         data = response.json()
+#         self.assertFalse(data.get('success', True))
+
+#     def test_doctor_can_create_prescription_with_validation(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         bad_payload = {
+#             'save_prescription': '1',
+#             'patient_mrn': self.patient.patient_mrn,
+#             'patient_name': self.patient.patient_name,
+#             'diagnosis': '',
+#             'medications_json': json.dumps([{'drug': 'Moxifloxacin'}])
+#         }
+#         res = self.client.post(reverse('users_naimul:profile'), bad_payload)
+#         self.assertEqual(res.status_code, 400)
+
+#         bad_payload_meds = {
+#             'save_prescription': '1',
+#             'patient_mrn': self.patient.patient_mrn,
+#             'patient_name': self.patient.patient_name,
+#             'diagnosis': 'Post-op review',
+#             'medications_json': json.dumps([])
+#         }
+#         res2 = self.client.post(reverse('users_naimul:profile'), bad_payload_meds)
+#         self.assertEqual(res2.status_code, 400)
+
+#         meds = [
+#             {'drug': 'Moxifloxacin 0.5%', 'dosage': '1 drop', 'frequency': '4 times daily', 'duration': '7 days'},
+#             {'drug': 'Prednisolone Acetate 1%', 'dosage': '1 drop', 'frequency': '6 times daily', 'duration': '14 days'}
+#         ]
+#         valid_payload = {
+#             'save_prescription': '1',
+#             'patient_mrn': self.patient.patient_mrn,
+#             'patient_name': self.patient.patient_name,
+#             'patient_age': '58',
+#             'patient_gender': 'Male',
+#             'eye': 'RE',
+#             'diagnosis': 'Post-phacoemulsification day 1 review',
+#             'notes': 'Keep eye shield on at night. Do not rub eye.',
+#             'medications_json': json.dumps(meds)
+#         }
+#         res3 = self.client.post(reverse('users_naimul:profile'), valid_payload)
+#         self.assertEqual(res3.status_code, 200)
+#         data = res3.json()
+#         self.assertTrue(data['success'])
+#         self.assertIn('prescription_id', data)
+
+#         rx = Prescription.objects.get(id=data['prescription_id'])
+#         self.assertEqual(rx.patient_name, 'Karim Rahman')
+#         self.assertEqual(rx.diagnosis, 'Post-phacoemulsification day 1 review')
+#         self.assertEqual(len(rx.medications), 2)
+#         self.assertEqual(rx.medications[0]['drug'], 'Moxifloxacin 0.5%')
+
+#     def test_doctor_can_update_prescription(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         rx = Prescription.objects.create(
+#             patient_mrn=self.patient.patient_mrn,
+#             patient_name=self.patient.patient_name,
+#             patient_age=58,
+#             patient_gender='Male',
+#             eye='RE',
+#             diagnosis='Initial diagnosis',
+#             prescribing_doctor=self.doc_profile.get_surgeon_display_name(),
+#             medications_json=json.dumps([{'drug': 'Drug A'}])
+#         )
+
+#         update_payload = {
+#             'save_prescription': '1',
+#             'prescription_id': str(rx.id),
+#             'patient_mrn': self.patient.patient_mrn,
+#             'patient_name': self.patient.patient_name,
+#             'patient_age': '58',
+#             'patient_gender': 'Male',
+#             'eye': 'RE',
+#             'diagnosis': 'Updated clinical impression: corneal edema resolved',
+#             'notes': 'Taper drops over next 2 weeks.',
+#             'medications_json': json.dumps([
+#                 {'drug': 'Prednisolone Acetate 1%', 'dosage': '1 drop', 'frequency': '3 times daily', 'duration': '7 days'}
+#             ])
+#         }
+#         res = self.client.post(reverse('users_naimul:profile'), update_payload)
+#         self.assertEqual(res.status_code, 200)
+#         data = res.json()
+#         self.assertTrue(data['success'])
+
+#         rx.refresh_from_db()
+#         self.assertEqual(rx.diagnosis, 'Updated clinical impression: corneal edema resolved')
+#         self.assertEqual(len(rx.medications), 1)
+#         self.assertEqual(rx.medications[0]['drug'], 'Prednisolone Acetate 1%')
+
+#     def test_prescription_api_filtering(self):
+#         self.client.login(username='dr_test', password='Password123!')
+#         rx1 = Prescription.objects.create(
+#             patient_mrn=self.patient.patient_mrn,
+#             patient_name=self.patient.patient_name,
+#             patient_age=58,
+#             patient_gender='Male',
+#             diagnosis='Rx 1',
+#             prescribing_doctor=self.doc_profile.get_surgeon_display_name(),
+#             medications_json=json.dumps([{'drug': 'Drug 1'}])
+#         )
+#         rx2 = Prescription.objects.create(
+#             patient_mrn='OTHER_MRN',
+#             patient_name='Another Patient',
+#             patient_age=40,
+#             patient_gender='Female',
+#             diagnosis='Rx 2',
+#             prescribing_doctor=self.doc_profile.get_surgeon_display_name(),
+#             medications_json=json.dumps([{'drug': 'Drug 2'}])
+#         )
+
+#         res_mrn = self.client.get(f"{reverse('users_naimul:prescription_api')}?patient_mrn={self.patient.patient_mrn}")
+#         self.assertEqual(res_mrn.status_code, 200)
+#         items = res_mrn.json()['prescriptions']
+#         self.assertEqual(len(items), 1)
+#         self.assertEqual(items[0]['id'], rx1.id)
+
+#         res_id = self.client.get(f"{reverse('users_naimul:prescription_api')}?rx_id={rx2.id}")
+#         self.assertEqual(res_id.status_code, 200)
+#         items2 = res_id.json()['prescriptions']
+#         self.assertEqual(len(items2), 1)
+#         self.assertEqual(items2[0]['id'], rx2.id)
+

@@ -27,6 +27,7 @@ from .models import (
     SurgeryRecord,
     DiagnosisProcedure,
     Appointment,
+    Prescription,
     get_available_doctors,
     get_doctor_assigned_ot_room,
     get_doctor_ot_room_map,
@@ -608,8 +609,76 @@ def profile_view(request):
     """
     profile, created = NaimulProfile.objects.get_or_create(user=request.user)
 
+    # ── POST: Save Prescription (Doctors Only) ───────────────────────────────
+    if request.method == 'POST' and 'save_prescription' in request.POST:
+        if not profile.is_doctor_role:
+            return JsonResponse({'success': False, 'error': 'Access denied. Only doctors can save prescriptions.'}, status=403)
+
+        patient_mrn = request.POST.get('patient_mrn', '').strip()
+        patient_name = request.POST.get('patient_name', '').strip()
+        patient_age = request.POST.get('patient_age', 0)
+        patient_gender = request.POST.get('patient_gender', 'Male')
+        eye = request.POST.get('eye', '').strip()
+        diagnosis = request.POST.get('diagnosis', '').strip()
+        notes = request.POST.get('notes', '').strip()
+        prescribing_doctor = request.POST.get('prescribing_doctor', '').strip() or profile.get_surgeon_display_name()
+        medications_json_raw = request.POST.get('medications_json', '[]').strip()
+
+        # Validation
+        if not patient_name:
+            return JsonResponse({'success': False, 'error': 'Patient name is required.'}, status=400)
+        if not diagnosis:
+            return JsonResponse({'success': False, 'error': 'Diagnosis is required.'}, status=400)
+        try:
+            meds_list = json.loads(medications_json_raw)
+            if not isinstance(meds_list, list) or len(meds_list) < 1:
+                raise ValueError("Must be a non-empty JSON array.")
+        except (json.JSONDecodeError, ValueError) as e:
+            return JsonResponse({'success': False, 'error': f'Medications must be a valid JSON array with at least 1 item. ({e})'}, status=400)
+
+        prescription_id = request.POST.get('prescription_id', '').strip()
+        if prescription_id:
+            # Update existing
+            try:
+                rx_qs = Prescription.objects.filter(id=prescription_id)
+                if not (request.user.is_superuser or profile.is_admin_role):
+                    rx_qs = rx_qs.filter(
+                        Q(prescribing_doctor__icontains=profile.get_surgeon_display_name()) |
+                        Q(prescribing_doctor__icontains=request.user.username)
+                    )
+                rx = rx_qs.first()
+                if not rx:
+                    raise Prescription.DoesNotExist
+            except Prescription.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Prescription not found or access denied.'}, status=400)
+            rx.patient_mrn = patient_mrn
+            rx.patient_name = patient_name
+            rx.patient_age = int(patient_age) if str(patient_age).isdigit() else 0
+            rx.patient_gender = patient_gender
+            rx.eye = eye
+            rx.diagnosis = diagnosis
+            rx.notes = notes
+            rx.prescribing_doctor = prescribing_doctor
+            rx.medications_json = medications_json_raw
+            rx.save()
+            return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} updated successfully.', 'prescription_id': rx.id})
+        else:
+            # Create new
+            rx = Prescription.objects.create(
+                patient_mrn=patient_mrn,
+                patient_name=patient_name,
+                patient_age=int(patient_age) if str(patient_age).isdigit() else 0,
+                patient_gender=patient_gender,
+                eye=eye,
+                diagnosis=diagnosis,
+                notes=notes,
+                prescribing_doctor=prescribing_doctor,
+                medications_json=medications_json_raw,
+            )
+            return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} saved successfully.', 'prescription_id': rx.id})
+
     # ── POST: Apply for Surgery ──────────────────────────────────────────────
-    if request.method == 'POST' and 'apply_surgery' in request.POST:
+    elif request.method == 'POST' and 'apply_surgery' in request.POST:
         name = request.POST.get('patient_name', '').strip()
         age = request.POST.get('patient_age', 0)
         gender = request.POST.get('patient_gender', 'Male')
@@ -1160,8 +1229,137 @@ def profile_view(request):
         'reg_form_errors': request.session.pop('reg_form_errors', None),
         'reg_form_data': request.session.pop('reg_form_data', None),
         'can_assign_admin': request.user.is_superuser,
+        'prescriptions_count': Prescription.objects.filter(prescribing_doctor=profile.get_surgeon_display_name()).count(),
     }
     return render(request, 'users_naimul/profile.html', context)
+
+
+@login_required(login_url='users_naimul:login')
+@require_GET
+def prescription_api(request):
+    """
+    API endpoint: Return prescriptions for a given patient MRN by the logged-in doctor.
+    Query params:
+        patient_mrn  - e.g. 'P2600001'
+    Response JSON:
+        {'prescriptions': [list of dicts with all Prescription fields including medications (parsed JSON)]}
+    """
+    profile, _ = NaimulProfile.objects.get_or_create(user=request.user)
+    if not profile.is_doctor_role:
+        return JsonResponse({'success': False, 'error': 'Access denied. Only doctors can access prescriptions.'}, status=403)
+
+    patient_mrn = request.GET.get('patient_mrn', '').strip()
+    rx_id = request.GET.get('rx_id', '').strip()
+    doctor_name = profile.get_surgeon_display_name()
+
+    qs = Prescription.objects.all()
+    if not (request.user.is_superuser or profile.is_admin_role):
+        qs = qs.filter(
+            Q(prescribing_doctor__icontains=doctor_name) |
+            Q(prescribing_doctor__icontains=request.user.username)
+        )
+    if rx_id and rx_id.isdigit():
+        qs = qs.filter(id=int(rx_id))
+    elif patient_mrn:
+        qs = qs.filter(patient_mrn=patient_mrn)
+    qs = qs.order_by('-date_created')
+
+    prescriptions = []
+    for rx in qs:
+        prescriptions.append({
+            'id': rx.id,
+            'patient_mrn': rx.patient_mrn,
+            'patient_name': rx.patient_name,
+            'patient_age': rx.patient_age,
+            'patient_gender': rx.patient_gender,
+            'eye': rx.eye,
+            'diagnosis': rx.diagnosis,
+            'medications': rx.medications,
+            'notes': rx.notes,
+            'prescribing_doctor': rx.prescribing_doctor,
+            'date_created': rx.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+            'date_updated': rx.date_updated.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+
+    return JsonResponse({'prescriptions': prescriptions})
+
+
+@login_required(login_url='users_naimul:login')
+@require_GET
+def patient_lookup_api(request):
+    """
+    API endpoint: Look up patient clinical details by MRN for Patient Load.
+    Query params:
+        mrn - Patient MRN e.g. 'P2600001'
+    Response JSON:
+        {'success': True, 'patient': {...}} or {'success': False, 'error': '...'}
+    """
+    profile, _ = NaimulProfile.objects.get_or_create(user=request.user)
+    if not profile.is_doctor_role:
+        return JsonResponse({'success': False, 'error': 'Access denied. Only doctors can access patient records.'}, status=403)
+
+    mrn = request.GET.get('mrn', '').strip()
+    if not mrn:
+        return JsonResponse({'success': False, 'error': 'Please enter a valid Patient MRN to search.'}, status=400)
+
+    # 1. Search SurgeryRecord by exact or containing MRN
+    record = SurgeryRecord.objects.filter(patient_mrn__iexact=mrn).first()
+    if not record:
+        record = SurgeryRecord.objects.filter(patient_mrn__icontains=mrn).first()
+
+    eye_map = {'LE': 'Left Eye (OS)', 'RE': 'Right Eye (OD)', 'BE': 'Both Eyes (OU)'}
+
+    if record:
+        return JsonResponse({
+            'success': True,
+            'patient': {
+                'mrn': record.patient_mrn,
+                'name': record.patient_name,
+                'age': record.patient_age,
+                'gender': record.patient_gender,
+                'eye': record.eye,
+                'eye_display': eye_map.get(record.eye, record.get_eye_display() if hasattr(record, 'get_eye_display') else record.eye),
+                'surgery_type': record.surgery_type or 'General Ophthalmology',
+                'surgeon_name': record.surgeon_name or 'N/A',
+                'ot_room': record.ot_room or 'N/A',
+                'ot_slot': record.ot_slot or 'N/A',
+                'outcome': record.outcome or 'Pending / Under Evaluation',
+                'medical_history': record.medical_history or 'No systemic comorbidities reported.',
+                'notes': record.notes or 'No clinical notes recorded.',
+                'date': record.date.strftime('%d %b %Y') if record.date else 'N/A',
+            }
+        })
+
+    # 2. Fallback: Search Prescription records by MRN
+    rx_record = Prescription.objects.filter(patient_mrn__iexact=mrn).first()
+    if not rx_record:
+        rx_record = Prescription.objects.filter(patient_mrn__icontains=mrn).first()
+
+    if rx_record:
+        return JsonResponse({
+            'success': True,
+            'patient': {
+                'mrn': rx_record.patient_mrn,
+                'name': rx_record.patient_name,
+                'age': rx_record.patient_age,
+                'gender': rx_record.patient_gender,
+                'eye': rx_record.eye,
+                'eye_display': eye_map.get(rx_record.eye, rx_record.eye),
+                'surgery_type': 'Consultation / Follow-Up',
+                'surgeon_name': rx_record.prescribing_doctor or 'N/A',
+                'ot_room': 'N/A',
+                'ot_slot': 'N/A',
+                'outcome': 'Consultation Completed',
+                'medical_history': rx_record.diagnosis or 'No prior systemic history.',
+                'notes': rx_record.notes or 'No prior clinical notes.',
+                'date': rx_record.date_created.strftime('%d %b %Y'),
+            }
+        })
+
+    return JsonResponse({
+        'success': False,
+        'error': f'No patient found with MRN "{mrn}". Please verify the MRN and try again.'
+    }, status=404)
 
 
 @login_required(login_url='users_naimul:login')

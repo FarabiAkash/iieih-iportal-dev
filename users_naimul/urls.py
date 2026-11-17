@@ -13,4 +13,8 @@ urlpatterns = [
     path('edit-doctor/', views.edit_doctor_view, name='edit_doctor'),
     # OT slot availability API — returns booked slots for a given room + date
     path('api/ot-slot-availability/', views.ot_slot_availability_api, name='ot_slot_availability_api'),
+    # Prescription API — returns prescriptions for a given patient MRN by the logged-in doctor
+    path('api/prescriptions/', views.prescription_api, name='prescription_api'),
+    # Patient lookup API — returns patient clinical details by MRN for Patient Load
+    path('api/patient-lookup/', views.patient_lookup_api, name='patient_lookup_api'),
 ]
