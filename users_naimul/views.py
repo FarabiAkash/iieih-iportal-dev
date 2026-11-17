@@ -288,6 +288,262 @@ def handle_doctor_registration(request, current_profile=None):
     )
     return (True, success_msg, {'profile': new_profile, 'user': new_user})
 
+
+def handle_edit_doctor(request, current_profile=None):
+    """
+    Validates form data and updates an existing doctor/staff user account & NaimulProfile.
+    Enforces authorization, formats, required fields, and duplicate checks.
+    Returns: (success: bool, message: str, data_or_errors: dict)
+    """
+    if current_profile is None:
+        current_profile, _ = NaimulProfile.objects.get_or_create(user=request.user)
+
+    # 1. Authorization Guard
+    if not is_authorized_admin(request.user, current_profile):
+        return (
+            False,
+            "Access Denied: Only authorized administrators can edit doctor or staff accounts.",
+            {'auth': 'Unauthorized'}
+        )
+
+    # 2. Identify target profile
+    profile_id = request.POST.get('profile_id')
+    try:
+        target_profile = NaimulProfile.objects.select_related('user').get(id=profile_id)
+    except (NaimulProfile.DoesNotExist, ValueError, TypeError):
+        return (False, "Doctor or staff profile not found.", {'profile_id': 'Profile not found'})
+
+    target_user = target_profile.user
+
+    # 3. Extract Fields
+    username = request.POST.get('username', '').strip()
+    email = request.POST.get('email', '').strip()
+    phone = request.POST.get('phone', '').strip()
+    role = request.POST.get('role', '').strip()
+    specialty = request.POST.get('specialty', '').strip()
+    assigned_ot_room = request.POST.get('assigned_ot_room', '').strip()
+    surgeon_display_name = request.POST.get('surgeon_display_name', '').strip()
+    surgeon_code = request.POST.get('surgeon_code', '').strip()
+    license_number = request.POST.get('license_number', '').strip()
+    department = request.POST.get('department', '').strip() or 'Department of Ophthalmology & Microsurgery'
+    bio = request.POST.get('bio', '').strip()
+    first_name = request.POST.get('first_name', '').strip()
+    last_name = request.POST.get('last_name', '').strip()
+    password = request.POST.get('password', '').strip()
+    is_active = request.POST.get('is_active') in ['1', 'true', 'on', True]
+
+    errors = {}
+
+    # Validation for username
+    if not username:
+        errors['username'] = "Username is required."
+    elif len(username) < 3:
+        errors['username'] = "Username must be at least 3 characters long."
+    elif len(username) > 150:
+        errors['username'] = "Username cannot exceed 150 characters."
+    elif not re.match(r'^[\w.@+-]+$', username):
+        errors['username'] = "Username may only contain letters, numbers, and @/./+/-/_ characters."
+    elif User.objects.filter(username__iexact=username).exclude(id=target_user.id).exists():
+        errors['username'] = f"The username '{username}' is already in use by another account."
+
+    # Validation for password (optional)
+    if password and len(password) < 6:
+        errors['password'] = "Password must be at least 6 characters long."
+
+    # Validation for email
+    if not email:
+        errors['email'] = "Email address is required."
+    else:
+        try:
+            validate_email(email)
+            if User.objects.filter(email__iexact=email).exclude(id=target_user.id).exists():
+                errors['email'] = f"The email '{email}' is already registered with another account."
+        except ValidationError:
+            errors['email'] = "Please enter a valid email address (e.g., doctor@iieih.com)."
+
+    # Validation for phone
+    if not phone:
+        errors['phone'] = "Phone number is required."
+    else:
+        digits_only = re.sub(r'\D', '', phone)
+        if len(digits_only) < 7:
+            errors['phone'] = "Phone number must contain at least 7 digits."
+        elif not re.match(r'^[\d\s+\-().]+$', phone):
+            errors['phone'] = "Phone number contains invalid characters."
+
+    # Normalization & Validation for Role
+    ROLE_NORMALIZATION = {
+        'surgeon': 'Surgeon',
+        'technician': 'Technician',
+        'consultant': 'Consultant',
+        'consultant — consultant eye surgeon': 'Consultant',
+        'consultant eye surgeon': 'Consultant',
+        'associate': 'Associate',
+        'associate — associate specialist': 'Associate',
+        'associate specialist': 'Associate',
+        'resident': 'Resident',
+        'resident — surgical resident / fellow': 'Resident',
+        'surgical resident / fellow': 'Resident',
+        'ot nurse': 'OT Nurse',
+        'ot nurse — ot': 'OT Nurse',
+        'ot nursing supervisor': 'OT Nurse',
+        'staff': 'Staff',
+        'staff — ot coordinator / surgical staff': 'Staff',
+        'ot coordinator / surgical staff': 'Staff',
+        'admin': 'Admin',
+        'other': 'Other',
+    }
+    normalized_role = ROLE_NORMALIZATION.get(role.lower(), role)
+    valid_roles = [choice[0] for choice in NaimulProfile.Role_Choices]
+    if not role:
+        errors['role'] = "Please select a professional role."
+    elif normalized_role not in valid_roles:
+        errors['role'] = f"Invalid role selection: '{role}'."
+    else:
+        role = normalized_role
+        if role == 'Admin' and target_profile.role != 'Admin' and not request.user.is_superuser:
+            errors['role'] = "Permission Denied: Only Super Administrators can assign the Admin role."
+
+    # Normalization & Validation for Specialty
+    SPECIALTY_NORMALIZATION = {
+        'qatar': 'Qatar',
+        'cataract': 'Cataract',
+        'qatar (cataract) — cataract & refractive services': 'Qatar',
+        'cataract & refractive': 'Cataract',
+        'glaucoma': 'Glaucoma',
+        'glaucoma — glaucoma services': 'Glaucoma',
+        'retina': 'Retina',
+        'retina — vitreoretinal surgery': 'Retina',
+        'cornea': 'Cornea',
+        'cornea — cornea & external disease': 'Cornea',
+        'the': 'THE',
+        'oculoplastic': 'Oculoplastic',
+        'the (oculoplastic) — oculoplastic & orbit': 'THE',
+        'oculoplastic  & orbit': 'Oculoplastic',
+        'pediatric ophthalmology': 'Pediatric Ophthalmology',
+        'pediatric ophthalmology — pediatric ophthalmology & strabismus': 'Pediatric Ophthalmology',
+        'neuro-ophthalmology': 'Neuro-Ophthalmology',
+        'neuro-ophthalmology — neuro-ophthalmology': 'Neuro-Ophthalmology',
+        'in': 'IN',
+        'uveitis': 'Uveitis',
+        'in (uveitis) — uveitis & inflammatory services': 'IN',
+        'uveitis services': 'Uveitis',
+        're': 'Re',
+        'refractive surgery': 'Refractive Surgery',
+        're (refractive) — refractive surgery': 'Re',
+        'other': 'Other',
+    }
+    normalized_spec = SPECIALTY_NORMALIZATION.get(specialty.lower(), specialty)
+    valid_specs = [choice[0] for choice in NaimulProfile.Specialty_Choices]
+    if not specialty:
+        errors['specialty'] = "Please select a surgical specialty."
+    elif normalized_spec not in valid_specs:
+        errors['specialty'] = f"Invalid specialty selection: '{specialty}'."
+    else:
+        specialty = normalized_spec
+
+    # Normalization & Validation for Assigned OT Room
+    OT_ROOM_NORMALIZATION = {
+        'ot-1': 'OT-1',
+        'ot 1': 'OT-1',
+        'ot': 'OT-1',
+        'ot room 1': 'OT-1',
+        'ot-1 (ot room 1 — general ot)': 'OT-1',
+        'ot-2': 'OT-2',
+        'ot 2': 'OT-2',
+        'ot room 2': 'OT-2',
+        'ot-2 (ot room 2 — retina ot)': 'OT-2',
+        'ot-3': 'OT-3',
+        'ot 3': 'OT-3',
+        'ot room 3': 'OT-3',
+        'ot-3 (ot room 3 — laser ot)': 'OT-3',
+        'ot-4': 'OT-4',
+        'ot 4': 'OT-4',
+        'ot room 4': 'OT-4',
+        'ot-4 (ot room 4 — pediatric ot)': 'OT-4',
+    }
+    normalized_room = OT_ROOM_NORMALIZATION.get(assigned_ot_room.lower(), assigned_ot_room)
+    valid_rooms = [choice[0] for choice in NaimulProfile.OT_Room_Choices]
+    if not assigned_ot_room:
+        errors['assigned_ot_room'] = "Please select an assigned OT room."
+    elif normalized_room not in valid_rooms:
+        errors['assigned_ot_room'] = f"Invalid OT room selection: '{assigned_ot_room}'."
+    else:
+        assigned_ot_room = normalized_room
+
+    # Surgeon Code validation & duplicate check (exclude current profile)
+    if not surgeon_code:
+        errors['surgeon_code'] = "Surgeon ID code is required (e.g. SURG-102)."
+    elif NaimulProfile.objects.filter(surgeon_code__iexact=surgeon_code).exclude(id=target_profile.id).exists():
+        errors['surgeon_code'] = f"The surgeon code '{surgeon_code}' is already assigned to another staff member."
+
+    # License Number validation & duplicate check (exclude current profile)
+    if not license_number:
+        errors['license_number'] = "Medical license number is required (e.g. BMDC-A-XXXXX)."
+    elif NaimulProfile.objects.filter(license_number__iexact=license_number).exclude(id=target_profile.id).exists():
+        errors['license_number'] = f"The medical license number '{license_number}' is already registered in the system."
+
+    if errors:
+        first_error_msg = next(iter(errors.values()))
+        return (False, first_error_msg, errors)
+
+    old_display_name = target_profile.get_surgeon_display_name()
+
+    # Canonical Surgeon Display Name & User Names
+    if not surgeon_display_name:
+        if first_name or last_name:
+            full = f"{first_name} {last_name}".strip()
+            surgeon_display_name = f"Dr. {full}" if role in NaimulProfile.DOCTOR_ROLES else full
+        else:
+            surgeon_display_name = f"Dr. {username.title()}" if role in NaimulProfile.DOCTOR_ROLES else username.title()
+    elif role in NaimulProfile.DOCTOR_ROLES and not surgeon_display_name.lower().startswith(('dr.', 'prof.')):
+        surgeon_display_name = f"Dr. {surgeon_display_name}"
+    elif role not in NaimulProfile.DOCTOR_ROLES:
+        surgeon_display_name = re.sub(r'^(Dr\.|Prof\.)\s*', '', surgeon_display_name, flags=re.IGNORECASE).strip()
+
+    if not first_name and not last_name:
+        clean_name = re.sub(r'^(Dr\.|Prof\.)\s*', '', surgeon_display_name, flags=re.IGNORECASE).strip()
+        tokens = clean_name.split(None, 1)
+        first_name = tokens[0] if len(tokens) > 0 else target_user.first_name
+        last_name = tokens[1] if len(tokens) > 1 else target_user.last_name
+
+    # Save User
+    target_user.username = username
+    target_user.email = email
+    target_user.first_name = first_name
+    target_user.last_name = last_name
+    target_user.is_active = is_active
+    if role == 'Admin':
+        target_user.is_staff = True
+    elif target_profile.role == 'Admin' and not target_user.is_superuser:
+        target_user.is_staff = False
+    if password:
+        target_user.set_password(password)
+    target_user.save()
+
+    # Save Profile
+    is_doc = role in NaimulProfile.DOCTOR_ROLES
+    target_profile.role = role
+    target_profile.specialty = specialty
+    target_profile.assigned_ot_room = assigned_ot_room
+    target_profile.surgeon_display_name = surgeon_display_name
+    target_profile.surgeon_code = surgeon_code
+    target_profile.license_number = license_number
+    target_profile.department = department
+    target_profile.phone = phone
+    target_profile.bio = bio
+    target_profile.can_apply_surgery = not is_doc
+    target_profile.can_make_appointments = not is_doc
+    target_profile.save()
+
+    new_display_name = target_profile.get_surgeon_display_name()
+    if old_display_name and new_display_name and old_display_name != new_display_name:
+        SurgeryRecord.objects.filter(surgeon_name=old_display_name).update(surgeon_name=new_display_name)
+        Appointment.objects.filter(doctor_name=old_display_name).update(doctor_name=new_display_name)
+
+    success_msg = f"Information for '{new_display_name}' (@{target_user.username}) updated successfully."
+    return (True, success_msg, {'profile': target_profile, 'user': target_user})
+
 def login_view(request):
     """
     Surgical & Clinical Staff Portal Login View.
@@ -579,6 +835,44 @@ def profile_view(request):
             messages.error(request, msg)
             request.session['reg_form_errors'] = data if isinstance(data, dict) else {}
             request.session['reg_form_data'] = {k: v for k, v in request.POST.items() if k != 'password'}
+            return redirect(f"{request.path}?tab=doctor-reg")
+
+    # ── POST: Edit Doctor / Staff Account (Authorized Administrators Only) ────
+    elif request.method == 'POST' and 'edit_doctor' in request.POST:
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1'
+        if not is_authorized_admin(request.user, profile):
+            err_msg = "Access Denied: Only authorized administrators can edit doctor accounts."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': err_msg}, status=403)
+            messages.error(request, err_msg)
+            return redirect(f"{request.path}?tab=patients")
+
+        success, msg, data = handle_edit_doctor(request, current_profile=profile)
+        if success:
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': msg,
+                    'doctor': {
+                        'id': data['profile'].id,
+                        'username': data['user'].username,
+                        'display_name': data['profile'].get_surgeon_display_name(),
+                        'role': data['profile'].role,
+                        'specialty': data['profile'].specialty,
+                        'assigned_ot_room': data['profile'].assigned_ot_room,
+                        'surgeon_code': data['profile'].surgeon_code,
+                        'license_number': data['profile'].license_number,
+                        'phone': data['profile'].phone,
+                        'department': data['profile'].department,
+                        'is_active': data['user'].is_active,
+                    }
+                })
+            messages.success(request, msg)
+            return redirect(f"{request.path}?tab=doctor-reg")
+        else:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': msg, 'errors': data if isinstance(data, dict) else {}}, status=400)
+            messages.error(request, msg)
             return redirect(f"{request.path}?tab=doctor-reg")
 
     # ── POST: Update Profile ─────────────────────────────────────────────────
@@ -914,6 +1208,54 @@ def register_doctor_view(request):
             messages.error(request, msg)
             request.session['reg_form_errors'] = data if isinstance(data, dict) else {}
             request.session['reg_form_data'] = {k: v for k, v in request.POST.items() if k != 'password'}
+            return redirect('/naimul/profile/?tab=doctor-reg')
+
+    return redirect('/naimul/profile/?tab=doctor-reg')
+
+
+@login_required(login_url='users_naimul:login')
+def edit_doctor_view(request):
+    """
+    Dedicated view endpoint for editing doctor / staff information.
+    Accessible to authorized administrators; supports AJAX & POST.
+    """
+    profile, _ = NaimulProfile.objects.get_or_create(user=request.user)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1'
+
+    if not is_authorized_admin(request.user, profile):
+        err_msg = "Access Denied: Only authorized administrators can edit doctor accounts."
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': err_msg}, status=403)
+        messages.error(request, err_msg)
+        return redirect('users_naimul:profile')
+
+    if request.method == 'POST':
+        success, msg, data = handle_edit_doctor(request, current_profile=profile)
+        if success:
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': msg,
+                    'doctor': {
+                        'id': data['profile'].id,
+                        'username': data['user'].username,
+                        'display_name': data['profile'].get_surgeon_display_name(),
+                        'role': data['profile'].role,
+                        'specialty': data['profile'].specialty,
+                        'assigned_ot_room': data['profile'].assigned_ot_room,
+                        'surgeon_code': data['profile'].surgeon_code,
+                        'license_number': data['profile'].license_number,
+                        'phone': data['profile'].phone,
+                        'department': data['profile'].department,
+                        'is_active': data['user'].is_active,
+                    }
+                })
+            messages.success(request, msg)
+            return redirect('/naimul/profile/?tab=doctor-reg')
+        else:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': msg, 'errors': data if isinstance(data, dict) else {}}, status=400)
+            messages.error(request, msg)
             return redirect('/naimul/profile/?tab=doctor-reg')
 
     return redirect('/naimul/profile/?tab=doctor-reg')
