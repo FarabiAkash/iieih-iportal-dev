@@ -163,11 +163,13 @@ window.onclick = function (e) {
     const editModal = document.getElementById('editSurgeryModal');
     const searchModal = document.getElementById('searchErrorModal');
     const scheduleModal = document.getElementById('schedulePatientModal');
+    const editDoctorModal = document.getElementById('editDoctorModal');
     if (e.target === dossier) closePatientDossier();
     if (e.target === ocular) closeOcularReport();
     if (e.target === editModal) closeEditSurgeryModal();
     if (e.target === searchModal) closeSearchErrorModal();
     if (e.target === scheduleModal && typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
+    if (e.target === editDoctorModal && typeof closeEditDoctorModal === 'function') closeEditDoctorModal();
 };
 
 // Close modals on Escape key
@@ -178,6 +180,7 @@ document.addEventListener('keydown', function (e) {
         closeOcularReport();
         closeEditSurgeryModal();
         if (typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
+        if (typeof closeEditDoctorModal === 'function') closeEditDoctorModal();
     }
 });
 
@@ -278,3 +281,346 @@ function initProfileAlerts() {
 if (document.readyState !== 'loading') {
     initProfileAlerts();
 }
+
+// ─── Doctor Registration Form Helpers ─────────────────────────────────────────
+function toggleRegPassword() {
+    const pwInput = document.getElementById('reg_password');
+    const icon = document.getElementById('pwToggleIcon');
+    if (!pwInput) return;
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    } else {
+        pwInput.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+}
+window.toggleRegPassword = toggleRegPassword;
+
+function handleRegRoleChange(selectEl) {
+    if (!selectEl) return;
+    const role = selectEl.value;
+    const isDoc = ['Surgeon', 'Consultant', 'Associate', 'Resident'].includes(role);
+    const dispNameInput = document.getElementById('reg_surgeon_display_name');
+    const unameInput = document.getElementById('reg_username');
+
+    if (dispNameInput && !dispNameInput.value.trim() && unameInput && unameInput.value.trim()) {
+        const uname = unameInput.value.trim();
+        const formatted = uname.charAt(0).toUpperCase() + uname.slice(1);
+        if (isDoc) {
+            dispNameInput.value = 'Dr. ' + formatted;
+        } else {
+            dispNameInput.value = formatted;
+        }
+    }
+}
+window.handleRegRoleChange = handleRegRoleChange;
+
+function filterDoctorDirectory(query) {
+    const q = (query || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#docDirectoryTable tbody tr.doc-row');
+    rows.forEach(row => {
+        const searchData = row.getAttribute('data-search') || row.textContent.toLowerCase();
+        if (!q || searchData.includes(q)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+window.filterDoctorDirectory = filterDoctorDirectory;
+
+function resetDoctorRegForm() {
+    const form = document.getElementById('doctorRegForm');
+    if (form) {
+        form.reset();
+        const errBox = document.querySelector('.reg-error-box');
+        if (errBox) errBox.style.display = 'none';
+    }
+}
+window.resetDoctorRegForm = resetDoctorRegForm;
+
+function validateDoctorRegistrationClient(e) {
+    const username = (document.getElementById('reg_username') || {}).value || '';
+    const password = (document.getElementById('reg_password') || {}).value || '';
+    const email = (document.getElementById('reg_email') || {}).value || '';
+    const phone = (document.getElementById('reg_phone') || {}).value || '';
+    const role = (document.getElementById('reg_role') || {}).value || '';
+    const specialty = (document.getElementById('reg_specialty') || {}).value || '';
+    const otRoom = (document.getElementById('reg_assigned_ot_room') || {}).value || '';
+    const surgeonCode = (document.getElementById('reg_surgeon_code') || {}).value || '';
+    const license = (document.getElementById('reg_license_number') || {}).value || '';
+
+    if (!username.trim() || username.length < 3) {
+        alert("Please enter a valid username (at least 3 characters).");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!password || password.length < 6) {
+        alert("Please enter a password with at least 6 characters.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!email.trim() || !email.includes('@')) {
+        alert("Please provide a valid email address.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!phone.trim()) {
+        alert("Please provide a contact phone number.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!role) {
+        alert("Please select a professional role.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!specialty) {
+        alert("Please select a surgical specialty.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!otRoom) {
+        alert("Please select an assigned OT suite.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!surgeonCode.trim()) {
+        alert("Please enter a hospital surgeon code.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!license.trim()) {
+        alert("Please enter a medical license number.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    return true;
+}
+window.validateDoctorRegistrationClient = validateDoctorRegistrationClient;
+
+// ─── Edit Doctor & Staff Information Modal Controller ────────────────────────
+function openEditDoctorModal(btn) {
+    if (!btn) return;
+    const modal = document.getElementById('editDoctorModal');
+    if (!modal) return;
+
+    const id = btn.getAttribute('data-id') || '';
+    const username = btn.getAttribute('data-username') || '';
+    const firstName = btn.getAttribute('data-first-name') || '';
+    const lastName = btn.getAttribute('data-last-name') || '';
+    const email = btn.getAttribute('data-email') || '';
+    const phone = btn.getAttribute('data-phone') || '';
+    const role = btn.getAttribute('data-role') || '';
+    const specialty = btn.getAttribute('data-specialty') || '';
+    const otRoom = btn.getAttribute('data-ot-room') || '';
+    const surgeonCode = btn.getAttribute('data-surgeon-code') || '';
+    const licenseNumber = btn.getAttribute('data-license-number') || '';
+    const department = btn.getAttribute('data-department') || '';
+    const displayName = btn.getAttribute('data-display-name') || '';
+    const bio = btn.getAttribute('data-bio') || '';
+    const isActive = btn.getAttribute('data-is-active') !== 'false';
+
+    const idInput = document.getElementById('edit_doc_profile_id');
+    if (idInput) idInput.value = id;
+
+    const unameInput = document.getElementById('edit_doc_username');
+    if (unameInput) unameInput.value = username;
+
+    const fnInput = document.getElementById('edit_doc_first_name');
+    if (fnInput) fnInput.value = firstName;
+
+    const lnInput = document.getElementById('edit_doc_last_name');
+    if (lnInput) lnInput.value = lastName;
+
+    const emailInput = document.getElementById('edit_doc_email');
+    if (emailInput) emailInput.value = email;
+
+    const phoneInput = document.getElementById('edit_doc_phone');
+    if (phoneInput) phoneInput.value = phone;
+
+    const roleInput = document.getElementById('edit_doc_role');
+    if (roleInput) {
+        const adminOpt = document.getElementById('edit_doc_role_admin_opt');
+        if (adminOpt) {
+            const superAllowed = adminOpt.getAttribute('data-super-allowed') === 'true';
+            if (superAllowed || role === 'Admin') {
+                adminOpt.disabled = false;
+            } else {
+                adminOpt.disabled = true;
+            }
+        }
+        roleInput.value = role;
+        if (!roleInput.value && role) {
+            for (let opt of roleInput.options) {
+                if (opt.value.toLowerCase() === role.toLowerCase()) {
+                    roleInput.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+
+    const specInput = document.getElementById('edit_doc_specialty');
+    if (specInput) {
+        specInput.value = specialty;
+        if (!specInput.value && specialty) {
+            for (let opt of specInput.options) {
+                if (opt.value.toLowerCase() === specialty.toLowerCase()) {
+                    specInput.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+
+    const otInput = document.getElementById('edit_doc_assigned_ot_room');
+    if (otInput) {
+        otInput.value = otRoom;
+        if (!otInput.value && otRoom) {
+            for (let opt of otInput.options) {
+                if (opt.value.toLowerCase() === otRoom.toLowerCase()) {
+                    otInput.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+
+    const codeInput = document.getElementById('edit_doc_surgeon_code');
+    if (codeInput) codeInput.value = surgeonCode;
+
+    const licInput = document.getElementById('edit_doc_license_number');
+    if (licInput) licInput.value = licenseNumber;
+
+    const deptInput = document.getElementById('edit_doc_department');
+    if (deptInput) deptInput.value = department;
+
+    const dispInput = document.getElementById('edit_doc_surgeon_display_name');
+    if (dispInput) dispInput.value = displayName;
+
+    const bioInput = document.getElementById('edit_doc_bio');
+    if (bioInput) bioInput.value = bio;
+
+    const activeInput = document.getElementById('edit_doc_is_active');
+    if (activeInput) activeInput.checked = isActive;
+
+    const pwInput = document.getElementById('edit_doc_password');
+    if (pwInput) pwInput.value = '';
+
+    const errBox = document.getElementById('modal_edit_doc_error');
+    if (errBox) errBox.style.display = 'none';
+
+    modal.style.display = 'flex';
+}
+
+function closeEditDoctorModal() {
+    const modal = document.getElementById('editDoctorModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function handleEditDocRoleChange(selectEl) {
+    const role = (selectEl && selectEl.value) || '';
+    const dispNameInput = document.getElementById('edit_doc_surgeon_display_name');
+    if (!dispNameInput) return;
+    const currentVal = dispNameInput.value.trim();
+    const doctorRoles = ['Surgeon', 'Consultant', 'Associate', 'Resident'];
+    const isDoc = doctorRoles.includes(role);
+    if (currentVal) {
+        const hasDr = /^Dr\.\s*/i.test(currentVal);
+        if (isDoc && !hasDr) {
+            dispNameInput.value = 'Dr. ' + currentVal;
+        } else if (!isDoc && hasDr) {
+            dispNameInput.value = currentVal.replace(/^Dr\.\s*/i, '');
+        }
+    }
+}
+
+function toggleEditDocPassword() {
+    const pwInput = document.getElementById('edit_doc_password');
+    const icon = document.getElementById('editDocPwToggleIcon');
+    if (!pwInput) return;
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    } else {
+        pwInput.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+}
+
+function validateEditDoctorModal(e) {
+    const username = (document.getElementById('edit_doc_username') || {}).value || '';
+    const email = (document.getElementById('edit_doc_email') || {}).value || '';
+    const phone = (document.getElementById('edit_doc_phone') || {}).value || '';
+    const role = (document.getElementById('edit_doc_role') || {}).value || '';
+    const specialty = (document.getElementById('edit_doc_specialty') || {}).value || '';
+    const otRoom = (document.getElementById('edit_doc_assigned_ot_room') || {}).value || '';
+    const surgeonCode = (document.getElementById('edit_doc_surgeon_code') || {}).value || '';
+    const license = (document.getElementById('edit_doc_license_number') || {}).value || '';
+    const password = (document.getElementById('edit_doc_password') || {}).value || '';
+    const errBox = document.getElementById('modal_edit_doc_error');
+    const errMsg = document.getElementById('modal_edit_doc_error_msg');
+
+    function showError(msg) {
+        if (errBox && errMsg) {
+            errMsg.innerText = msg;
+            errBox.style.display = 'block';
+            errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            alert(msg);
+        }
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+
+    if (!username.trim() || username.length < 3) {
+        return showError("Please enter a valid username (at least 3 characters).");
+    }
+    if (!email.trim() || !email.includes('@')) {
+        return showError("Please enter a valid email address.");
+    }
+    if (!phone.trim()) {
+        return showError("Please enter a contact phone number.");
+    }
+    if (!role) {
+        return showError("Please select a professional role.");
+    }
+    if (!specialty) {
+        return showError("Please select a surgical specialty.");
+    }
+    if (!otRoom) {
+        return showError("Please select an assigned OT room.");
+    }
+    if (!surgeonCode.trim()) {
+        return showError("Please enter a hospital surgeon code.");
+    }
+    if (!license.trim()) {
+        return showError("Please enter a medical license number.");
+    }
+    if (password && password.length < 6) {
+        return showError("New password must be at least 6 characters long.");
+    }
+
+    return true;
+}
+
+window.openEditDoctorModal = openEditDoctorModal;
+window.closeEditDoctorModal = closeEditDoctorModal;
+window.handleEditDocRoleChange = handleEditDocRoleChange;
+window.toggleEditDocPassword = toggleEditDocPassword;
+window.validateEditDoctorModal = validateEditDoctorModal;
+

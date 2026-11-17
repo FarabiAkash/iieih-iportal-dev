@@ -2141,3 +2141,503 @@
     opacity: 0.92;
     transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   DOCTOR & MEDICAL STAFF REGISTRATION TAB (Admin Console)
+   ========================================================================== */
+
+.admin-tab-btn {
+    border-left: 2px solid var(--accent-teal) !important;
+    position: relative;
+}
+
+.admin-tab-btn::after {
+    content: "ADMIN";
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    display: inline-block;
+}
+
+/* Admin Header & Banner */
+.admin-header-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-shield-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.15) 0%, rgba(13, 148, 136, 0.25) 100%);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.admin-header-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.admin-header-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.admin-header-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.admin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(2, 132, 199, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
+.admin-chip.chip-gold {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Error Banner */
+.reg-error-box {
+    background: rgba(220, 38, 38, 0.08);
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    color: var(--danger);
+}
+
+.reg-error-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.reg-error-list {
+    margin: 0;
+    padding-left: 24px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+/* Form Styles */
+.doc-reg-card {
+    margin-bottom: 24px;
+}
+
+.doc-reg-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.doc-reg-tag {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.doc-reg-form {
+    padding: 20px 24px;
+}
+
+.doc-form-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-top: 16px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.doc-form-section-title:first-of-type {
+    margin-top: 0;
+}
+
+.doc-form-section-title i {
+    color: var(--accent-teal);
+    font-size: 0.9rem;
+}
+
+.doc-form-row {
+    margin-bottom: 14px;
+}
+
+.doc-form-group {
+    margin-bottom: 0;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+/* Password Toggle Wrapper */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper .form-control {
+    padding-right: 42px;
+}
+
+.btn-toggle-pw {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.btn-toggle-pw:hover {
+    color: var(--primary);
+}
+
+/* Form Actions */
+.doc-reg-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-doc-reg {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-doc-reset {
+    padding: 11px 20px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+}
+
+/* Directory Table Card */
+.doc-table-card {
+    margin-bottom: 30px;
+}
+
+.doc-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.doc-search-wrapper {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+}
+
+.doc-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.doc-search-input {
+    padding-left: 36px;
+    font-size: 0.85rem;
+    border-radius: 20px;
+}
+
+.doc-directory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.doc-directory-table th {
+    background: var(--table-stripe);
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-glass);
+    white-space: nowrap;
+}
+
+.doc-directory-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-main);
+    vertical-align: middle;
+    font-size: 0.84rem;
+}
+
+.doc-directory-table tbody tr:hover {
+    background: var(--table-hover);
+}
+
+.btn-edit-doc-entry {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #f59e0b;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-doc-entry:hover {
+    background: #f59e0b;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.doc-identity-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.doc-avatar-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.doc-avatar-doctor {
+    background: rgba(2, 132, 199, 0.15);
+    color: var(--primary);
+}
+
+.doc-avatar-staff {
+    background: rgba(13, 148, 136, 0.15);
+    color: var(--accent-teal);
+}
+
+.doc-contact-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.8rem;
+}
+
+.doc-uname {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.doc-email, .doc-phone {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.badge-doctor {
+    background: rgba(2, 132, 199, 0.15);
+    color: var(--primary);
+}
+
+.badge-staff {
+    background: rgba(13, 148, 136, 0.15);
+    color: var(--accent-teal);
+}
+
+.badge-admin {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.spec-badge {
+    display: inline-block;
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.ot-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+    font-weight: 700;
+    font-size: 0.76rem;
+}
+
+.license-tag {
+    font-family: monospace;
+    font-size: 0.78rem;
+    background: var(--input-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-glass);
+    color: var(--text-main);
+}
+
+.status-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--success);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   RESPONSIVE STYLES (PC, Laptop, Mobile, Tablet)
+   ========================================================================== */
+
+/* Laptop & Tablet (1024px and below) */
+@media (max-width: 1024px) {
+    .admin-header-card {
+        padding: 16px 20px;
+    }
+    .doc-reg-form {
+        padding: 16px 20px;
+    }
+    .doc-search-wrapper {
+        width: 100%;
+    }
+}
+
+/* Tablet (768px and below) */
+@media (max-width: 768px) {
+    .admin-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .admin-header-left {
+        width: 100%;
+    }
+    .admin-header-chips {
+        width: 100%;
+    }
+    .doc-form-row {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .doc-table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .doc-reg-actions {
+        width: 100%;
+    }
+    .btn-doc-reg, .btn-doc-reset {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Mobile Devices (480px and below) */
+@media (max-width: 480px) {
+    .admin-header-card {
+        padding: 14px 16px;
+    }
+    .admin-shield-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.15rem;
+    }
+    .admin-header-title {
+        font-size: 1.1rem;
+    }
+    .doc-reg-form {
+        padding: 14px 16px;
+    }
+    .doc-form-section-title {
+        font-size: 0.88rem;
+    }
+    .admin-chip {
+        font-size: 0.72rem;
+        padding: 4px 8px;
+    }
+}
+

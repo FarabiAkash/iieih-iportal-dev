@@ -101,12 +101,12 @@
                         <i class="fa-solid fa-syringe"></i> <span>Apply for Surgery</span>
                     </button>
                     {% endif %}
-                    {% if profile.can_make_appointments %}
+                    {% comment %} {% if profile.can_make_appointments %}
                     <button type="button" class="tab-btn {% if active_tab == 'appointments' %}active{% endif %}"
                         onclick="switchClinicalTab('appointments')">
                         <i class="fa-solid fa-calendar-plus"></i> <span>Appointments ({{ appointments.count }})</span>
                     </button>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     <button type="button" class="tab-btn {% if active_tab == 'patients' %}active{% endif %}"
                         onclick="switchClinicalTab('patients')">
                         <i class="fa-solid fa-hospital-user"></i> <span>Patient Roster ({{ all_surgeries.count }})</span>
@@ -115,6 +115,13 @@
                         onclick="switchClinicalTab('surgery-history')">
                         <i class="fa-solid fa-clipboard-list"></i> <span>Surgery Records</span>
                     </button>
+                    {% if is_admin or profile.is_admin_role %}
+                    <button type="button"
+                        class="tab-btn admin-tab-btn {% if active_tab == 'doctor-reg' or active_tab == 'doctor-registration' %}active{% endif %}"
+                        onclick="switchClinicalTab('doctor-reg')">
+                        <i class="fa-solid fa-user-doctor"></i> <span>Doctor Registration</span>
+                    </button>
+                    {% endif %}
                     {% comment %} <button type="button"
                         class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
                         onclick="switchClinicalTab('profile-settings')">
@@ -151,6 +158,13 @@
                         onclick="switchClinicalTab('surgery-history')">
                         <i class="fa-solid fa-pen-to-square"></i> <span>Surgery History (View &amp; Edit)</span>
                     </button>
+                    {% if is_admin or profile.is_admin_role %}
+                    <button type="button"
+                        class="tab-btn admin-tab-btn {% if active_tab == 'doctor-reg' or active_tab == 'doctor-registration' %}active{% endif %}"
+                        onclick="switchClinicalTab('doctor-reg')">
+                        <i class="fa-solid fa-user-doctor"></i> <span>Doctor Registration</span>
+                    </button>
+                    {% endif %}
                     <!-- <button type="button" class="tab-btn {% if active_tab == 'profile-settings' %}active{% endif %}"
                         onclick="switchClinicalTab('profile-settings')">
                         <i class="fa-solid fa-user-gear"></i> <span>Roster Settings</span>
@@ -452,7 +466,7 @@
                     </div>
                 </div>
 
-                <!-- TAB: APPOINTMENTS (Staff) -->
+                <!-- TAB: APPOINTMENTS (Staff) --> <!--
                 <div class="tab-pane {% if active_tab == 'appointments' %}active{% endif %}" id="pane-appointments">
                     <div class="card">
                         <div class="card-header">
@@ -563,9 +577,9 @@
                             </button>
                         </form>
 
-                        <hr class="section-separator">
+                        <hr class="section-separator"> -->
 
-                        <!-- Appointments List -->
+                        <!-- Appointments List --> <!--
                         <div class="card-header" style="margin-top: 0; padding-top: 0;">
                             <h2 class="card-title" style="font-size: 1rem;">
                                 <i class="fa-solid fa-list-check"></i> Scheduled Appointments Register
@@ -640,7 +654,7 @@
                             </table>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- TAB 2: PATIENT DETAILS VIEW (Isolated with Cross-Doctor MRN Lookup) -->
                 <div class="tab-pane {% if active_tab == 'patients' or not active_tab and not profile.is_staff_role %}active{% endif %}"
@@ -1279,6 +1293,386 @@
                     </div>
                 </div>
 
+                <!-- TAB: DOCTOR REGISTRATION (Authorized Administrators) -->
+                {% if is_admin or profile.is_admin_role %}
+                <div class="tab-pane {% if active_tab == 'doctor-reg' or active_tab == 'doctor-registration' %}active{% endif %}" id="pane-doctor-reg">
+                    
+                    <!-- Admin Console Header & Telemetry -->
+                    <div class="admin-header-card">
+                        <div class="admin-header-left">
+                            <div class="admin-shield-icon">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <h2 class="admin-header-title">Doctor &amp; Staff Registration Console</h2>
+                                <p class="admin-header-subtitle">Authorized Administrator Portal &mdash; Provision clinical credentials, surgical privileges, and OT suite assignments.</p>
+                            </div>
+                        </div>
+                        <div class="admin-header-chips">
+                            <span class="admin-chip"><i class="fa-solid fa-lock"></i> Admin Guarded</span>
+                            <span class="admin-chip"><i class="fa-solid fa-key"></i> PBKDF2 Encrypted</span>
+                            <span class="admin-chip chip-gold">
+                                <i class="fa-solid fa-crown"></i> {% if can_assign_admin %}Super Admin Authorized{% else %}Staff Administrator{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Server Error Banner (if form validation failed) -->
+                    {% if reg_form_errors %}
+                    <div class="reg-error-box" role="alert">
+                        <div class="reg-error-header">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <strong>Registration Failed &mdash; Please correct the following errors:</strong>
+                        </div>
+                        <ul class="reg-error-list">
+                            {% for field, err in reg_form_errors.items %}
+                            <li><strong>{{ field|title }}:</strong> {{ err }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Doctor Registration Form Card -->
+                    <div class="card doc-reg-card">
+                        <div class="card-header doc-reg-card-header">
+                            <h3 class="card-title">
+                                <i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Create New Doctor or Staff Account
+                            </h3>
+                            <span class="doc-reg-tag">
+                                <i class="fa-solid fa-circle-check" style="color: var(--success); margin-right: 4px;"></i> Live Provisioning
+                            </span>
+                        </div>
+
+                        <form method="post" action="{% url 'users_naimul:profile' %}" id="doctorRegForm" class="doc-reg-form" novalidate onsubmit="return validateDoctorRegistrationClient(event)">
+                            {% csrf_token %}
+                            <input type="hidden" name="register_doctor" value="1">
+                            <input type="hidden" name="active_tab" value="doctor-reg">
+
+                            <!-- Section 1: Account & Credentials -->
+                            <div class="doc-form-section-title">
+                                <i class="fa-solid fa-id-card"></i> Account Credentials &amp; Contact Information
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_username">
+                                        <i class="fa-solid fa-user" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Username <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="text" id="reg_username" name="username" class="form-control"
+                                        placeholder="e.g. dr.fahim" required autocomplete="username"
+                                        value="{{ reg_form_data.username|default:'' }}">
+                                    <small class="field-hint">Alphanumeric, dots, hyphens, and underscores only. No spaces.</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_password">
+                                        <i class="fa-solid fa-lock" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Password <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="reg_password" name="password" class="form-control"
+                                            placeholder="Minimum 6 characters" required autocomplete="new-password">
+                                        <button type="button" class="btn-toggle-pw" onclick="toggleRegPassword()" aria-label="Toggle password visibility">
+                                            <i class="fa-regular fa-eye" id="pwToggleIcon"></i>
+                                        </button>
+                                    </div>
+                                    <small class="field-hint">Securely stored with PBKDF2 hash encryption.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_email">
+                                        <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Email Address <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="email" id="reg_email" name="email" class="form-control"
+                                        placeholder="e.g. doctor@iieih.com" required autocomplete="email"
+                                        value="{{ reg_form_data.email|default:'' }}">
+                                    <small class="field-hint">Used for portal notifications and account recovery.</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_phone">
+                                        <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Phone Number <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="tel" id="reg_phone" name="phone" class="form-control"
+                                        placeholder="e.g. +880 1711-234567" required autocomplete="tel"
+                                        value="{{ reg_form_data.phone|default:'' }}">
+                                    <small class="field-hint">Direct contact for surgical rosters and OT coordination.</small>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Clinical Placement & Roles -->
+                            <div class="doc-form-section-title">
+                                <i class="fa-solid fa-hospital-user"></i> Role Assignment &amp; Surgical Department
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_role">
+                                        <i class="fa-solid fa-user-doctor" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                        Role <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="reg_role" name="role" class="form-control" required onchange="handleRegRoleChange(this)">
+                                        <option value="" disabled {% if not reg_form_data.role %}selected{% endif %}>-- Select Role --</option>
+                                        <option value="Surgeon" {% if reg_form_data.role == 'Surgeon' %}selected{% endif %}>Surgeon</option>
+                                        <option value="Technician" {% if reg_form_data.role == 'Technician' %}selected{% endif %}>Technician</option>
+                                        <option value="Consultant" {% if reg_form_data.role == 'Consultant' %}selected{% endif %}>Consultant &mdash; Consultant Eye Surgeon</option>
+                                        <option value="Associate" {% if reg_form_data.role == 'Associate' %}selected{% endif %}>Associate &mdash; Associate Specialist</option>
+                                        <option value="Resident" {% if reg_form_data.role == 'Resident' %}selected{% endif %}>Resident &mdash; Surgical Resident / Fellow</option>
+                                        <option value="OT Nurse" {% if reg_form_data.role == 'OT Nurse' %}selected{% endif %}>OT Nurse &mdash; OT</option>
+                                        <option value="Staff" {% if reg_form_data.role == 'Staff' %}selected{% endif %}>Staff &mdash; OT Coordinator / Surgical Staff</option>
+                                        {% if can_assign_admin %}
+                                        <option value="Admin" {% if reg_form_data.role == 'Admin' %}selected{% endif %}>Admin</option>
+                                        {% else %}
+                                        <option value="Admin" disabled title="Only Super Administrators can assign the Admin role">Admin (Super Admin Only)</option>
+                                        {% endif %}
+                                        <option value="Other" {% if reg_form_data.role == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                    <small class="field-hint">Doctor roles (Surgeon, Consultant, Associate, Resident) automatically receive 'Dr.' prefix.</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_specialty">
+                                        <i class="fa-solid fa-eye" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                        Specialty <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="reg_specialty" name="specialty" class="form-control" required>
+                                        <option value="" disabled {% if not reg_form_data.specialty %}selected{% endif %}>-- Select Specialty --</option>
+                                        <option value="Qatar" {% if reg_form_data.specialty == 'Qatar' or reg_form_data.specialty == 'Cataract' %}selected{% endif %}>Qatar (Cataract) &mdash; Cataract &amp; Refractive</option>
+                                        <option value="Glaucoma" {% if reg_form_data.specialty == 'Glaucoma' %}selected{% endif %}>Glaucoma &mdash; Glaucoma Services</option>
+                                        <option value="Retina" {% if reg_form_data.specialty == 'Retina' %}selected{% endif %}>Retina &mdash; Vitreoretinal Surgery</option>
+                                        <option value="Cornea" {% if reg_form_data.specialty == 'Cornea' %}selected{% endif %}>Cornea &mdash; Cornea &amp; External Disease</option>
+                                        <option value="THE" {% if reg_form_data.specialty == 'THE' or reg_form_data.specialty == 'Oculoplastic' %}selected{% endif %}>THE (Oculoplastic) &mdash; Oculoplastic &amp; Orbit</option>
+                                        <option value="Pediatric Ophthalmology" {% if reg_form_data.specialty == 'Pediatric Ophthalmology' %}selected{% endif %}>Pediatric Ophthalmology &mdash; Pediatric Ophthalmology &amp; Strabismus</option>
+                                        <option value="Neuro-Ophthalmology" {% if reg_form_data.specialty == 'Neuro-Ophthalmology' %}selected{% endif %}>Neuro-Ophthalmology &mdash; Neuro-Ophthalmology</option>
+                                        <option value="IN" {% if reg_form_data.specialty == 'IN' or reg_form_data.specialty == 'Uveitis' %}selected{% endif %}>IN (Uveitis) &mdash; Uveitis &amp; Inflammatory</option>
+                                        <option value="Re" {% if reg_form_data.specialty == 'Re' or reg_form_data.specialty == 'Refractive Surgery' %}selected{% endif %}>Re (Refractive) &mdash; Refractive Surgery</option>
+                                        <option value="Other" {% if reg_form_data.specialty == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                    <small class="field-hint">Primary ophthalmic surgical subspecialty.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_assigned_ot_room">
+                                        <i class="fa-solid fa-door-open" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                        Assigned OT Room <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <select id="reg_assigned_ot_room" name="assigned_ot_room" class="form-control" required>
+                                        <option value="" disabled {% if not reg_form_data.assigned_ot_room %}selected{% endif %}>-- Select Assigned OT --</option>
+                                        <option value="OT-1" {% if reg_form_data.assigned_ot_room == 'OT-1' %}selected{% endif %}>OT-1 (OT Room 1 &mdash; General OT)</option>
+                                        <option value="OT-2" {% if reg_form_data.assigned_ot_room == 'OT-2' %}selected{% endif %}>OT-2 (OT Room 2 &mdash; Retina OT)</option>
+                                        <option value="OT-3" {% if reg_form_data.assigned_ot_room == 'OT-3' %}selected{% endif %}>OT-3 (OT Room 3 &mdash; Laser OT)</option>
+                                        <option value="OT-4" {% if reg_form_data.assigned_ot_room == 'OT-4' %}selected{% endif %}>OT-4 (OT Room 4 &mdash; Pediatric OT)</option>
+                                    </select>
+                                    <small class="field-hint">Dedicated operation theatre suite automatically mapped to patient scheduling.</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_department">
+                                        <i class="fa-solid fa-building-user" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                        Department <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="text" id="reg_department" name="department" class="form-control"
+                                        placeholder="e.g. Department of Ophthalmology &amp; Microsurgery" required
+                                        value="{{ reg_form_data.department|default:'Department of Ophthalmology & Microsurgery' }}">
+                                    <small class="field-hint">Clinical division or administrative unit.</small>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Professional Verification & Identity -->
+                            <div class="doc-form-section-title">
+                                <i class="fa-solid fa-certificate"></i> Professional Identity &amp; Medical Verification
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_surgeon_display_name">
+                                        <i class="fa-solid fa-signature" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Surgeon Display Name
+                                    </label>
+                                    <input type="text" id="reg_surgeon_display_name" name="surgeon_display_name" class="form-control"
+                                        placeholder="e.g. Dr. Fahim Rahman"
+                                        value="{{ reg_form_data.surgeon_display_name|default:'' }}">
+                                    <small class="field-hint">Canonical name in surgery records and appointments. Leave blank to auto-format from username.</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_surgeon_code">
+                                        <i class="fa-solid fa-barcode" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Surgeon Codes <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="text" id="reg_surgeon_code" name="surgeon_code" class="form-control"
+                                        placeholder="e.g. SURG-102" required
+                                        value="{{ reg_form_data.surgeon_code|default:'' }}">
+                                    <small class="field-hint">Unique hospital staff badge / surgeon code.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-row doc-form-row">
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_license_number">
+                                        <i class="fa-solid fa-stamp" style="color: var(--primary); margin-right: 4px;"></i>
+                                        License Number <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="text" id="reg_license_number" name="license_number" class="form-control"
+                                        placeholder="e.g. BMDC-A-49201" required
+                                        value="{{ reg_form_data.license_number|default:'' }}">
+                                    <small class="field-hint">Official Medical Council License Number (must be unique).</small>
+                                </div>
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="reg_bio">
+                                        <i class="fa-solid fa-book-medical" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Bio &amp; Clinical Background
+                                    </label>
+                                    <textarea id="reg_bio" name="bio" class="form-control" rows="2"
+                                        placeholder="Clinical qualifications, fellowship details, and surgical specialization...">{{ reg_form_data.bio|default:'' }}</textarea>
+                                    <small class="field-hint">Short clinical biography displayed on the staff roster.</small>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="doc-reg-actions">
+                                <button type="submit" id="btn_register_doctor" class="btn-teal btn-doc-reg">
+                                    <i class="fa-solid fa-user-plus"></i> Register Doctor Account
+                                </button>
+                                <button type="reset" class="nav-btn btn-doc-reset" onclick="resetDoctorRegForm()">
+                                    <i class="fa-solid fa-rotate-left"></i> Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Registered Staff & Doctors Directory -->
+                    <div class="card doc-table-card">
+                        <div class="card-header doc-table-header">
+                            <div>
+                                <h3 class="card-title">
+                                    <i class="fa-solid fa-hospital-user" style="color: var(--accent-teal);"></i>
+                                    Hospital Medical Staff &amp; Doctors Directory ({{ all_registered_profiles.count }})
+                                </h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                                    Real-time directory of all registered clinicians, surgical coordinators, and administrators.
+                                </p>
+                            </div>
+                            <div class="doc-search-wrapper">
+                                <i class="fa-solid fa-magnifying-glass doc-search-icon"></i>
+                                <input type="text" id="docTableSearch" class="form-control doc-search-input"
+                                    placeholder="Filter by name, username, role, OT..." oninput="filterDoctorDirectory(this.value)">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table doc-directory-table" id="docDirectoryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Doctor / Staff Name</th>
+                                        <th>Username &amp; Contact</th>
+                                        <th>Role</th>
+                                        <th>Specialty</th>
+                                        <th>Assigned OT</th>
+                                        <th>Surgeon Code</th>
+                                        <th>License Number</th>
+                                        <th>Department</th>
+                                        <th>Status</th>
+                                        <th style="text-align: center; min-width: 90px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in all_registered_profiles %}
+                                    <tr class="doc-row" data-search="{{ p.get_surgeon_display_name|lower }} {{ p.user.username|lower }} {{ p.role|lower }} {{ p.specialty|lower }} {{ p.assigned_ot_room|lower }} {{ p.surgeon_code|lower }}">
+                                        <td>
+                                            <div class="doc-identity-cell">
+                                                <div class="doc-avatar-icon {% if p.is_doctor_role %}doc-avatar-doctor{% else %}doc-avatar-staff{% endif %}">
+                                                    {% if p.is_doctor_role %}
+                                                    <i class="fa-solid fa-user-doctor"></i>
+                                                    {% elif p.role == 'Admin' %}
+                                                    <i class="fa-solid fa-user-shield"></i>
+                                                    {% else %}
+                                                    <i class="fa-solid fa-user-nurse"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ p.get_surgeon_display_name }}</strong>
+                                                    {% if p.user.first_name or p.user.last_name %}
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ p.user.get_full_name }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="doc-contact-cell">
+                                                <span class="doc-uname">@{{ p.user.username }}</span>
+                                                {% if p.user.email %}
+                                                <span class="doc-email"><i class="fa-regular fa-envelope"></i> {{ p.user.email }}</span>
+                                                {% endif %}
+                                                {% if p.phone %}
+                                                <span class="doc-phone"><i class="fa-solid fa-phone"></i> {{ p.phone }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="role-badge {% if p.is_doctor_role %}badge-doctor{% elif p.role == 'Admin' %}badge-admin{% else %}badge-staff{% endif %}">
+                                                {{ p.role }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="spec-badge">{{ p.specialty }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="ot-badge">{{ p.assigned_ot_room }}</span>
+                                        </td>
+                                        <td><code>{{ p.surgeon_code }}</code></td>
+                                        <td><span class="license-tag">{{ p.license_number }}</span></td>
+                                        <td><span style="font-size: 0.8rem; color: var(--text-muted);">{{ p.department }}</span></td>
+                                        <td>
+                                            {% if p.user.is_active %}
+                                            <span class="status-active-badge">
+                                                <i class="fa-solid fa-circle-check"></i> Active
+                                            </span>
+                                            {% else %}
+                                            <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--danger, #ef4444); font-size: 0.78rem; font-weight: 600;">
+                                                <i class="fa-solid fa-circle-xmark"></i> Inactive
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: center; white-space: nowrap;">
+                                            <button type="button" class="btn-action-edit btn-edit-doc-entry"
+                                                data-id="{{ p.id }}"
+                                                data-username="{{ p.user.username }}"
+                                                data-first-name="{{ p.user.first_name|default:'' }}"
+                                                data-last-name="{{ p.user.last_name|default:'' }}"
+                                                data-email="{{ p.user.email|default:'' }}"
+                                                data-phone="{{ p.phone|default:'' }}"
+                                                data-role="{{ p.role }}"
+                                                data-specialty="{{ p.specialty }}"
+                                                data-ot-room="{{ p.assigned_ot_room }}"
+                                                data-surgeon-code="{{ p.surgeon_code }}"
+                                                data-license-number="{{ p.license_number }}"
+                                                data-department="{{ p.department }}"
+                                                data-display-name="{{ p.surgeon_display_name }}"
+                                                data-bio="{{ p.bio|default:'' }}"
+                                                data-is-active="{{ p.user.is_active|yesno:'true,false' }}"
+                                                onclick="openEditDoctorModal(this)"
+                                                title="Edit Doctor / Staff Information">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 36px;">
+                                            No registered profiles found in the registry.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- TAB 4: PROFILE & ROSTER SETTINGS -->
                 <!-- <div class="tab-pane {% if active_tab == 'profile-settings' %}active{% endif %}" id="pane-profile-settings">
                     <div class="card">
@@ -1914,6 +2308,224 @@
                                 <button type="button" class="nav-btn" onclick="closeSchedulePatientModal()">Cancel</button>
                                 <button type="submit" id="modal_surg_submit_btn" class="btn-teal" style="margin-top: 0; padding: 10px 22px;">
                                     <i class="fa-solid fa-file-medical"></i> Submit Surgery Application
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Edit Doctor & Staff Information Modal -->
+                <div class="modal-overlay" id="editDoctorModal">
+                    <div class="modal-card" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+                        <div class="modal-header">
+                            <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-user-pen" style="color: var(--accent-teal);"></i> Edit Doctor / Staff Information
+                            </h2>
+                            <button type="button" onclick="closeEditDoctorModal()"
+                                style="background:none; border:none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;"
+                                aria-label="Close modal">&times;</button>
+                        </div>
+                        <form id="editDoctorModalForm" method="post" action="{% url 'users_naimul:profile' %}"
+                            onsubmit="return validateEditDoctorModal(event)" style="display: flex; flex-direction: column; overflow: hidden; margin: 0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="edit_doctor" value="1">
+                            <input type="hidden" name="active_tab" value="doctor-reg">
+                            <input type="hidden" name="profile_id" id="edit_doc_profile_id">
+
+                            <div class="modal-body" style="overflow-y: auto; padding: 20px 24px;">
+                                <!-- Inline Error Banner inside Modal -->
+                                <div id="modal_edit_doc_error" style="display:none; margin-bottom: 14px;
+                                    background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; border-radius: 10px;
+                                    padding: 12px 16px; color: #fca5a5; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; margin-right: 8px;"></i>
+                                    <span id="modal_edit_doc_error_msg"></span>
+                                </div>
+
+                                <!-- Section 1: Account Credentials & Contact Information -->
+                                <div class="doc-form-section-title" style="margin-top: 0;">
+                                    <i class="fa-solid fa-id-card"></i> Account Credentials &amp; Contact Information
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_username">
+                                            <i class="fa-solid fa-user" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Username <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="text" id="edit_doc_username" name="username" class="form-control" required autocomplete="username">
+                                        <small class="field-hint">Alphanumeric, dots, hyphens, and underscores only.</small>
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_surgeon_display_name">
+                                            <i class="fa-solid fa-signature" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Surgeon / Staff Display Name
+                                        </label>
+                                        <input type="text" id="edit_doc_surgeon_display_name" name="surgeon_display_name" class="form-control"
+                                            placeholder="e.g. Dr. Nazmul Islam Shifat">
+                                        <small class="field-hint">Formal name displayed across portal rosters.</small>
+                                    </div>
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_first_name">First Name</label>
+                                        <input type="text" id="edit_doc_first_name" name="first_name" class="form-control" placeholder="First Name">
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_last_name">Last Name</label>
+                                        <input type="text" id="edit_doc_last_name" name="last_name" class="form-control" placeholder="Last Name">
+                                    </div>
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_email">
+                                            <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Email Address <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="email" id="edit_doc_email" name="email" class="form-control" required autocomplete="email">
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_phone">
+                                            <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Phone Number <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="tel" id="edit_doc_phone" name="phone" class="form-control" required autocomplete="tel">
+                                    </div>
+                                </div>
+
+                                <!-- Section 2: Clinical Placement & Roles -->
+                                <div class="doc-form-section-title">
+                                    <i class="fa-solid fa-hospital-user"></i> Role Assignment &amp; Surgical Department
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_role">
+                                            <i class="fa-solid fa-user-doctor" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                            Role <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <select id="edit_doc_role" name="role" class="form-control" required onchange="handleEditDocRoleChange(this)">
+                                            <option value="Surgeon">Surgeon</option>
+                                            <option value="Technician">Technician</option>
+                                            <option value="Consultant">Consultant &mdash; Consultant Eye Surgeon</option>
+                                            <option value="Associate">Associate &mdash; Associate Specialist</option>
+                                            <option value="Resident">Resident &mdash; Surgical Resident / Fellow</option>
+                                            <option value="OT Nurse">OT Nurse &mdash; OT</option>
+                                            <option value="Staff">Staff &mdash; OT Coordinator / Surgical Staff</option>
+                                            <option value="Admin" id="edit_doc_role_admin_opt" data-super-allowed="{{ can_assign_admin|yesno:'true,false' }}" {% if not can_assign_admin %}disabled title="Only Super Administrators can assign the Admin role"{% endif %}>Admin{% if not can_assign_admin %} (Super Admin Only){% endif %}</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_specialty">
+                                            <i class="fa-solid fa-eye" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                            Specialty <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <select id="edit_doc_specialty" name="specialty" class="form-control" required>
+                                            <option value="Cataract">Qatar (Cataract) &mdash; Cataract &amp; Refractive Services</option>
+                                            <option value="Qatar">Qatar &mdash; Cataract &amp; Refractive Services</option>
+                                            <option value="Glaucoma">Glaucoma &mdash; Glaucoma Services</option>
+                                            <option value="Retina">Retina &mdash; Vitreoretinal Surgery</option>
+                                            <option value="Cornea">Cornea &mdash; Cornea &amp; External Disease</option>
+                                            <option value="Oculoplastic">THE (Oculoplastic) &mdash; Oculoplastic &amp; Orbit</option>
+                                            <option value="THE">THE &mdash; Oculoplastic &amp; Orbit</option>
+                                            <option value="Pediatric Ophthalmology">Pediatric Ophthalmology &mdash; Pediatric Ophthalmology &amp; Strabismus</option>
+                                            <option value="Neuro-Ophthalmology">Neuro-Ophthalmology &mdash; Neuro-Ophthalmology</option>
+                                            <option value="Uveitis">IN (Uveitis) &mdash; Uveitis &amp; Inflammatory Services</option>
+                                            <option value="IN">IN &mdash; Uveitis &amp; Inflammatory Services</option>
+                                            <option value="Refractive Surgery">Re (Refractive) &mdash; Refractive Surgery</option>
+                                            <option value="Re">Re &mdash; Refractive Surgery</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_assigned_ot_room">
+                                            <i class="fa-solid fa-door-open" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                            Assigned OT Room <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <select id="edit_doc_assigned_ot_room" name="assigned_ot_room" class="form-control" required>
+                                            <option value="OT-1">OT-1 (OT Room 1 &mdash; General OT)</option>
+                                            <option value="OT-2">OT-2 (OT Room 2 &mdash; Retina OT)</option>
+                                            <option value="OT-3">OT-3 (OT Room 3 &mdash; Laser OT)</option>
+                                            <option value="OT-4">OT-4 (OT Room 4 &mdash; Pediatric OT)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_department">
+                                            <i class="fa-solid fa-building-user" style="color: var(--accent-teal); margin-right: 4px;"></i>
+                                            Department <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="text" id="edit_doc_department" name="department" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <!-- Section 3: Professional Verification & Identity -->
+                                <div class="doc-form-section-title">
+                                    <i class="fa-solid fa-certificate"></i> Professional Identity &amp; Medical Verification
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_surgeon_code">
+                                            <i class="fa-solid fa-barcode" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Surgeon Code <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="text" id="edit_doc_surgeon_code" name="surgeon_code" class="form-control" required>
+                                    </div>
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_license_number">
+                                            <i class="fa-solid fa-stamp" style="color: var(--primary); margin-right: 4px;"></i>
+                                            License Number <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="text" id="edit_doc_license_number" name="license_number" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group doc-form-group">
+                                    <label class="form-label" for="edit_doc_bio">
+                                        <i class="fa-solid fa-book-medical" style="color: var(--primary); margin-right: 4px;"></i>
+                                        Bio &amp; Clinical Background
+                                    </label>
+                                    <textarea id="edit_doc_bio" name="bio" class="form-control" rows="2"
+                                        placeholder="Clinical qualifications, fellowship details..."></textarea>
+                                </div>
+
+                                <div class="form-row doc-form-row">
+                                    <div class="form-group doc-form-group">
+                                        <label class="form-label" for="edit_doc_password">
+                                            <i class="fa-solid fa-key" style="color: var(--primary); margin-right: 4px;"></i>
+                                            Reset Password <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">(Optional &mdash; leave blank to keep unchanged)</span>
+                                        </label>
+                                        <div class="password-input-wrapper">
+                                            <input type="password" id="edit_doc_password" name="password" class="form-control"
+                                                placeholder="New password (min. 6 characters)" autocomplete="new-password">
+                                            <button type="button" class="btn-toggle-pw" onclick="toggleEditDocPassword()" aria-label="Toggle password visibility">
+                                                <i class="fa-regular fa-eye" id="editDocPwToggleIcon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group doc-form-group" style="display: flex; flex-direction: column; justify-content: center;">
+                                        <label class="form-label">
+                                            <i class="fa-solid fa-toggle-on" style="color: var(--success); margin-right: 4px;"></i>
+                                            Account Status
+                                        </label>
+                                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 8px; font-size: 0.88rem; color: var(--text-main);">
+                                            <input type="checkbox" id="edit_doc_is_active" name="is_active" value="1" style="width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;">
+                                            <span>Active Account &amp; Login Permitted</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer"
+                                style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" class="nav-btn" onclick="closeEditDoctorModal()">Cancel</button>
+                                <button type="submit" id="btn_save_doctor" class="btn-teal" style="margin-top: 0; padding: 10px 22px;">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
                                 </button>
                             </div>
                         </form>

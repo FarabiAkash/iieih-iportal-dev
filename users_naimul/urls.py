@@ -7,6 +7,10 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
+    # Doctor Registration tab / endpoint for administrators
+    path('register-doctor/', views.register_doctor_view, name='register_doctor'),
+    # Doctor Edit endpoint for administrators
+    path('edit-doctor/', views.edit_doctor_view, name='edit_doctor'),
     # OT slot availability API — returns booked slots for a given room + date
     path('api/ot-slot-availability/', views.ot_slot_availability_api, name='ot_slot_availability_api'),
 ]

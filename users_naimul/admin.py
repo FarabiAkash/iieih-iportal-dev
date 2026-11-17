@@ -13,9 +13,23 @@ from users_naimul.models import NaimulProfile
 
 @admin.register(NaimulProfile)
 class NaimulProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role', 'specialty', 'assigned_ot_room', 'surgeon_display_name', 'surgeon_code', 'license_number', 'can_apply_surgery', 'can_make_appointments')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'surgeon_display_name', 'surgeon_code', 'license_number')
-    list_filter = ('role', 'specialty', 'assigned_ot_room', 'can_apply_surgery', 'can_make_appointments')
+    list_display = ('user', 'role', 'specialty', 'assigned_ot_room', 'surgeon_display_name', 'surgeon_code', 'license_number', 'phone', 'department', 'can_apply_surgery', 'can_make_appointments')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'user__email', 'surgeon_display_name', 'surgeon_code', 'license_number', 'phone', 'department')
+    list_filter = ('role', 'specialty', 'assigned_ot_room', 'department', 'can_apply_surgery', 'can_make_appointments')
+    fieldsets = (
+        ('User & Credentials', {
+            'fields': ('user', 'role', 'surgeon_display_name')
+        }),
+        ('Clinical Placement', {
+            'fields': ('specialty', 'assigned_ot_room', 'department')
+        }),
+        ('Professional Verification', {
+            'fields': ('surgeon_code', 'license_number', 'phone', 'bio')
+        }),
+        ('Permissions', {
+            'fields': ('can_view_patient_details', 'can_view_medical_history', 'can_view_ot_slots', 'can_apply_surgery', 'can_make_appointments')
+        }),
+    )
 
 @admin.register(SurgeryRecord)
 class SurgeryRecordAdmin(admin.ModelAdmin):
