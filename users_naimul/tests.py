@@ -935,3 +935,414 @@
 #         record = SurgeryRecord.objects.filter(patient_name='Past Date Patient POST').first()
 #         self.assertIsNone(record)
 
+
+# from django.test import TestCase, Client
+# from django.urls import reverse
+# from django.contrib.auth.models import User
+# from users_naimul.models import NaimulProfile, get_available_doctors
+
+
+# class DoctorRegistrationTests(TestCase):
+#     """
+#     Tests for the Doctor Registration feature in users_naimul:
+#     - Authorization (only authorized administrators can register accounts)
+#     - Privilege limitation (only superusers can assign the 'Admin' role)
+#     - Field validations, formats, and duplicate detection
+#     - Secure password hashing
+#     - Account creation and subsequent login
+#     - Doctor role behavior (Dr. prefix, available_doctors listing)
+#     - Dropdown choices (Role, Specialty, Assigned OT)
+#     - AJAX endpoint behavior
+#     """
+
+#     def setUp(self):
+#         self.client = Client()
+
+#         # 1. Superuser Administrator
+#         self.superuser = User.objects.create_superuser(
+#             username='superadmin',
+#             email='superadmin@iieih.com',
+#             password='AdminPass@123',
+#             first_name='Super',
+#             last_name='Admin'
+#         )
+#         self.super_profile = NaimulProfile.objects.create(
+#             user=self.superuser,
+#             role='Admin',
+#             specialty='Cataract',
+#             assigned_ot_room='OT-1',
+#             surgeon_code='ADMIN-001',
+#             license_number='BMDC-AD-0001'
+#         )
+
+#         # 2. Staff Administrator (is_staff=True, not superuser)
+#         self.staff_admin = User.objects.create_user(
+#             username='staffadmin',
+#             email='staffadmin@iieih.com',
+#             password='StaffPass@123',
+#             first_name='Staff',
+#             last_name='Admin',
+#             is_staff=True
+#         )
+#         self.staff_admin_profile = NaimulProfile.objects.create(
+#             user=self.staff_admin,
+#             role='Admin',
+#             specialty='Glaucoma',
+#             assigned_ot_room='OT-2',
+#             surgeon_code='ADMIN-002',
+#             license_number='BMDC-AD-0002'
+#         )
+
+#         # 3. Regular Doctor (Surgeon, not staff, not superuser)
+#         self.doctor_user = User.objects.create_user(
+#             username='regular_surgeon',
+#             email='surgeon@iieih.com',
+#             password='DocPass@123',
+#             first_name='Naimul',
+#             last_name='Islam'
+#         )
+#         self.doctor_profile = NaimulProfile.objects.create(
+#             user=self.doctor_user,
+#             role='Surgeon',
+#             specialty='Retina',
+#             assigned_ot_room='OT-2',
+#             surgeon_display_name='Dr. Naimul Islam',
+#             surgeon_code='SURG-001',
+#             license_number='BMDC-A-0001'
+#         )
+
+#         # 4. Standard registration POST payload
+#         self.valid_payload = {
+#             'register_doctor': '1',
+#             'username': 'new_dr_fahim',
+#             'password': 'SecurePassword@2026',
+#             'email': 'fahim.eye@iieih.com',
+#             'phone': '+880 1711-987654',
+#             'role': 'Consultant',
+#             'specialty': 'Glaucoma',
+#             'assigned_ot_room': 'OT-1',
+#             'surgeon_display_name': 'Dr. Fahim Rahman',
+#             'surgeon_code': 'SURG-501',
+#             'license_number': 'BMDC-A-50123',
+#             'department': 'Department of Ophthalmology & Microsurgery',
+#             'bio': 'Senior Consultant in Glaucoma micro-invasive surgery.'
+#         }
+
+#     def test_admin_can_view_doctor_registration_tab(self):
+#         """Authorized administrator can see the Doctor Registration tab button and pane."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         response = self.client.get(reverse('users_naimul:profile') + '?tab=doctor-reg')
+#         self.assertEqual(response.status_code, 200)
+#         content = response.content.decode('utf-8')
+#         self.assertIn('Doctor Registration', content)
+#         self.assertIn('id="pane-doctor-reg"', content)
+#         self.assertIn('id="doctorRegForm"', content)
+
+#     def test_regular_doctor_cannot_view_doctor_registration_tab(self):
+#         """Regular clinical doctor cannot see the Doctor Registration tab button or form."""
+#         self.client.login(username='regular_surgeon', password='DocPass@123')
+#         response = self.client.get(reverse('users_naimul:profile'))
+#         self.assertEqual(response.status_code, 200)
+#         content = response.content.decode('utf-8')
+#         self.assertNotIn('admin-tab-btn', content)
+#         self.assertNotIn('id="pane-doctor-reg"', content)
+
+#     def test_admin_creates_doctor_account_success(self):
+#         """Administrator successfully creates a doctor account with all required fields."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         response = self.client.post(reverse('users_naimul:profile'), self.valid_payload, follow=True)
+#         self.assertEqual(response.status_code, 200)
+
+#         # Verify user exists in database
+#         new_user = User.objects.filter(username='new_dr_fahim').first()
+#         self.assertIsNotNone(new_user)
+#         self.assertEqual(new_user.email, 'fahim.eye@iieih.com')
+
+#         # Verify profile exists with correct fields
+#         profile = getattr(new_user, 'naimul_profile', None)
+#         self.assertIsNotNone(profile)
+#         self.assertEqual(profile.role, 'Consultant')
+#         self.assertEqual(profile.specialty, 'Glaucoma')
+#         self.assertEqual(profile.assigned_ot_room, 'OT-1')
+#         self.assertEqual(profile.surgeon_code, 'SURG-501')
+#         self.assertEqual(profile.license_number, 'BMDC-A-50123')
+#         self.assertEqual(profile.phone, '+880 1711-987654')
+#         self.assertEqual(profile.surgeon_display_name, 'Dr. Fahim Rahman')
+#         self.assertTrue(profile.is_doctor_role)
+
+#     def test_created_doctor_can_log_in(self):
+#         """The newly created doctor user can authenticate and log in successfully."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         self.client.post(reverse('users_naimul:profile'), self.valid_payload)
+#         self.client.logout()
+
+#         # Attempt login with newly created credentials
+#         login_resp = self.client.post(reverse('users_naimul:login'), {
+#             'username': 'new_dr_fahim',
+#             'password': 'SecurePassword@2026'
+#         }, follow=True)
+#         self.assertEqual(login_resp.status_code, 200)
+#         # Doctor role redirects to profile patients tab
+#         self.assertTrue(login_resp.context['user'].is_authenticated)
+#         self.assertEqual(login_resp.context['user'].username, 'new_dr_fahim')
+#         # Welcome message contains display name
+#         messages_text = [str(m) for m in login_resp.context['messages']]
+#         self.assertTrue(any('Dr. Fahim Rahman' in m for m in messages_text))
+
+#     def test_doctor_gets_dr_prefix_and_in_available_doctors(self):
+#         """Doctor role accounts have 'Dr.' display name and appear in available doctors list."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         self.client.post(reverse('users_naimul:profile'), self.valid_payload)
+
+#         doctors = get_available_doctors()
+#         self.assertIn('Dr. Fahim Rahman', doctors)
+
+#     def test_secure_password_hashing(self):
+#         """Passwords are never stored in plaintext and are hashed via PBKDF2/Django auth."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         self.client.post(reverse('users_naimul:profile'), self.valid_payload)
+
+#         new_user = User.objects.get(username='new_dr_fahim')
+#         self.assertNotEqual(new_user.password, 'SecurePassword@2026')
+#         self.assertTrue(new_user.password.startswith('pbkdf2_') or new_user.password.startswith('bcrypt') or new_user.password.startswith('argon2'))
+#         self.assertTrue(new_user.check_password('SecurePassword@2026'))
+
+#     def test_duplicate_username_rejected(self):
+#         """Attempting to register with an existing username is rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['username'] = 'regular_surgeon'  # Already exists
+#         payload['surgeon_code'] = 'SURG-UNIQUE-1'
+#         payload['license_number'] = 'BMDC-UNIQUE-1'
+#         payload['email'] = 'unique1@iieih.com'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already in use" in m or "already exists" in m for m in messages_text))
+
+#     def test_duplicate_email_rejected(self):
+#         """Attempting to register with an existing email address is rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['email'] = 'surgeon@iieih.com'  # Already exists
+#         payload['username'] = 'unique_dr_user'
+#         payload['surgeon_code'] = 'SURG-UNIQUE-2'
+#         payload['license_number'] = 'BMDC-UNIQUE-2'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already registered" in m or "already exists" in m for m in messages_text))
+
+#     def test_duplicate_surgeon_code_rejected(self):
+#         """Duplicate surgeon code is rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['surgeon_code'] = 'SURG-001'  # Already exists
+#         payload['username'] = 'unique_code_user'
+#         payload['email'] = 'uniquecode@iieih.com'
+#         payload['license_number'] = 'BMDC-UNIQUE-3'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already assigned" in m or "surgeon code" in m.lower() for m in messages_text))
+
+#     def test_duplicate_license_number_rejected(self):
+#         """Duplicate medical license number is rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['license_number'] = 'BMDC-A-0001'  # Already exists
+#         payload['username'] = 'unique_lic_user'
+#         payload['email'] = 'uniquelic@iieih.com'
+#         payload['surgeon_code'] = 'SURG-UNIQUE-4'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("already registered" in m or "license" in m.lower() for m in messages_text))
+
+#     def test_invalid_username_format_rejected(self):
+#         """Usernames with spaces or illegal characters are rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['username'] = 'dr fahim space'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("may only contain" in m or "invalid" in m.lower() for m in messages_text))
+
+#     def test_invalid_email_format_rejected(self):
+#         """Invalid email addresses are rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['email'] = 'not-an-email-address'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("valid email address" in m for m in messages_text))
+
+#     def test_short_password_rejected(self):
+#         """Passwords shorter than 6 characters are rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['password'] = '123'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("at least 6 characters" in m for m in messages_text))
+
+#     def test_invalid_phone_rejected(self):
+#         """Phones without enough digits are rejected."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['phone'] = '123'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("at least 7 digits" in m for m in messages_text))
+
+#     def test_non_admin_cannot_post_doctor_registration(self):
+#         """A non-administrator user posting to doctor registration is rejected with access denied."""
+#         self.client.login(username='regular_surgeon', password='DocPass@123')
+#         response = self.client.post(reverse('users_naimul:profile'), self.valid_payload, follow=True)
+#         self.assertEqual(response.status_code, 200)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("Access Denied" in m for m in messages_text))
+
+#         # Check dedicated view rejects non-admin with 403 on AJAX
+#         ajax_resp = self.client.post(reverse('users_naimul:register_doctor'), self.valid_payload, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+#         self.assertEqual(ajax_resp.status_code, 403)
+
+#     def test_staff_admin_cannot_assign_admin_role(self):
+#         """A staff administrator without superuser privileges CANNOT assign the Admin role."""
+#         self.client.login(username='staffadmin', password='StaffPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['role'] = 'Admin'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         messages_text = [str(m) for m in response.context['messages']]
+#         self.assertTrue(any("Only Super Administrators can assign the Admin role" in m for m in messages_text))
+#         self.assertFalse(User.objects.filter(username=payload['username']).exists())
+
+#     def test_superuser_can_assign_admin_role(self):
+#         """A superuser administrator CAN assign the Admin role."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['username'] = 'second_admin'
+#         payload['email'] = 'admin2@iieih.com'
+#         payload['surgeon_code'] = 'ADMIN-003'
+#         payload['license_number'] = 'BMDC-AD-0003'
+#         payload['role'] = 'Admin'
+
+#         response = self.client.post(reverse('users_naimul:profile'), payload, follow=True)
+#         self.assertEqual(response.status_code, 200)
+
+#         created_user = User.objects.filter(username='second_admin').first()
+#         self.assertIsNotNone(created_user)
+#         self.assertEqual(created_user.naimul_profile.role, 'Admin')
+#         self.assertTrue(created_user.is_staff)
+
+#     def test_all_role_choices_accepted(self):
+#         """Verifies all dropdown role choices from prompt are accepted."""
+#         roles = [
+#             'Surgeon',
+#             'Technician',
+#             'Consultant — Consultant Eye Surgeon',
+#             'Associate — Associate Specialist',
+#             'Resident — Surgical Resident / Fellow',
+#             'OT Nurse — OT',
+#             'Staff — OT Coordinator / Surgical Staff',
+#             'Other'
+#         ]
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         for i, r in enumerate(roles):
+#             payload = self.valid_payload.copy()
+#             payload['username'] = f'test_role_user_{i}'
+#             payload['email'] = f'roleuser{i}@iieih.com'
+#             payload['surgeon_code'] = f'CODE-R-{i}'
+#             payload['license_number'] = f'LIC-R-{i}'
+#             payload['role'] = r
+#             resp = self.client.post(reverse('users_naimul:profile'), payload)
+#             self.assertEqual(resp.status_code, 302)
+#             u = User.objects.filter(username=f'test_role_user_{i}').first()
+#             self.assertIsNotNone(u, f"Failed creating user with role: {r}")
+
+#     def test_all_specialty_choices_including_aliases_accepted(self):
+#         """Verifies all specialty dropdown choices and aliases from prompt are accepted."""
+#         specialties = [
+#             'Qatar',
+#             'Glaucoma — Glaucoma Services',
+#             'Retina — Vitreoretinal Surgery',
+#             'Cornea — Cornea & External Disease',
+#             'THE',
+#             'Pediatric Ophthalmology — Pediatric Ophthalmology & Strabismus',
+#             'Neuro-Ophthalmology — Neuro-Ophthalmology',
+#             'IN',
+#             'Re',
+#             'Other'
+#         ]
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         for i, s in enumerate(specialties):
+#             payload = self.valid_payload.copy()
+#             payload['username'] = f'test_spec_user_{i}'
+#             payload['email'] = f'specuser{i}@iieih.com'
+#             payload['surgeon_code'] = f'CODE-S-{i}'
+#             payload['license_number'] = f'LIC-S-{i}'
+#             payload['specialty'] = s
+#             resp = self.client.post(reverse('users_naimul:profile'), payload)
+#             self.assertEqual(resp.status_code, 302)
+#             u = User.objects.filter(username=f'test_spec_user_{i}').first()
+#             self.assertIsNotNone(u, f"Failed creating user with specialty: {s}")
+
+#     def test_all_ot_rooms_accepted(self):
+#         """Verifies all assigned OT room choices (OT-1, OT-2, OT-3, OT-4) are accepted."""
+#         rooms = ['OT-1', 'OT-2', 'OT-3', 'OT-4']
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         for i, rm in enumerate(rooms):
+#             payload = self.valid_payload.copy()
+#             payload['username'] = f'test_ot_user_{i}'
+#             payload['email'] = f'otuser{i}@iieih.com'
+#             payload['surgeon_code'] = f'CODE-OT-{i}'
+#             payload['license_number'] = f'LIC-OT-{i}'
+#             payload['assigned_ot_room'] = rm
+#             resp = self.client.post(reverse('users_naimul:profile'), payload)
+#             self.assertEqual(resp.status_code, 302)
+#             u = User.objects.filter(username=f'test_ot_user_{i}').first()
+#             self.assertIsNotNone(u)
+#             self.assertEqual(u.naimul_profile.assigned_ot_room, rm)
+
+#     def test_ajax_registration_success(self):
+#         """Submitting doctor registration via AJAX returns JSON success with created doctor details."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['username'] = 'ajax_doctor'
+#         payload['email'] = 'ajax.dr@iieih.com'
+#         payload['surgeon_code'] = 'SURG-AJAX-1'
+#         payload['license_number'] = 'BMDC-AJAX-1'
+
+#         response = self.client.post(
+#             reverse('users_naimul:register_doctor'),
+#             payload,
+#             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+#         )
+#         self.assertEqual(response.status_code, 200)
+#         data = response.json()
+#         self.assertTrue(data['success'])
+#         self.assertEqual(data['doctor']['username'], 'ajax_doctor')
+#         self.assertEqual(data['doctor']['role'], 'Consultant')
+
+#     def test_ajax_registration_validation_error(self):
+#         """Submitting invalid data via AJAX returns JSON failure with 400 status code and errors dict."""
+#         self.client.login(username='superadmin', password='AdminPass@123')
+#         payload = self.valid_payload.copy()
+#         payload['username'] = ''  # missing username
+
+#         response = self.client.post(
+#             reverse('users_naimul:register_doctor'),
+#             payload,
+#             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+#         )
+#         self.assertEqual(response.status_code, 400)
+#         data = response.json()
+#         self.assertFalse(data['success'])
+#         self.assertIn('username', data['errors'])
+
+

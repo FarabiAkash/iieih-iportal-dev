@@ -318,23 +318,27 @@ class DiagnosisProcedure(models.Model):
 class NaimulProfile(models.Model):
     
     Specialty_Choices = [
-        ('Cataract', 'Cataract & Refractive'),
-        ('Glaucoma', 'Glaucoma Services'),
-        ('Retina', 'Vitreoretinal Surgery'),
-        ('Cornea', 'Cornea & External Disease'),
-        ('Oculoplastic', 'Oculoplastic  & Orbit'),
-        ('Pediatric Ophthalmology', 'Pediatric Ophthalmology & Strabismus'),
-        ('Neuro-Ophthalmology', 'Neuro-Ophthalmology'),
-        ('Uveitis', 'Uveitis Services'),
-        ('Refractive Surgery', 'Refractive Surgery'),
+        ('Cataract', 'Qatar (Cataract) — Cataract & Refractive Services'),
+        ('Qatar', 'Qatar — Cataract & Refractive Services'),
+        ('Glaucoma', 'Glaucoma — Glaucoma Services'),
+        ('Retina', 'Retina — Vitreoretinal Surgery'),
+        ('Cornea', 'Cornea — Cornea & External Disease'),
+        ('Oculoplastic', 'THE (Oculoplastic) — Oculoplastic & Orbit'),
+        ('THE', 'THE — Oculoplastic & Orbit'),
+        ('Pediatric Ophthalmology', 'Pediatric Ophthalmology — Pediatric Ophthalmology & Strabismus'),
+        ('Neuro-Ophthalmology', 'Neuro-Ophthalmology — Neuro-Ophthalmology'),
+        ('Uveitis', 'IN (Uveitis) — Uveitis & Inflammatory Services'),
+        ('IN', 'IN — Uveitis & Inflammatory Services'),
+        ('Refractive Surgery', 'Re (Refractive) — Refractive Surgery'),
+        ('Re', 'Re — Refractive Surgery'),
         ('Other', 'Other'),
     ]
     
     OT_Room_Choices = [
-        ('OT-1', 'OT Room 1 (General OT)'),
-        ('OT-2', 'OT Room 2 (Retina OT)'),
-        ('OT-3', 'OT Room 3 (Laser OT)'),
-        ('OT-4', 'OT Room 4 (Pediatric OT)'),
+        ('OT-1', 'OT-1 (OT Room 1 — General OT)'),
+        ('OT-2', 'OT-2 (OT Room 2 — Retina OT)'),
+        ('OT-3', 'OT-3 (OT Room 3 — Laser OT)'),
+        ('OT-4', 'OT-4 (OT Room 4 — Pediatric OT)'),
     ]
     
     DOCTOR_ROLES = ['Surgeon', 'Consultant', 'Associate', 'Resident']
@@ -342,11 +346,11 @@ class NaimulProfile(models.Model):
     Role_Choices = [
         ('Surgeon', 'Surgeon'),
         ('Technician', 'Technician'),
-        ('Consultant', 'Consultant Eye Surgeon'),
-        ('Associate', 'Associate Specialist'),
-        ('Resident', 'Surgical Resident / Fellow'),
-        ('OT Nurse', 'OT Nursing Supervisor'),
-        ('Staff', 'OT Coordinator / Surgical Staff'),
+        ('Consultant', 'Consultant — Consultant Eye Surgeon'),
+        ('Associate', 'Associate — Associate Specialist'),
+        ('Resident', 'Resident — Surgical Resident / Fellow'),
+        ('OT Nurse', 'OT Nurse — OT'),
+        ('Staff', 'Staff — OT Coordinator / Surgical Staff'),
         ('Admin', 'Admin'),
         ('Other', 'Other'),
     ]
@@ -390,6 +394,17 @@ class NaimulProfile(models.Model):
         Returns True for non-doctor roles (Technician, OT Nurse, Staff, Admin, Other, etc.).
         """
         return not self.is_doctor_role
+
+    @property
+    def is_admin_role(self):
+        """
+        Returns True if the role is Admin or if the user is a Django staff/superuser.
+        """
+        if self.role == 'Admin':
+            return True
+        if self.user and (self.user.is_staff or self.user.is_superuser):
+            return True
+        return False
 
     def get_surgeon_display_name(self):
         """

@@ -278,3 +278,128 @@ function initProfileAlerts() {
 if (document.readyState !== 'loading') {
     initProfileAlerts();
 }
+
+// ─── Doctor Registration Form Helpers ─────────────────────────────────────────
+function toggleRegPassword() {
+    const pwInput = document.getElementById('reg_password');
+    const icon = document.getElementById('pwToggleIcon');
+    if (!pwInput) return;
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    } else {
+        pwInput.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+}
+window.toggleRegPassword = toggleRegPassword;
+
+function handleRegRoleChange(selectEl) {
+    if (!selectEl) return;
+    const role = selectEl.value;
+    const isDoc = ['Surgeon', 'Consultant', 'Associate', 'Resident'].includes(role);
+    const dispNameInput = document.getElementById('reg_surgeon_display_name');
+    const unameInput = document.getElementById('reg_username');
+
+    if (dispNameInput && !dispNameInput.value.trim() && unameInput && unameInput.value.trim()) {
+        const uname = unameInput.value.trim();
+        const formatted = uname.charAt(0).toUpperCase() + uname.slice(1);
+        if (isDoc) {
+            dispNameInput.value = 'Dr. ' + formatted;
+        } else {
+            dispNameInput.value = formatted;
+        }
+    }
+}
+window.handleRegRoleChange = handleRegRoleChange;
+
+function filterDoctorDirectory(query) {
+    const q = (query || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#docDirectoryTable tbody tr.doc-row');
+    rows.forEach(row => {
+        const searchData = row.getAttribute('data-search') || row.textContent.toLowerCase();
+        if (!q || searchData.includes(q)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+window.filterDoctorDirectory = filterDoctorDirectory;
+
+function resetDoctorRegForm() {
+    const form = document.getElementById('doctorRegForm');
+    if (form) {
+        form.reset();
+        const errBox = document.querySelector('.reg-error-box');
+        if (errBox) errBox.style.display = 'none';
+    }
+}
+window.resetDoctorRegForm = resetDoctorRegForm;
+
+function validateDoctorRegistrationClient(e) {
+    const username = (document.getElementById('reg_username') || {}).value || '';
+    const password = (document.getElementById('reg_password') || {}).value || '';
+    const email = (document.getElementById('reg_email') || {}).value || '';
+    const phone = (document.getElementById('reg_phone') || {}).value || '';
+    const role = (document.getElementById('reg_role') || {}).value || '';
+    const specialty = (document.getElementById('reg_specialty') || {}).value || '';
+    const otRoom = (document.getElementById('reg_assigned_ot_room') || {}).value || '';
+    const surgeonCode = (document.getElementById('reg_surgeon_code') || {}).value || '';
+    const license = (document.getElementById('reg_license_number') || {}).value || '';
+
+    if (!username.trim() || username.length < 3) {
+        alert("Please enter a valid username (at least 3 characters).");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!password || password.length < 6) {
+        alert("Please enter a password with at least 6 characters.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!email.trim() || !email.includes('@')) {
+        alert("Please provide a valid email address.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!phone.trim()) {
+        alert("Please provide a contact phone number.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!role) {
+        alert("Please select a professional role.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!specialty) {
+        alert("Please select a surgical specialty.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!otRoom) {
+        alert("Please select an assigned OT suite.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!surgeonCode.trim()) {
+        alert("Please enter a hospital surgeon code.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    if (!license.trim()) {
+        alert("Please enter a medical license number.");
+        if (e && e.preventDefault) e.preventDefault();
+        return false;
+    }
+    return true;
+}
+window.validateDoctorRegistrationClient = validateDoctorRegistrationClient;
+
