@@ -1094,22 +1094,34 @@ def profile_view(request):
         my_mrns = my_surgeries.values_list('patient_mrn', flat=True)
         displayed_diagnostics = DiagnosisProcedure.objects.filter(patient_mrn__in=my_mrns)
 
-    # OT Utilization Analytics
-    total_ot_capacity = 20  # 4 suites * 5 slots
+    # OT Utilization Analytics — derived from DB model choices, no hardcoded values
+    # Capacity = number of OT rooms × number of OT slots (all from model definitions)
+    num_ot_rooms = len(SurgeryRecord.OT_Room_Choices)
+    num_ot_slots = len(SurgeryRecord.OT_Slot_Choices)
+    total_ot_capacity = num_ot_rooms * num_ot_slots
     total_booked_cases = all_surgeries.count()
-    overall_ot_utilization = round((total_booked_cases / total_ot_capacity) * 100, 1)
+    overall_ot_utilization = round((total_booked_cases / total_ot_capacity) * 100, 1) if total_ot_capacity else 0
 
-    ot1_count = all_surgeries.filter(ot_room='OT-1').count()
-    ot2_count = all_surgeries.filter(ot_room='OT-2').count()
-    ot3_count = all_surgeries.filter(ot_room='OT-3').count()
-    ot4_count = all_surgeries.filter(ot_room='OT-4').count()
-
-    ot_suite_stats = [
-        {'room': 'OT-1', 'name': 'General & Phaco Suite', 'count': ot1_count, 'capacity': 5, 'utilization': round((ot1_count / 5) * 100, 1), 'icon': 'fa-microscope', 'color': '#0284c7'},
-        {'room': 'OT-2', 'name': 'Retina Microsurgery Suite', 'count': ot2_count, 'capacity': 5, 'utilization': round((ot2_count / 5) * 100, 1), 'icon': 'fa-eye', 'color': '#0d9488'},
-        {'room': 'OT-3', 'name': 'Laser & Refractive Suite', 'count': ot3_count, 'capacity': 5, 'utilization': round((ot3_count / 5) * 100, 1), 'icon': 'fa-bolt', 'color': '#f59e0b'},
-        {'room': 'OT-4', 'name': 'Pediatric & Day Care OT', 'count': ot4_count, 'capacity': 5, 'utilization': round((ot4_count / 5) * 100, 1), 'icon': 'fa-children', 'color': '#8b5cf6'},
-    ]
+    # OT suite metadata derived from DB model choices — room name/icon/color mapped to room value
+    _ot_room_meta = {
+        'OT-1': {'name': 'General & Phaco Suite',      'icon': 'fa-microscope', 'color': '#0284c7'},
+        'OT-2': {'name': 'Retina Microsurgery Suite',  'icon': 'fa-eye',        'color': '#0d9488'},
+        'OT-3': {'name': 'Laser & Refractive Suite',   'icon': 'fa-bolt',       'color': '#f59e0b'},
+        'OT-4': {'name': 'Pediatric & Day Care OT',    'icon': 'fa-children',   'color': '#8b5cf6'},
+    }
+    ot_suite_stats = []
+    for room_val, _room_label in SurgeryRecord.OT_Room_Choices:
+        room_count = all_surgeries.filter(ot_room=room_val).count()
+        meta = _ot_room_meta.get(room_val, {'name': _room_label, 'icon': 'fa-hospital', 'color': '#6b7280'})
+        ot_suite_stats.append({
+            'room': room_val,
+            'name': meta['name'],
+            'count': room_count,
+            'capacity': num_ot_slots,
+            'utilization': round((room_count / num_ot_slots) * 100, 1) if num_ot_slots else 0,
+            'icon': meta['icon'],
+            'color': meta['color'],
+        })
 
     # Appointments (all, ordered by date)
     appointments = Appointment.objects.all().order_by('appointment_date', 'appointment_time_slot')
@@ -1302,64 +1314,219 @@ def patient_lookup_api(request):
     if not mrn:
         return JsonResponse({'success': False, 'error': 'Please enter a valid Patient MRN to search.'}, status=400)
 
-    # 1. Search SurgeryRecord by exact or containing MRN
+    eye_map = {'LE': 'Left Eye (OS)', 'RE': 'Right Eye (OD)', 'BE': 'Both Eyes (OU)'}
+
+    # 1. Search across SurgeryRecord, Prescription, Appointment, DiagnosisProcedure
     record = SurgeryRecord.objects.filter(patient_mrn__iexact=mrn).first()
     if not record:
         record = SurgeryRecord.objects.filter(patient_mrn__icontains=mrn).first()
+    if not record:
+        record = SurgeryRecord.objects.filter(patient_name__icontains=mrn).first()
 
-    eye_map = {'LE': 'Left Eye (OS)', 'RE': 'Right Eye (OD)', 'BE': 'Both Eyes (OU)'}
+    rx_record = None
+    if not record:
+        rx_record = Prescription.objects.filter(patient_mrn__iexact=mrn).first()
+        if not rx_record:
+            rx_record = Prescription.objects.filter(patient_mrn__icontains=mrn).first()
+        if not rx_record:
+            rx_record = Prescription.objects.filter(patient_name__icontains=mrn).first()
 
+    appt_record = None
+    if not record and not rx_record:
+        appt_record = Appointment.objects.filter(patient_mrn__iexact=mrn).first()
+        if not appt_record:
+            appt_record = Appointment.objects.filter(patient_mrn__icontains=mrn).first()
+        if not appt_record:
+            appt_record = Appointment.objects.filter(patient_name__icontains=mrn).first()
+
+    diag_record = None
+    if not record and not rx_record and not appt_record:
+        diag_record = DiagnosisProcedure.objects.filter(patient_mrn__iexact=mrn).first()
+        if not diag_record:
+            diag_record = DiagnosisProcedure.objects.filter(patient_mrn__icontains=mrn).first()
+        if not diag_record:
+            diag_record = DiagnosisProcedure.objects.filter(patient_name__icontains=mrn).first()
+
+    matched_obj = record or rx_record or appt_record or diag_record
+    if not matched_obj:
+        return JsonResponse({
+            'success': False,
+            'error': f'No patient found with MRN "{mrn}". Please verify the MRN and try again.'
+        }, status=404)
+
+    target_mrn = matched_obj.patient_mrn or mrn
+    patient_name = matched_obj.patient_name
+    patient_age = getattr(matched_obj, 'patient_age', 0)
+    patient_gender = getattr(matched_obj, 'patient_gender', 'Male')
+    patient_eye = getattr(matched_obj, 'eye', 'BE')
+    uin_val = f"{matched_obj.id:010d}"
+
+    # Determine procedure / attending doctor details
     if record:
-        return JsonResponse({
-            'success': True,
-            'patient': {
-                'mrn': record.patient_mrn,
-                'name': record.patient_name,
-                'age': record.patient_age,
-                'gender': record.patient_gender,
-                'eye': record.eye,
-                'eye_display': eye_map.get(record.eye, record.get_eye_display() if hasattr(record, 'get_eye_display') else record.eye),
-                'surgery_type': record.surgery_type or 'General Ophthalmology',
-                'surgeon_name': record.surgeon_name or 'N/A',
-                'ot_room': record.ot_room or 'N/A',
-                'ot_slot': record.ot_slot or 'N/A',
-                'outcome': record.outcome or 'Pending / Under Evaluation',
-                'medical_history': record.medical_history or 'No systemic comorbidities reported.',
-                'notes': record.notes or 'No clinical notes recorded.',
-                'date': record.date.strftime('%d %b %Y') if record.date else 'N/A',
-            }
-        })
+        surgery_type = record.surgery_type or 'General Ophthalmology'
+        surgeon_name = record.surgeon_name or 'N/A'
+        ot_room = record.ot_room or 'N/A'
+        ot_slot = record.ot_slot or 'N/A'
+        outcome = record.outcome or 'Pending / Under Evaluation'
+        medical_history = record.medical_history or 'No systemic comorbidities reported.'
+        notes = record.notes or 'No clinical notes recorded.'
+        clinic_label = 'Clinic: Surgical Ophthalmology'
+    elif rx_record:
+        surgery_type = 'Consultation / Follow-Up'
+        surgeon_name = rx_record.prescribing_doctor or 'N/A'
+        ot_room = 'N/A'
+        ot_slot = 'N/A'
+        outcome = 'Consultation Completed'
+        medical_history = rx_record.diagnosis or 'No prior systemic history.'
+        notes = rx_record.notes or 'No prior clinical notes.'
+        try:
+            rx_doctor_profile = NaimulProfile.objects.select_related('user').filter(
+                Q(surgeon_display_name__icontains=rx_record.prescribing_doctor) |
+                Q(user__username__icontains=rx_record.prescribing_doctor)
+            ).first()
+            clinic_label = f"Clinic: {rx_doctor_profile.department}" if rx_doctor_profile and rx_doctor_profile.department else 'Clinic: OPD'
+        except Exception:
+            clinic_label = 'Clinic: OPD'
+    elif appt_record:
+        surgery_type = appt_record.appointment_type or 'Clinical Consultation'
+        surgeon_name = appt_record.doctor_name or 'N/A'
+        ot_room = 'N/A'
+        ot_slot = appt_record.appointment_time_slot or 'N/A'
+        outcome = appt_record.status or 'Scheduled'
+        medical_history = 'Scheduled for clinical evaluation.'
+        notes = appt_record.notes or 'No appointment notes.'
+        clinic_label = 'Clinic: OPD Consultation'
+    else:
+        surgery_type = diag_record.procedure_name or 'Ophthalmic Investigation'
+        surgeon_name = diag_record.technician_name or 'N/A'
+        ot_room = 'N/A'
+        ot_slot = 'N/A'
+        outcome = 'Diagnostics Completed'
+        medical_history = diag_record.findings_summary or 'Diagnostic investigations recorded.'
+        notes = diag_record.findings_summary or 'No diagnostic notes.'
+        clinic_label = 'Clinic: Ocular Diagnostics'
 
-    # 2. Fallback: Search Prescription records by MRN
-    rx_record = Prescription.objects.filter(patient_mrn__iexact=mrn).first()
-    if not rx_record:
-        rx_record = Prescription.objects.filter(patient_mrn__icontains=mrn).first()
+    # 2. Collect ALL visits and encounters from the database for this patient
+    surg_qs = SurgeryRecord.objects.filter(Q(patient_mrn=target_mrn) | Q(patient_name__iexact=patient_name)).order_by('date', 'id')
+    rx_qs = Prescription.objects.filter(Q(patient_mrn=target_mrn) | Q(patient_name__iexact=patient_name)).order_by('date_created')
+    appt_qs = Appointment.objects.filter(Q(patient_mrn=target_mrn) | Q(patient_name__iexact=patient_name)).order_by('appointment_date', 'id')
+    diag_qs = DiagnosisProcedure.objects.filter(Q(patient_mrn=target_mrn) | Q(patient_name__iexact=patient_name)).order_by('date', 'id')
 
-    if rx_record:
-        return JsonResponse({
-            'success': True,
-            'patient': {
-                'mrn': rx_record.patient_mrn,
-                'name': rx_record.patient_name,
-                'age': rx_record.patient_age,
-                'gender': rx_record.patient_gender,
-                'eye': rx_record.eye,
-                'eye_display': eye_map.get(rx_record.eye, rx_record.eye),
-                'surgery_type': 'Consultation / Follow-Up',
-                'surgeon_name': rx_record.prescribing_doctor or 'N/A',
-                'ot_room': 'N/A',
-                'ot_slot': 'N/A',
-                'outcome': 'Consultation Completed',
-                'medical_history': rx_record.diagnosis or 'No prior systemic history.',
-                'notes': rx_record.notes or 'No prior clinical notes.',
-                'date': rx_record.date_created.strftime('%d %b %Y'),
-            }
+    visits_by_date = {}
+
+    for s in surg_qs:
+        if s.date:
+            d = s.date
+            visits_by_date.setdefault(d, []).append({
+                'type': 'Surgery',
+                'title': s.surgery_type,
+                'doctor': s.surgeon_name,
+                'details': f"{s.surgery_type} ({s.ot_room or 'OT'})",
+            })
+
+    for p in rx_qs:
+        if p.date_created:
+            d = p.date_created.date()
+            visits_by_date.setdefault(d, []).append({
+                'type': 'Prescription',
+                'title': p.diagnosis or 'Prescription',
+                'doctor': p.prescribing_doctor,
+                'rx_id': p.id,
+                'details': p.diagnosis,
+            })
+
+    for a in appt_qs:
+        if a.appointment_date:
+            d = a.appointment_date
+            visits_by_date.setdefault(d, []).append({
+                'type': 'Appointment',
+                'title': a.appointment_type,
+                'doctor': a.doctor_name,
+                'details': f"{a.appointment_type} ({a.appointment_time_slot})",
+            })
+
+    for diag in diag_qs:
+        if diag.date:
+            d = diag.date
+            visits_by_date.setdefault(d, []).append({
+                'type': 'Diagnostic',
+                'title': diag.procedure_name,
+                'doctor': diag.technician_name,
+                'details': diag.procedure_name,
+            })
+
+    sorted_db_dates = sorted(visits_by_date.keys())
+    today = date.today()
+
+    # All unique encounter dates
+    all_dates = list(sorted_db_dates)
+    if today not in all_dates:
+        all_dates.append(today)
+    all_dates.sort()
+
+    # Registration date is the earliest recorded date in DB
+    reg_date = sorted_db_dates[0] if sorted_db_dates else today
+    registration_date_str = reg_date.strftime('%d %b %Y')
+
+    # Last Visit date:
+    # Most recent visit strictly before today (or before the latest active visit)
+    earlier_dates = [d for d in sorted_db_dates if d < today]
+    if earlier_dates:
+        last_visit_date = earlier_dates[-1]
+        last_visit_str = last_visit_date.strftime('%d %b %Y')
+    elif len(all_dates) > 1 and all_dates[-1] == today:
+        last_visit_date = all_dates[-2]
+        last_visit_str = last_visit_date.strftime('%d %b %Y')
+    else:
+        # If there's only 1 encounter date
+        last_visit_str = reg_date.strftime('%d %b %Y')
+
+    # Active encounter date (default to today or latest)
+    active_date = today if today in all_dates else all_dates[-1]
+    active_date_str = active_date.strftime('%d %b %Y')
+
+    # Build visits payload
+    visits_list = []
+    for d in all_dates:
+        encounters = visits_by_date.get(d, [])
+        is_today = (d == today)
+        is_active = (d == active_date)
+        label_parts = [e['title'] for e in encounters if e.get('title')]
+        label = ', '.join(label_parts) if label_parts else ('OPD Consultation' if is_today else 'Hospital Visit')
+        visits_list.append({
+            'date': d.strftime('%d %b %Y'),
+            'date_iso': d.strftime('%Y-%m-%d'),
+            'is_new': is_today,
+            'is_active': is_active,
+            'label': label,
+            'encounters': encounters,
         })
 
     return JsonResponse({
-        'success': False,
-        'error': f'No patient found with MRN "{mrn}". Please verify the MRN and try again.'
-    }, status=404)
+        'success': True,
+        'patient': {
+            'mrn': target_mrn,
+            'name': patient_name,
+            'age': patient_age,
+            'gender': patient_gender,
+            'uin': uin_val,
+            'eye': patient_eye,
+            'eye_display': eye_map.get(patient_eye, patient_eye),
+            'surgery_type': surgery_type,
+            'surgeon_name': surgeon_name,
+            'clinic': clinic_label,
+            'ot_room': ot_room,
+            'ot_slot': ot_slot,
+            'outcome': outcome,
+            'medical_history': medical_history,
+            'notes': notes,
+            'date': active_date_str,
+            'registration_date': registration_date_str,
+            'last_visit': last_visit_str,
+            'last_visit_date': last_visit_str,
+            'visits': visits_list,
+        }
+    })
 
 
 @login_required(login_url='users_naimul:login')

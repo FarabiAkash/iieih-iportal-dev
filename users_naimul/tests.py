@@ -1848,3 +1848,98 @@
 #         self.assertEqual(len(items2), 1)
 #         self.assertEqual(items2[0]['id'], rx2.id)
 
+from django.test import TestCase, Client
+from django.urls import reverse
+from django.contrib.auth.models import User
+from datetime import date
+from .models import NaimulProfile, SurgeryRecord, Appointment, Prescription, DiagnosisProcedure
+
+class PatientLookupVisitsDateTests(TestCase):
+    def setUp(self):
+        self.client = Client(SERVER_NAME='localhost')
+        self.doc_user = User.objects.create_user(
+            username='doctor_test',
+            password='Password123!',
+            first_name='Doctor',
+            last_name='Test'
+        )
+        self.profile = NaimulProfile.objects.create(
+            user=self.doc_user,
+            role='Surgeon',
+            specialty='Cataract',
+            assigned_ot_room='OT-1',
+            surgeon_display_name='Dr. Doctor Test'
+        )
+        self.client.force_login(self.doc_user)
+
+    def test_multi_visit_patient_dates_from_database(self):
+        surg = SurgeryRecord.objects.create(
+            patient_mrn='PTEST999',
+            patient_name='Naimul Test Patient',
+            patient_age=45,
+            patient_gender='Male',
+            eye='RE',
+            surgery_type='Cataract',
+            surgeon_name='Dr. Doctor Test',
+            ot_room='OT-1',
+            date=date(2026, 9, 27)
+        )
+        appt = Appointment.objects.create(
+            patient_mrn='PTEST999',
+            patient_name='Naimul Test Patient',
+            patient_age=45,
+            patient_gender='Male',
+            doctor_name='Dr. Doctor Test',
+            appointment_date=date(2026, 11, 16)
+        )
+        rx = Prescription.objects.create(
+            patient_mrn='PTEST999',
+            patient_name='Naimul Test Patient',
+            patient_age=45,
+            patient_gender='Male',
+            prescribing_doctor='Dr. Doctor Test',
+            diagnosis='Post-op evaluation'
+        )
+        Prescription.objects.filter(id=rx.id).update(date_created=date(2026, 11, 17))
+
+        res = self.client.get(f"{reverse('users_naimul:patient_lookup_api')}?mrn=PTEST999")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        pat = data['patient']
+
+        # Registration date must be earliest date in DB
+        self.assertEqual(pat['registration_date'], '27 Sep 2026')
+
+        # Last visit must be the most recent encounter before active date
+        self.assertEqual(pat['last_visit'], '17 Nov 2026')
+
+        # Visits list must contain all encounter dates from DB
+        visit_dates = [v['date'] for v in pat['visits']]
+        self.assertIn('27 Sep 2026', visit_dates)
+        self.assertIn('16 Nov 2026', visit_dates)
+        self.assertIn('17 Nov 2026', visit_dates)
+
+    def test_single_visit_patient_dates(self):
+        surg = SurgeryRecord.objects.create(
+            patient_mrn='PTEST888',
+            patient_name='Single Visit Patient',
+            patient_age=30,
+            patient_gender='Female',
+            eye='LE',
+            surgery_type='LASIK',
+            surgeon_name='Dr. Doctor Test',
+            ot_room='OT-3',
+            date=date(2026, 11, 15)
+        )
+        res = self.client.get(f"{reverse('users_naimul:patient_lookup_api')}?mrn=PTEST888")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        pat = data['patient']
+        self.assertEqual(pat['registration_date'], '15 Nov 2026')
+        self.assertEqual(pat['last_visit'], '15 Nov 2026')
+        visit_dates = [v['date'] for v in pat['visits']]
+        self.assertIn('15 Nov 2026', visit_dates)
+
+
