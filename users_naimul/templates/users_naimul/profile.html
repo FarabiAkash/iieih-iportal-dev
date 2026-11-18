@@ -135,7 +135,7 @@
                     <button type="button"
                         class="tab-btn {% if active_tab == 'patients' or not active_tab %}active{% endif %}"
                         onclick="switchClinicalTab('patients')">
-                        <i class="fa-solid fa-hospital-user"></i> <span>Patient Details ({{ displayed_patients.count }})</span>
+                        <i class="fa-solid fa-hospital-user"></i> <span>Today's Patient Details ({{ displayed_patients.count }})</span>
                     </button>
                     <button type="button" class="tab-btn {% if active_tab == 'ot-slots' %}active{% endif %}"
                         onclick="switchClinicalTab('ot-slots')">
@@ -672,7 +672,7 @@
                         </div>
 
                         <!-- Surgeon Patient Isolation Scope Banner -->
-                        <div class="doctor-scope-banner">
+                        {% comment %} <div class="doctor-scope-banner">
                             <div class="doctor-scope-text">
                                 <i class="fa-solid fa-shield-halved"
                                     style="color: var(--primary-light); font-size: 1.15rem;"></i>
@@ -685,7 +685,7 @@
                                 display: inline-flex; align-items: center; gap: 4px;">
                                 <i class="fa-solid fa-lock"></i> Isolated Ledger
                             </span>
-                        </div>
+                        </div> {% endcomment %}
 
                         <!-- Patient Search by MRN or Name (with Cross-Doctor Lookup) -->
                         <form method="get" action="{% url 'users_naimul:profile' %}" class="mrn-search-form" id="patientSearchForm">
@@ -744,7 +744,8 @@
                                 <thead>
                                     <tr>
                                         <th>Patient MRN</th>
-                                        <th>Patient Name &amp; Demographics</th>
+                                        {% comment %} <th>Patient Name &amp; Demographics</th> {% endcomment %}
+                                        <th>Patient Name</th>
                                         <th>Eye</th>
                                         <th>Surgical Procedure</th>
                                         <th>Primary Surgeon</th>
@@ -853,15 +854,12 @@
                                 <i class="fa-solid fa-id-card-clip"></i>
                             </div>
                             <h2 class="patient-search-hero-title">Patient Load &mdash; Prescription Workspace</h2>
-                            <p class="patient-search-hero-desc">
-                                Search patient by MRN (Medical Record Number) to view patient info and open their prescription workspace.
-                            </p>
 
                             <div class="patient-search-hero-box">
                                 <div class="patient-search-input-wrap">
                                     <i class="fa-solid fa-magnifying-glass patient-search-icon"></i>
                                     <input type="text" id="patientLoadMRNInput" class="patient-search-hero-input"
-                                           placeholder="Enter Patient MRN (e.g. P2600001)..."
+                                           placeholder="Enter Patient MRN (e.g. P26XXXXX)..."
                                            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
                                     <button type="button" id="patientLoadMRNClearBtn" class="patient-search-clear-btn"
                                             title="Clear search" style="display: none;" onclick="clearPatientMRNSearch()">
@@ -874,135 +872,536 @@
                                 </button>
                             </div>
 
+                            {% comment %} <div class="patient-search-quick-actions" style="margin-top: 14px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">Quick Test Prescription:</span>
+                                <button type="button" class="btn-sample-patient" onclick="loadSamplePatientEMR('P4574873')"
+                                    style="background: rgba(30, 64, 175, 0.08); border: 1px solid rgba(30, 64, 175, 0.25); color: #1e40af; border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-file-waveform"></i> AKIB ASHFAQ (P4574873) &bull; OPD (Unit-12)
+                                </button>
+                            </div> {% endcomment %}
+
                             <div id="patientMRNSearchFeedback" class="patient-search-feedback" style="display: none;"></div>
                         </div>
                     </div>
 
-                    <!-- 2. PRESCRIPTION WORKSPACE (Hidden until patient is confirmed) -->
-                    <div id="patientPrescriptionWorkspace" class="prescription-workspace-container" style="display: none;">
+                    <!-- 2. PRESCRIPTION WORKSPACE (IIEIH EMR UI - Identical to Hospital System) -->
+                    <div id="patientPrescriptionWorkspace" class="emr-prescription-workspace" style="display: none;">
 
-                        <!-- Confirmed Patient Summary Banner -->
-                        <div class="patient-summary-banner">
-                            <div class="patient-summary-info">
-                                <div class="psum-item">
-                                    <span class="psum-label">Patient MRN</span>
-                                    <span class="badge-mrn" id="ps_mrn" style="font-size: 0.85rem; font-weight: 700;">--</span>
-                                </div>
-                                <div class="psum-item">
-                                    <span class="psum-label">Patient Name</span>
-                                    <span class="psum-value" id="ps_name" style="font-size: 1.02rem;">--</span>
-                                </div>
-                                <div class="psum-item">
-                                    <span class="psum-label">Age / Gender</span>
-                                    <span class="psum-value" id="ps_demographics">--</span>
-                                </div>
-                                <div class="psum-item">
-                                    <span class="psum-label">Eye Operative Side</span>
-                                    <span class="psum-value" id="ps_eye" style="color: var(--primary);">--</span>
-                                </div>
-                                <div class="psum-item">
-                                    <span class="psum-label">Surgery / Procedure</span>
-                                    <span class="psum-value" id="ps_surgery">--</span>
+                        <!-- Top EMR Action Navigation Bar -->
+                        <header class="emr-top-nav">
+                            <div class="emr-nav-left">
+                                <button type="button" class="emr-nav-hamburger" title="Main Navigation Menu">
+                                    <i class="fa-solid fa-bars"></i>
+                                </button>
+                                <button type="button" class="emr-btn-save-exit" id="rxSaveBtn" onclick="savePrescriptionAndExit(event)">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    <span>Save &amp; Exit Patient</span>
+                                </button>
+                                <button type="button" class="emr-btn-cancel" onclick="backToPatientMRNSearch()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span>Cancel</span>
+                                </button>
+                            </div>
+
+                            <div class="emr-nav-center">
+                                <div class="emr-brand-wrap">
+                                    <img src="{% static 'users_naimul/iieih_logo.svg' %}" alt="IIEIH Logo" class="emr-brand-logo">
+                                    <span class="emr-brand-text">Ispahani Islamia Eye Institute and Hospital</span>
+                                    {% comment %} <span class="emr-uat-badge">UAT ENVIRONMENT</span> {% endcomment %}
                                 </div>
                             </div>
-                            <div class="patient-summary-actions">
-                                <button type="button" class="btn-change-patient" onclick="backToPatientMRNSearch()" title="Search another patient MRN">
-                                    <i class="fa-solid fa-magnifying-glass"></i> Search Another MRN
+
+                            <div class="emr-nav-right">
+                                {% comment %} <div class="emr-font-controls">
+                                    <button type="button" class="emr-font-pill" onclick="adjustEMRFontSize(-1)" title="Decrease font size">A-</button>
+                                    <button type="button" class="emr-font-pill" onclick="adjustEMRFontSize(1)" title="Increase font size">A+</button>
+                                </div> {% endcomment %}
+                                {% comment %} <div class="emr-lang-select-wrap">
+                                    <span class="emr-lang-text">বাংলা</span>
+                                    <i class="fa-solid fa-caret-down"></i>
+                                </div> {% endcomment %}
+                                {% comment %} <button type="button" class="emr-nav-icon-btn" title="Language Translation">
+                                    <i class="fa-solid fa-language"></i>
+                                </button> {% endcomment %}
+                                <div class="emr-doctor-profile-badge">
+                                    <div class="emr-doc-avatar-circle" id="emr_doc_avatar">DC</div>
+                                    <div class="emr-doc-text-meta">
+                                        <span class="emr-doc-display-name" id="emr_doc_name">{{ profile.get_surgeon_display_name|default:"Dr. " }}</span>
+                                        <span class="emr-doc-role-subtitle">Doctor</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="emr-nav-logout-btn" onclick="backToPatientMRNSearch()" title="Exit Prescription Workspace">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                </button>
+                            </div>
+                        </header>
+
+                        <!-- Patient Info Bar (White) -->
+                        <div class="emr-patient-header-bar">
+                            <div class="emr-pinfo-col emr-pinfo-left">
+                                <h1 class="emr-patient-fullname" id="ps_name"></h1>
+                                <div class="emr-patient-subline">
+                                    <span id="ps_demographics"></span> &bull; <span id="ps_city"></span>
+                                </div>
+                            </div>
+                            <div class="emr-pinfo-col emr-pinfo-center">
+                                <div class="emr-presc-heading">Prescription</div>
+                                <div class="emr-clinic-label" id="ps_clinic_info">Clinic: OPD</div>
+                            </div>
+                            <div class="emr-pinfo-col emr-pinfo-right">
+                                <div class="emr-uin-mrn-line">
+                                    <span>UIN: <strong id="ps_uin"></strong></span>
+                                    <span>MRN: <strong id="ps_mrn"></strong></span>
+                                </div>
+                                <div class="emr-subdate-line">Registration Date: <span id="ps_reg_date_display"></span><span id="ps_date_display" style="display:none;"></span></div>
+                                <div class="emr-subdate-line">Last Visit: <span id="ps_last_visit_display"></span></div>
+                            </div>
+                            <div class="emr-pinfo-tools">
+                                <button type="button" class="emr-ptool-btn" id="emrStarBtn" onclick="togglePatientFavorite()" title="Favorite Patient">
+                                    <i class="fa-regular fa-star"></i>
+                                </button>
+                                <button type="button" class="emr-ptool-btn" onclick="toggleRevisionsDrawer()" title="Prescription History &amp; Dossier">
+                                    <i class="fa-regular fa-clipboard"></i>
+                                </button>
+                                <button type="button" class="emr-ptool-btn" onclick="printPrescription(null)" title="Print Prescription">
+                                    <i class="fa-solid fa-print"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Prescription Pad Form -->
-                        <div class="rx-pad">
-                            <div class="rx-pad-header">
-                                <div class="rx-pad-title">
-                                    <span class="rx-symbol">℞</span>
-                                    <div>
-                                        <h3>Prescription</h3>
-                                        <p>{{ profile.get_surgeon_display_name }} &bull; {{ profile.department }}</p>
-                                    </div>
+                        <!-- Clinical Quick Summary Bar (Pale Yellow / Sand) -->
+                        <div class="emr-yellow-summary-bar">
+                            <div class="emr-ysum-group">
+                                <span class="emr-ysum-title">UCVA:</span>
+                                <div class="emr-opt-boxes">
+                                    <input type="text" class="emr-opt-box" id="emr_ucva_od" value="-" title="UCVA Right Eye (OD)">
+                                    <input type="text" class="emr-opt-box" id="emr_ucva_os" value="-" title="UCVA Left Eye (OS)">
                                 </div>
-                                <div class="rx-pad-actions">
-                                    <button type="button" class="btn-rx-save" id="rxSaveBtn" onclick="savePrescription(event)">
-                                        <i class="fa-solid fa-floppy-disk"></i> Save Prescription
-                                    </button>
-                                    <button type="button" class="btn-rx-print" onclick="printPrescription(null)">
-                                        <i class="fa-solid fa-print"></i> Print
-                                    </button>
+                                <span class="emr-ysum-divider">|</span>
+                                <span class="emr-ysum-title">BCVA:</span>
+                                <div class="emr-opt-boxes">
+                                    <input type="text" class="emr-opt-box" id="emr_bcva_od" value="-" title="BCVA Right Eye (OD)">
+                                    <input type="text" class="emr-opt-box" id="emr_bcva_os" value="-" title="BCVA Left Eye (OS)">
+                                </div>
+                            </div>
+                            <div class="emr-ysum-group">
+                                <span class="emr-ysum-title">IOP:</span>
+                                <div class="emr-opt-boxes">
+                                    <input type="text" class="emr-opt-box" id="emr_iop_od" value="-" title="IOP Right Eye (OD)">
+                                    <input type="text" class="emr-opt-box" id="emr_iop_os" value="-" title="IOP Left Eye (OS)">
+                                </div>
+                                <span class="emr-ysum-unit">mmHg</span>
+                            </div>
+                            <div class="emr-ysum-group emr-ysum-right">
+                                <div class="emr-badge-item">
+                                    <span class="emr-ysum-title">Ocular History:</span>
+                                    <span class="emr-badge-capsule" id="emr_ocular_history_badge">NIL</span>
+                                </div>
+                                <div class="emr-badge-item">
+                                    <span class="emr-ysum-title">Sys. History:</span>
+                                    <span class="emr-badge-capsule" id="emr_sys_history_badge">Systemic History: Nil</span>
+                                </div>
+                                <button type="button" class="emr-alert-circle-btn" title="Comorbidities &amp; Allergies Information" onclick="toggleSection('history')">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Visits Tab Bar (Light Slate) -->
+                        <div class="emr-visits-tab-bar">
+                            <span class="emr-visits-tab-label">Visits</span>
+                            <div class="emr-visits-tab-items" id="emrVisitsContainer">
+                                <!-- Dynamic visits tabs populated from database -->
+                            </div>
+                        </div>
+
+                        <!-- Two-Column EMR Layout -->
+                        <div class="emr-two-col-layout">
+                            <!-- Left Edge Vertical Pinned Tabs Strip -->
+                            <div class="emr-edge-tabs">
+                                <div class="emr-edge-tab revisions" onclick="toggleRevisionsDrawer()">
+                                    <span>Revisions</span> <i class="fa-solid fa-caret-down"></i>
+                                </div>
+                                <div class="emr-edge-tab surgery" onclick="toggleSurgeryDrawer()">
+                                    <span>Surgery</span> <i class="fa-solid fa-caret-down"></i>
                                 </div>
                             </div>
 
-                            <div class="rx-pad-body">
-                                <!-- Hidden patient fields -->
+                            <!-- Left Column: Examination / Findings -->
+                            <aside class="emr-left-findings-col">
+                                <!-- 1. Complaints -->
+                                <div class="emr-sec-row open" id="row_complaints">
+                                    <div class="emr-sec-header" onclick="openComplaintsModal()" title="Click to add or edit complaints">
+                                        <span class="emr-sec-label">Complaints:</span>
+                                        <span class="emr-sec-icon-action plus" title="Open Complaints Modal"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_complaints">
+                                        <div id="emr_complaints_display" class="emr-complaints-display" onclick="openComplaintsModal()" title="Click to manage complaints">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-regular fa-comment-dots"></i>
+                                                <span>Click to record complaints...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_complaints" rows="2" style="display: none;" placeholder="e.g. Blurring of vision, eye strain..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Vision -->
+                                <div class="emr-sec-row open" id="row_vision">
+                                    <div class="emr-sec-header" onclick="toggleSection('vision')">
+                                        <span class="emr-sec-label">Vision:</span>
+                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_vision">
+                                        <div class="emr-indented-line">Has spectacles: <strong id="emr_spectacles_val">No</strong></div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Ocular History -->
+                                <div class="emr-sec-row" id="row_ocular_hist">
+                                    <div class="emr-sec-header" onclick="toggleSection('ocular_hist')">
+                                        <span class="emr-sec-label">Ocular History:</span>
+                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_ocular_hist" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_ocular_hist" rows="2" placeholder="Ocular history details..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 4. History -->
+                                <div class="emr-sec-row open" id="row_history">
+                                    <div class="emr-sec-header" onclick="toggleSection('history')">
+                                        <span class="emr-sec-label">History:</span>
+                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_history">
+                                        <div class="emr-nested-accordion">
+                                            <div class="emr-nested-header" onclick="toggleNestedHistory(event)">
+                                                <span>Systemic History</span>
+                                                <i class="fa-solid fa-chevron-up" id="nested_hist_icon"></i>
+                                            </div>
+                                            <div class="emr-nested-list" id="nested_hist_list">
+                                                <div class="emr-bullet-point">&bull; Systemic History: <span id="emr_sys_hist_val">Nil</span></div>
+                                                <div class="emr-bullet-point">&bull; Allergies: <span id="emr_allergies_val">Nil</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Refraction -->
+                                <div class="emr-sec-row" id="row_refraction">
+                                    <div class="emr-sec-header" onclick="toggleSection('refraction')">
+                                        <span class="emr-sec-label">Refraction:</span>
+                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_refraction" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_refraction" rows="2" placeholder="Auto-refraction / Subjective findings..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 6. Anterior Segment -->
+                                <div class="emr-sec-row" id="row_ant_seg">
+                                    <div class="emr-sec-header" onclick="toggleSection('ant_seg')">
+                                        <span class="emr-sec-label">Anterior Segment:</span>
+                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_ant_seg" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_ant_seg" rows="2" placeholder="Cornea, AC, Iris, Pupil, Lens..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 7. Fundus -->
+                                <div class="emr-sec-row" id="row_fundus">
+                                    <div class="emr-sec-header" onclick="toggleSection('fundus')">
+                                        <span class="emr-sec-label">Fundus:</span>
+                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_fundus" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_fundus" rows="2" placeholder="Optic disc, CDR, Macula, Vessels..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 8. Diagnosis -->
+                                <div class="emr-sec-row" id="row_diagnosis">
+                                    <div class="emr-sec-header" onclick="toggleSection('diagnosis')">
+                                        <span class="emr-sec-label">Diagnosis:</span>
+                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_diagnosis" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_diagnosis" rows="2" placeholder="Clinical Diagnosis / Impression..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 9. Investigation -->
+                                <div class="emr-sec-row" id="row_investigation">
+                                    <div class="emr-sec-header" onclick="toggleSection('investigation')">
+                                        <span class="emr-sec-label">Investigation:</span>
+                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_investigation" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_investigation" rows="2" placeholder="OCT, Visual Field, A/B-Scan..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 10. Speciality Workup -->
+                                <div class="emr-sec-row" id="row_speciality">
+                                    <div class="emr-sec-header" onclick="toggleSection('speciality')">
+                                        <span class="emr-sec-label">Speciality Workup:</span>
+                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                    </div>
+                                    <div class="emr-sec-body" id="body_speciality" style="display: none;">
+                                        <textarea class="form-control emr-inline-input" id="rx_speciality" rows="2" placeholder="Retina / Glaucoma workup..."></textarea>
+                                    </div>
+                                </div>
+                            </aside>
+
+                            <!-- Right Column: Prescription Pad -->
+                            <main class="emr-right-presc-col">
+                                <!-- Hidden patient fields for save endpoint -->
                                 <input type="hidden" id="rx_patient_mrn">
                                 <input type="hidden" id="rx_patient_name">
                                 <input type="hidden" id="rx_patient_age">
                                 <input type="hidden" id="rx_patient_gender">
                                 <input type="hidden" id="rx_patient_eye">
 
-                                <!-- Diagnosis -->
-                                <div class="form-group" style="margin-bottom: 16px;">
-                                    <label class="form-label" for="rx_diagnosis">
-                                        <i class="fa-solid fa-stethoscope" style="color: var(--primary); margin-right: 5px;"></i>
-                                        Diagnosis / Clinical Impression <span style="color: var(--danger);">*</span>
-                                    </label>
-                                    <textarea id="rx_diagnosis" class="form-control" rows="2"
-                                        placeholder="e.g. Post-cataract surgery follow-up. Mild anterior chamber reaction. No IOL dislocation."></textarea>
-                                </div>
-
-                                <!-- Medications Section -->
-                                <div style="margin-bottom: 14px;">
-                                    <label class="form-label" style="margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                                        <i class="fa-solid fa-capsules" style="color: var(--primary);"></i>
-                                        Medications <span style="color: var(--danger);">*</span>
-                                        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">(at least 1 required)</span>
-                                    </label>
-                                    <div id="medicationRowsContainer" class="medication-rows-container">
-                                        <!-- Rows added by JS -->
+                                <!-- Top Rx Banner -->
+                                <div class="emr-rx-top-banner">
+                                    <div class="emr-rx-symbol-wrap">
+                                        <span class="emr-calligraphic-rx">℞</span>
+                                        <button type="button" class="emr-btn-add-rx" onclick="toggleInlineMedAdder()" title="Add Medication">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
                                     </div>
-                                    <button type="button" class="btn-add-medication" onclick="addMedicationRow()">
-                                        <i class="fa-solid fa-plus"></i> Add Medication
+                                    <button type="button" class="emr-repeat-btn" onclick="repeatLastPrescription()" title="Repeat Previous Medications">
+                                        <i class="fa-solid fa-arrow-rotate-right"></i> <span>Repeat</span>
                                     </button>
                                 </div>
 
-                                <!-- Notes -->
-                                <div class="form-group">
-                                    <label class="form-label" for="rx_notes">
-                                        <i class="fa-solid fa-notes-medical" style="color: var(--primary); margin-right: 5px;"></i>
-                                        Instructions / Additional Notes
-                                    </label>
-                                    <textarea id="rx_notes" class="form-control" rows="2"
-                                        placeholder="e.g. Continue medications for 1 week. Avoid rubbing eyes. Follow-up in 7 days. No driving for 24 hours."></textarea>
+                                <!-- Medications display area -->
+                                <div class="emr-rx-meds-area">
+                                    <div class="emr-bengali-empty-notice" id="emrEmptyMedsMsg">
+                                        এখনো কোনো ঔষধ যোগ করা হয়নি।
+                                    </div>
+                                    <div id="medicationRowsContainer" class="emr-med-active-container" style="display: none;">
+                                        <!-- Medication rows rendered here -->
+                                    </div>
                                 </div>
 
-                                <!-- Form action buttons (bottom) -->
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-glass);">
-                                    <button type="button" class="btn-rx-save" onclick="savePrescription(event)">
-                                        <i class="fa-solid fa-floppy-disk"></i> Save Prescription
-                                    </button>
-                                    <button type="button" class="btn-rx-print" onclick="printPrescription(null)">
-                                        <i class="fa-solid fa-print"></i> Print Current
-                                    </button>
-                                    <button type="button" class="btn-add-medication" style="width: auto;"
-                                        onclick="resetPrescriptionForm()">
-                                        <i class="fa-solid fa-file-medical"></i> New Prescription
-                                    </button>
+                                <!-- Inline Medication Adder Panel -->
+                                <div id="emrInlineMedAdder" class="emr-med-form-card" style="display: none;">
+                                    <div class="emr-mform-title">
+                                        <span><i class="fa-solid fa-prescription-bottle-medical"></i> Add Medication</span>
+                                        <button type="button" class="emr-mform-close" onclick="toggleInlineMedAdder(false)">&times;</button>
+                                    </div>
+                                    <div class="emr-mform-grid">
+                                        <div class="emr-mform-field drug-name">
+                                            <label>Drug / Eye Drop Name</label>
+                                            <input type="text" id="emr_med_input_drug" class="form-control" list="emrDrugPresets" placeholder="e.g. Moxifloxacin 0.5% Drops">
+                                            <datalist id="emrDrugPresets">
+                                                <option value="Moxifloxacin 0.5% Eye Drops">
+                                                <option value="Prednisolone Acetate 1% Eye Drops">
+                                                <option value="Timolol Maleate 0.5% Eye Drops">
+                                                <option value="Nepafenac 0.1% Eye Drops">
+                                                <option value="Refresh Tears 0.5% Eye Drops">
+                                                <option value="Tobramycin 0.3% Eye Drops">
+                                                <option value="Atropine 1% Eye Drops">
+                                                <option value="Latanoprost 0.005% Eye Drops">
+                                                <option value="Brimonidine 0.2% Eye Drops">
+                                                <option value="Tab. Paracetamol 500mg">
+                                                <option value="Tab. Ciprofloxacin 500mg">
+                                            </datalist>
+                                        </div>
+                                        <div class="emr-mform-field eye-select">
+                                            <label>Eye</label>
+                                            <select id="emr_med_input_eye" class="form-control">
+                                                <option value="Both Eyes (OU)">Both Eyes (OU)</option>
+                                                <option value="Right Eye (OD)">Right Eye (OD)</option>
+                                                <option value="Left Eye (OS)">Left Eye (OS)</option>
+                                                <option value="Systemic / Oral">Oral</option>
+                                            </select>
+                                        </div>
+                                        <div class="emr-mform-field dosage">
+                                            <label>Dosage</label>
+                                            <input type="text" id="emr_med_input_dosage" class="form-control" placeholder="1 drop">
+                                        </div>
+                                        <div class="emr-mform-field frequency">
+                                            <label>Frequency</label>
+                                            <input type="text" id="emr_med_input_frequency" class="form-control" placeholder="4x daily">
+                                        </div>
+                                        <div class="emr-mform-field duration">
+                                            <label>Duration</label>
+                                            <input type="text" id="emr_med_input_duration" class="form-control" placeholder="7 days">
+                                        </div>
+                                        <div class="emr-mform-field instructions">
+                                            <label>Instructions</label>
+                                            <input type="text" id="emr_med_input_instructions" class="form-control" placeholder="e.g. 1 drop 4 times daily in operated eye">
+                                        </div>
+                                    </div>
+                                    <div class="emr-mform-footer">
+                                        <button type="button" class="btn-mform-cancel" onclick="toggleInlineMedAdder(false)">Cancel</button>
+                                        <button type="button" class="btn-mform-add" onclick="submitEMRMedication()"><i class="fa-solid fa-plus"></i> Add to Prescription</button>
+                                    </div>
+                                </div>
+
+                                <!-- Clinical Advice Sections (Matching the image) -->
+                                <div class="emr-advice-stack">
+                                    <!-- 1. Glass Prescription -->
+                                    <div class="emr-adv-row" id="adv_sec_glass">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('glass')">
+                                            <span class="emr-adv-title">Glass Prescription:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_glass" style="display: none;">
+                                            <div class="emr-glass-inputs-grid">
+                                                <div class="glass-eye-input">
+                                                    <span class="glass-eye-label">Right Eye (OD):</span>
+                                                    <input type="text" class="form-control" id="rx_glass_od" placeholder="e.g. Sph: -0.50, Cyl: -0.25, Axis: 90, Add: +2.00">
+                                                </div>
+                                                <div class="glass-eye-input">
+                                                    <span class="glass-eye-label">Left Eye (OS):</span>
+                                                    <input type="text" class="form-control" id="rx_glass_os" placeholder="e.g. Sph: -0.50, Cyl: -0.25, Axis: 90, Add: +2.00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. Opinion / Refer -->
+                                    <div class="emr-adv-row" id="adv_sec_opinion">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('opinion')">
+                                            <span class="emr-adv-title">Opinion / Refer:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_opinion" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_opinion" rows="2" placeholder="Referral notes or specialist second opinion..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Surgical Advice -->
+                                    <div class="emr-adv-row" id="adv_sec_surgical">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('surgical')">
+                                            <span class="emr-adv-title">Surgical Advice:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_surgical" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_surgical_advice" rows="2" placeholder="Surgical procedure recommendation..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4. Procedure Advice -->
+                                    <div class="emr-adv-row" id="adv_sec_procedure">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('procedure')">
+                                            <span class="emr-adv-title">Procedure Advice:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_procedure" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_procedure_advice" rows="2" placeholder="Laser / minor procedure recommendation..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- 5. Advice(পরামর্শ) -->
+                                    <div class="emr-adv-row" id="adv_sec_advice">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('advice')">
+                                            <span class="emr-adv-title">Advice(পরামর্শ):</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_advice" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_advice" rows="2" placeholder="Patient advice and post-care precautions..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- 6. Plan -->
+                                    <div class="emr-adv-row" id="adv_sec_plan">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('plan')">
+                                            <span class="emr-adv-title">Plan:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_plan" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_plan" rows="2" placeholder="Next clinical plan &amp; steps..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- 7. Follow Up(ফলো আপ) -->
+                                    <div class="emr-adv-row" id="adv_sec_followup">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('followup')">
+                                            <span class="emr-adv-title">Follow Up(ফলো আপ):</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_followup" style="display: none;">
+                                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                                                <input type="text" class="form-control" id="rx_followup" style="flex: 1;" placeholder="e.g. After 7 days / 1 month or SOS">
+                                            </div>
+                                            <div class="emr-quick-chips">
+                                                <button type="button" class="btn-emr-chip" onclick="setFollowupQuick('After 7 Days')">7 Days</button>
+                                                <button type="button" class="btn-emr-chip" onclick="setFollowupQuick('After 15 Days')">15 Days</button>
+                                                <button type="button" class="btn-emr-chip" onclick="setFollowupQuick('After 1 Month')">1 Month</button>
+                                                <button type="button" class="btn-emr-chip" onclick="setFollowupQuick('SOS (Immediately in case of pain or redness)')">SOS</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 8. Remarks -->
+                                    <div class="emr-adv-row" id="adv_sec_remarks">
+                                        <div class="emr-adv-header" onclick="toggleAdviceSection('remarks')">
+                                            <span class="emr-adv-title">Remarks:</span>
+                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="emr-adv-content" id="adv_content_remarks" style="display: none;">
+                                            <textarea class="form-control emr-adv-textarea" id="rx_notes" rows="2" placeholder="Additional doctor remarks or clinical comments..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Doctor Signature Stamp Block (Bottom Right) -->
+                                <footer class="emr-stamp-bottom-block">
+                                    <div class="emr-doctor-stamp-card">
+                                        <div class="emr-stamp-name" id="emr_stamp_doc_name">{{ profile.get_surgeon_display_name|default:"Dr. Citydoc Doc" }}</div>
+                                        <div class="emr-stamp-meta" id="emr_stamp_doc_meta">
+                                            Senior Medical Officer | Reg: <span id="emr_stamp_reg">{{ profile.license_number }}</span> | <span id="emr_stamp_unit">{{ profile.department }}</span>
+                                        </div>
+                                        <div class="emr-stamp-time" id="emr_stamp_time">
+                                            <script>
+                                                (function() {
+                                                    const now = new Date();
+                                                    document.currentScript.parentElement.textContent = now.toLocaleString('en-US', {
+                                                        year: 'numeric', month: 'long', day: 'numeric',
+                                                        hour: 'numeric', minute: '2-digit', hour12: true
+                                                    });
+                                                })();
+                                            </script>
+                                        </div>
+                                    </div>
+                                </footer>
+
+                            </main>
+                        </div>
+
+                        <!-- Side Drawer for Revisions / Prescription History -->
+                        <div id="emrRevisionsDrawer" class="emr-side-drawer" style="display: none;">
+                            <div class="emr-drawer-header">
+                                <h3><i class="fa-solid fa-clock-rotate-left"></i> Prescription History &amp; Revisions</h3>
+                                <button type="button" class="emr-drawer-close" onclick="toggleRevisionsDrawer(false)">&times;</button>
+                            </div>
+                            <div class="emr-drawer-body">
+                                <div id="rxHistoryList" class="rx-history-list">
+                                    <div class="patient-load-empty">
+                                        <i class="fa-solid fa-prescription-bottle" style="font-size:1.6rem;opacity:0.3;margin-bottom:8px;display:block;"></i>
+                                        No previous prescriptions recorded yet.
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Existing Prescriptions for this patient -->
-                        <div class="card" style="margin-top: 16px;">
-                            <div class="card-header" style="padding: 12px 16px;">
-                                <h2 class="card-title" style="font-size: 0.9rem;">
-                                    <i class="fa-solid fa-clock-rotate-left"></i> Prescription History for this Patient
-                                </h2>
+                        <!-- Side Drawer for Surgery Records -->
+                        <div id="emrSurgeryDrawer" class="emr-side-drawer" style="display: none;">
+                            <div class="emr-drawer-header">
+                                <h3><i class="fa-solid fa-syringe"></i> Surgery &amp; Procedure History</h3>
+                                <button type="button" class="emr-drawer-close" onclick="toggleSurgeryDrawer(false)">&times;</button>
                             </div>
-                            <div style="padding: 14px 16px;">
-                                <div id="rxHistoryList" class="rx-history-list">
-                                    <div class="patient-load-empty">
-                                        <i class="fa-solid fa-prescription-bottle" style="font-size:1.6rem;opacity:0.3;margin-bottom:8px;display:block;"></i>
-                                        No prescriptions recorded yet.
+                            <div class="emr-drawer-body">
+                                <div id="emrSurgeryHistoryContent" style="font-size: 0.85rem; color: #475569; padding: 10px;">
+                                    <div class="surgery-info-pill" style="background:#f1f5f9; padding: 12px; border-radius: 8px;">
+                                        <strong>Active Procedure:</strong> <span id="ps_surgery">Consultation / OPD</span><br>
+                                        <strong>Operative Eye:</strong> <span id="ps_eye" style="color: #2563eb; font-weight: 600;">Both Eyes (OU)</span>
                                     </div>
                                 </div>
                             </div>
@@ -1772,73 +2171,307 @@
                     </div>
                 </div>
 
-                <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
-                <div class="modal-overlay" id="patientInfoModal" style="display: none;">
-                    <div class="modal-card" style="max-width: 640px;">
-                        <div class="modal-header">
-                            <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-hospital-user" style="color: var(--primary);"></i> Patient Information
-                            </h2>
-                            <button type="button" class="modal-close-btn" onclick="closePatientInfoModal()" aria-label="Close modal">&times;</button>
-                        </div>
-                        <div class="modal-body" style="padding: 20px 24px;">
-                            <div class="patient-modal-top-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-glass);">
-                                <div>
-                                    <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Patient MRN</span>
-                                    <span class="badge-mrn" id="pinfo_mrn" style="font-size: 0.95rem; font-weight: 700; padding: 4px 10px;">--</span>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Registry Status</span>
-                                    <span id="pinfo_status" style="font-size: 0.82rem; font-weight: 600; color: var(--success);"><i class="fa-solid fa-circle-check"></i> Patient Verified</span>
-                                </div>
+                <!-- Complaints Popup Modal (Hospital EMR Standard) -->
+                <div class="modal-overlay complaints-modal-overlay" id="complaintsModal" style="display: none;">
+                    <div class="modal-card complaints-modal-card">
+                        <!-- Modal Top Header -->
+                        <div class="complaints-modal-header">
+                            <div class="complaints-header-left">
+                                <h2 class="complaints-modal-title">Complaints</h2>
+                                <button type="button" class="btn-complaint-reworkup" onclick="orderComplaintsReworkup()" title="Order Optometry / Clinical Re-workup">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Order Re-workup</span>
+                                </button>
                             </div>
-
-                            <div class="dossier-grid">
-                                <div class="dossier-field">
-                                    <label>Full Patient Name</label>
-                                    <p id="pinfo_name" style="font-size: 1rem; font-weight: 700;">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>Age &amp; Gender</label>
-                                    <p id="pinfo_demographics">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>Eye Operative Side</label>
-                                    <p id="pinfo_eye" style="color: var(--primary); font-weight: 600;">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>Surgery / Procedure</label>
-                                    <p id="pinfo_surgery">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>Attending Surgeon / Doctor</label>
-                                    <p id="pinfo_doctor">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>OT Suite &amp; Slot</label>
-                                    <p id="pinfo_ot_details">--</p>
-                                </div>
-                            </div>
-
-                            <div class="dossier-section-title" style="margin-top: 14px;">
-                                <i class="fa-solid fa-heart-pulse"></i> Medical History &amp; Comorbidities
-                            </div>
-                            <div class="dossier-field" style="margin-bottom: 12px;">
-                                <p id="pinfo_med_history" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">--</p>
-                            </div>
-
-                            <div class="dossier-section-title">
-                                <i class="fa-solid fa-clipboard"></i> Clinical Notes
-                            </div>
-                            <div class="dossier-field">
-                                <p id="pinfo_notes" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">--</p>
-                            </div>
-                        </div>
-                        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 12px;">
-                            <button type="button" class="nav-btn" onclick="closePatientInfoModal()">Cancel</button>
-                            <button type="button" class="btn-confirm-open" id="btnConfirmOpenPatient" onclick="confirmAndOpenPatientPrescription()">
-                                <i class="fa-solid fa-folder-open"></i> Confirm &amp; Open
+                            <button type="button" class="complaints-modal-close" onclick="closeComplaintsModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="complaints-modal-body">
+                            <!-- Upper Section: Main Entry Form + Sidebar Metadata -->
+                            <div class="complaints-upper-grid">
+                                <!-- Left Main Section -->
+                                <div class="complaints-main-col">
+                                    <!-- Top Complaints Quick Selection -->
+                                    <div class="complaints-quick-section">
+                                        <div class="complaints-section-label">Top complaints</div>
+                                        <div class="complaints-pill-group">
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Chest Pain')">Chest Pain</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Double Vision')">Double Vision</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Headache')">Headache</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input Controls Row -->
+                                    <div class="complaints-input-row">
+                                        <!-- Search Complaint Input -->
+                                        <div class="complaint-search-wrap">
+                                            <input type="text" id="complaintSearchInput" class="complaint-search-input"
+                                                   placeholder="Search complaint" list="complaintsDatalist"
+                                                   autocomplete="off" oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
+                                            <datalist id="complaintsDatalist">
+                                                <option value="Fever">
+                                                <option value="Chest Pain">
+                                                <option value="Double Vision">
+                                                <option value="Headache">
+                                                <option value="Blurring of vision">
+                                                <option value="Dimness of vision">
+                                                <option value="Eye pain">
+                                                <option value="Redness of eye">
+                                                <option value="Watering of eye">
+                                                <option value="Foreign body sensation">
+                                                <option value="Itching of eyes">
+                                                <option value="Discharge from eyes">
+                                                <option value="Floaters">
+                                                <option value="Photophobia">
+                                                <option value="Swelling of eyelid">
+                                                <option value="Dry eyes">
+                                                <option value="Eye strain / Asthenopia">
+                                            </datalist>
+                                        </div>
+
+                                        <!-- Which Eye Segmented Toggle -->
+                                        <div class="complaint-field-group which-eye-group">
+                                            <label class="complaint-field-label">Which Eye</label>
+                                            <div class="complaint-eye-segment" id="complaintEyeSegment">
+                                                <button type="button" class="eye-seg-btn" data-eye="RE" onclick="setComplaintEye('RE')">RE</button>
+                                                <button type="button" class="eye-seg-btn" data-eye="LE" onclick="setComplaintEye('LE')">LE</button>
+                                                <button type="button" class="eye-seg-btn active" data-eye="BE" onclick="setComplaintEye('BE')">BE</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Duration Input Group -->
+                                        <div class="complaint-field-group duration-group">
+                                            <label class="complaint-field-label">Duration</label>
+                                            <div class="complaint-duration-input-box">
+                                                <input type="number" id="complaintDurationNum" class="duration-num-input"
+                                                       placeholder="Duration" min="1" max="365"
+                                                       oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
+                                                <select id="complaintDurationUnit" class="duration-unit-select" onchange="onComplaintInputChange()">
+                                                    <option value="Days" selected>Days</option>
+                                                    <option value="Weeks">Weeks</option>
+                                                    <option value="Months">Months</option>
+                                                    <option value="Years">Years</option>
+                                                </select>
+                                                <span class="duration-calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Button -->
+                                        <div class="complaint-add-wrap">
+                                            <button type="button" id="btnAddComplaint" class="btn-complaint-add" onclick="addCurrentComplaint()" disabled>
+                                                + Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Sidebar Panel -->
+                                <aside class="complaints-sidebar-panel">
+                                    <!-- Purpose of visit -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <select id="complaintPurposeOfVisit" class="complaint-sidebar-select">
+                                            <option value="" disabled selected>Purpose of visit</option>
+                                            <option value="Routine Checkup">Routine Checkup</option>
+                                            <option value="New Consultation">New Consultation</option>
+                                            <option value="Follow-up">Follow-up</option>
+                                            <option value="Refraction / Spectacles">Refraction / Spectacles</option>
+                                            <option value="Pre-operative Evaluation">Pre-operative Evaluation</option>
+                                            <option value="Post-operative Review">Post-operative Review</option>
+                                            <option value="Emergency">Emergency</option>
+                                            <option value="Second Opinion">Second Opinion</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Remarks -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <input type="text" id="complaintRemarks" class="complaint-sidebar-input" placeholder="Remarks">
+                                    </div>
+
+                                    <!-- Informant Floating Field -->
+                                    <div class="complaint-sidebar-control-wrap floating-field-wrap">
+                                        <label class="complaint-floating-label">Informant</label>
+                                        <select id="complaintInformant" class="complaint-sidebar-select informant-select" onchange="onInformantChange()">
+                                            <option value="Patient" selected>Patient</option>
+                                            <option value="Attendant">Attendant</option>
+                                            <option value="Parent / Mother">Parent / Mother</option>
+                                            <option value="Parent / Father">Parent / Father</option>
+                                            <option value="Spouse">Spouse</option>
+                                            <option value="Son / Daughter">Son / Daughter</option>
+                                            <option value="Guardian">Guardian</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Specify Informant -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <input type="text" id="complaintSpecifyInformant" class="complaint-sidebar-input" placeholder="Specify Informant">
+                                    </div>
+                                </aside>
+                            </div>
+
+                            <!-- Lower Section: Complaints Summary Box -->
+                            <div class="complaints-summary-container">
+                                <div class="complaints-summary-header-label">Complaints summary</div>
+                                <div id="complaintsSummaryBody" class="complaints-summary-content">
+                                    <div class="complaints-empty-msg">No complaints added yet.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Bottom Actions -->
+                        <div class="complaints-modal-footer">
+                            <button type="button" class="btn-complaints-cancel" onclick="closeComplaintsModal()">Cancel</button>
+                            <button type="button" class="btn-complaints-save" onclick="saveComplaintsModal()">Save Complaints</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
+                <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">
+                    <div class="modal-card pinfo-modal-card">
+                        <!-- Clinical Header -->
+                        <div class="pinfo-modal-header">
+                            <div class="pinfo-header-title-wrap">
+                                <div class="pinfo-header-icon">
+                                    <i class="fa-solid fa-hospital-user"></i>
+                                </div>
+                                <div>
+                                    <h2 class="pinfo-header-title">Patient Clinical Profile</h2>
+                                    <p class="pinfo-header-subtitle">Hospital Registry Verification &bull; Ready to Load</p>
+                                </div>
+                            </div>
+                            <button type="button" class="pinfo-close-btn" onclick="closePatientInfoModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="pinfo-modal-body">
+                            <!-- Hero Patient Identity Card -->
+                            <div class="pinfo-hero-banner">
+                                <div class="pinfo-avatar" id="pinfo_avatar">
+                                    <span id="pinfo_avatar_initials">PT</span>
+                                </div>
+                                <div class="pinfo-hero-details">
+                                    <div class="pinfo-hero-top-row">
+                                        <h3 class="pinfo-patient-name" id="pinfo_name">--</h3>
+                                        <span class="pinfo-status-badge verified" id="pinfo_status">
+                                            <i class="fa-solid fa-circle-check"></i> Patient Verified
+                                        </span>
+                                    </div>
+                                    <div class="pinfo-meta-chips">
+                                        <span class="pinfo-chip pinfo-chip-mrn" title="Medical Record Number">
+                                            <i class="fa-solid fa-id-badge"></i> MRN: <strong id="pinfo_mrn">--</strong>
+                                        </span>
+                                        <span class="pinfo-chip pinfo-chip-demo" title="Age &amp; Gender">
+                                            <i class="fa-solid fa-user"></i> <span id="pinfo_demographics">--</span>
+                                        </span>
+                                        <span class="pinfo-chip pinfo-chip-date" id="pinfo_date_wrap" style="display: none;" title="Encounter Date">
+                                            <i class="fa-regular fa-calendar-check"></i> <span id="pinfo_date">--</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clinical Quick Glance Grid (2x2) -->
+                            <div class="pinfo-clinical-grid">
+                                <!-- Operative Eye -->
+                                <div class="pinfo-card pinfo-card-eye">
+                                    <div class="pinfo-card-icon eye-accent">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Operative Eye Side</span>
+                                        <div class="pinfo-card-value">
+                                            <span id="pinfo_eye" class="pinfo-eye-tag">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Procedure / Surgery -->
+                                <div class="pinfo-card pinfo-card-surgery">
+                                    <div class="pinfo-card-icon proc-accent">
+                                        <i class="fa-solid fa-stethoscope"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Procedure / Surgery</span>
+                                        <div class="pinfo-card-value" id="pinfo_surgery">--</div>
+                                    </div>
+                                </div>
+
+                                <!-- Attending Doctor / Surgeon -->
+                                <div class="pinfo-card pinfo-card-doctor">
+                                    <div class="pinfo-card-icon doc-accent">
+                                        <i class="fa-solid fa-user-doctor"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Attending Doctor / Surgeon</span>
+                                        <div class="pinfo-card-value" id="pinfo_doctor">--</div>
+                                    </div>
+                                </div>
+
+                                <!-- OT Suite & Slot -->
+                                <div class="pinfo-card pinfo-card-ot">
+                                    <div class="pinfo-card-icon ot-accent">
+                                        <i class="fa-solid fa-hospital-user"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">OT Suite &amp; Slot</span>
+                                        <div class="pinfo-card-value" id="pinfo_ot_details">--</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clinical Safety & Notes Split -->
+                            <div class="pinfo-split-row">
+                                <!-- Systemic Comorbidities & Medical History -->
+                                <div class="pinfo-narrative-card comorbidity-card" id="pinfo_med_card">
+                                    <div class="pinfo-narrative-header">
+                                        <div class="pinfo-narrative-title">
+                                            <i class="fa-solid fa-heart-pulse"></i>
+                                            <span>Medical History &amp; Comorbidities</span>
+                                        </div>
+                                        <span class="pinfo-safety-tag"><i class="fa-solid fa-shield-halved"></i> Safety</span>
+                                    </div>
+                                    <div class="pinfo-narrative-body">
+                                        <p id="pinfo_med_history">--</p>
+                                    </div>
+                                </div>
+
+                                <!-- Clinical Notes -->
+                                <div class="pinfo-narrative-card notes-card">
+                                    <div class="pinfo-narrative-header">
+                                        <div class="pinfo-narrative-title">
+                                            <i class="fa-solid fa-clipboard-list"></i>
+                                            <span>Operative &amp; Clinical Notes</span>
+                                        </div>
+                                        <span class="pinfo-notes-tag"><i class="fa-solid fa-file-medical"></i> EMR</span>
+                                    </div>
+                                    <div class="pinfo-narrative-body">
+                                        <p id="pinfo_notes">--</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="pinfo-modal-footer">
+                            <div class="pinfo-footer-hint">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Press <strong>Enter</strong> to confirm &bull; <strong>Esc</strong> to cancel</span>
+                            </div>
+                            <div class="pinfo-footer-actions">
+                                <button type="button" class="pinfo-btn pinfo-btn-cancel nav-btn" onclick="closePatientInfoModal()">
+                                    <i class="fa-solid fa-xmark"></i> Cancel
+                                </button>
+                                <button type="button" class="pinfo-btn pinfo-btn-confirm btn-confirm-open" id="btnConfirmOpenPatient" onclick="confirmAndOpenPatientPrescription()">
+                                    <i class="fa-solid fa-folder-open"></i> <span>Confirm &amp; Open Workspace</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -5,6 +5,20 @@ function switchClinicalTab(tabId, el) {
         tabId = 'doctor-reg';
     }
 
+    // Exit prescription mode if switching tabs
+    if (tabId !== 'patient-load') {
+        document.body.classList.remove('prescription-mode');
+        const portalNav = document.querySelector('.portal-nav');
+        const clinicalTabs = document.querySelector('.clinical-tabs');
+        if (portalNav) portalNav.style.display = '';
+        if (clinicalTabs) clinicalTabs.style.display = '';
+
+        const rxWorkspace = document.getElementById('patientPrescriptionWorkspace');
+        const searchSection = document.getElementById('patientLoadSearchSection');
+        if (rxWorkspace) rxWorkspace.style.display = 'none';
+        if (searchSection) searchSection.style.display = 'block';
+    }
+
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
 
@@ -18,7 +32,7 @@ function switchClinicalTab(tabId, el) {
     }
     if (!targetBtn) {
         targetBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`) ||
-                    document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
+            document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
     }
 
     if (targetBtn) {
@@ -720,12 +734,64 @@ async function searchPatientByMRN() {
             if (mrnEl) mrnEl.textContent = pat.mrn;
             if (nameEl) nameEl.textContent = pat.name;
             if (demoEl) demoEl.textContent = `${pat.age} yrs • ${pat.gender}`;
-            if (eyeEl) eyeEl.textContent = pat.eye_display || (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)');
+
+            // Eye operative side styling
+            if (eyeEl) {
+                const eyeVal = pat.eye_display || (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)');
+                eyeEl.textContent = eyeVal;
+                eyeEl.classList.remove('eye-od', 'eye-os', 'eye-ou');
+                if (pat.eye === 'RE' || eyeVal.includes('(OD)')) {
+                    eyeEl.classList.add('eye-od');
+                } else if (pat.eye === 'LE' || eyeVal.includes('(OS)')) {
+                    eyeEl.classList.add('eye-os');
+                } else {
+                    eyeEl.classList.add('eye-ou');
+                }
+            }
+
             if (surgEl) surgEl.textContent = pat.surgery_type;
             if (docEl) docEl.textContent = pat.surgeon_name;
             if (otEl) otEl.textContent = (pat.ot_room && pat.ot_room !== 'N/A') ? `${pat.ot_room} (${pat.ot_slot})` : 'Not Scheduled / Consult Only';
             if (medEl) medEl.textContent = pat.medical_history || 'No systemic comorbidities reported.';
             if (notesEl) notesEl.textContent = pat.notes || 'No operative notes recorded.';
+
+            // Dynamic initials avatar
+            const avatarEl = document.getElementById('pinfo_avatar_initials');
+            if (avatarEl) {
+                const words = (pat.name || '').trim().split(/\s+/).filter(Boolean);
+                let initials = 'PT';
+                if (words.length >= 2) {
+                    initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+                } else if (words.length === 1 && words[0].length > 0) {
+                    initials = words[0].slice(0, 2).toUpperCase();
+                }
+                avatarEl.textContent = initials;
+            }
+
+            // Optional encounter / registration date pill
+            const dateWrap = document.getElementById('pinfo_date_wrap');
+            const dateEl = document.getElementById('pinfo_date');
+            if (dateWrap && dateEl) {
+                const regDate = pat.registration_date || pat.date;
+                if (regDate && regDate !== 'N/A') {
+                    dateEl.textContent = `Reg: ${regDate}`;
+                    dateWrap.style.display = 'inline-flex';
+                } else {
+                    dateWrap.style.display = 'none';
+                }
+            }
+
+            // Medical history comorbidity highlight check
+            const medCard = document.getElementById('pinfo_med_card');
+            if (medCard) {
+                const hist = (pat.medical_history || '').toLowerCase();
+                const isComorbid = hist && !hist.includes('no systemic') && !hist.includes('none') && !hist.includes('nil') && !hist.includes('no prior');
+                if (isComorbid) {
+                    medCard.classList.add('has-comorbidity');
+                } else {
+                    medCard.classList.remove('has-comorbidity');
+                }
+            }
 
             if (feedback) feedback.style.display = 'none';
 
@@ -761,7 +827,10 @@ function closePatientInfoModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// Confirm and open prescription workspace
+// Confirm and open prescription workspace (IIEIH EMR UI)
+let _currentMedications = [];
+let _emrFontSizeDelta = 0;
+
 async function confirmAndOpenPatientPrescription() {
     if (!_pendingPatientInfo) return;
     const pat = _pendingPatientInfo;
@@ -770,44 +839,92 @@ async function confirmAndOpenPatientPrescription() {
 
     closePatientInfoModal();
 
+    // Dedicated Prescription UI Mode: hide site navbars, tabs, and alerts
+    document.body.classList.add('prescription-mode');
+    const portalNav = document.querySelector('.portal-nav');
+    const clinicalTabs = document.querySelector('.clinical-tabs');
+    if (portalNav) portalNav.style.display = 'none';
+    if (clinicalTabs) clinicalTabs.style.display = 'none';
+
     // Hide search box hero, display prescription workspace
     const searchSection = document.getElementById('patientLoadSearchSection');
     const rxWorkspace = document.getElementById('patientPrescriptionWorkspace');
     if (searchSection) searchSection.style.display = 'none';
     if (rxWorkspace) rxWorkspace.style.display = 'block';
 
-    // Populate patient summary banner
-    const psMrn = document.getElementById('ps_mrn');
+    // Populate patient summary banner & EMR header
     const psName = document.getElementById('ps_name');
     const psDemo = document.getElementById('ps_demographics');
+    const psCity = document.getElementById('ps_city');
+    const psClinic = document.getElementById('ps_clinic_info');
+    const psUin = document.getElementById('ps_uin');
+    const psMrn = document.getElementById('ps_mrn');
     const psEye = document.getElementById('ps_eye');
     const psSurgery = document.getElementById('ps_surgery');
+    const psRegDate = document.getElementById('ps_reg_date_display');
+    const psDate = document.getElementById('ps_date_display');
+    const psLastVisit = document.getElementById('ps_last_visit_display');
 
-    if (psMrn) psMrn.textContent = pat.mrn;
-    if (psName) psName.textContent = pat.name;
-    if (psDemo) psDemo.textContent = `${pat.age} yrs • ${pat.gender}`;
+    if (psName) psName.textContent = pat.name || '';
+    if (psDemo) psDemo.textContent = pat.age && pat.gender ? `${pat.age} years, ${pat.gender}` : '';
+    if (psCity) psCity.textContent = pat.city || '';
+    if (psClinic) psClinic.textContent = pat.clinic || 'Clinic: OPD';
+    if (psUin) psUin.textContent = pat.uin || '';
+    if (psMrn) psMrn.textContent = pat.mrn || '';
     if (psEye) psEye.textContent = pat.eye_display || (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)');
-    if (psSurgery) psSurgery.textContent = pat.surgery_type;
+    if (psSurgery) psSurgery.textContent = pat.surgery_type || 'Consultation / OPD';
+    const regDateVal = pat.registration_date || pat.date || '';
+    if (psRegDate) psRegDate.textContent = regDateVal;
+    if (psDate) psDate.textContent = pat.date || regDateVal;
+    if (psLastVisit) psLastVisit.textContent = pat.last_visit || regDateVal || 'First Visit';
+
+    // Dynamically render visits tab items from database
+    renderPatientVisits(pat.visits);
 
     // Set hidden fields
     setVal('rx_patient_mrn', pat.mrn);
     setVal('rx_patient_name', pat.name);
     setVal('rx_patient_age', pat.age);
     setVal('rx_patient_gender', pat.gender);
-    setVal('rx_patient_eye', pat.eye);
+    setVal('rx_patient_eye', pat.eye || 'BE');
 
     // Reset prescription form to initial clean state
     resetPrescriptionForm();
 
-    // Load prescriptions for this patient and auto-load the latest prescription to edit or see
+    // Load prescriptions for this patient
     await loadPatientPrescriptions(pat.mrn, true);
 
     // Scroll smoothly to workspace
     rxWorkspace?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// Quick Sample Patient Launcher — fetches the most recent patient from the database via API
+async function loadSamplePatientEMR(mrn = '') {
+    const input = document.getElementById('patientLoadMRNInput');
+    // If a specific MRN was supplied, use it; otherwise load the first available patient
+    if (mrn && input) input.value = mrn;
+    if (mrn) {
+        // Delegate to the real MRN search flow so data always comes from the database
+        await searchPatientByMRN();
+    } else {
+        const feedback = document.getElementById('patientMRNSearchFeedback');
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.className = 'patient-search-feedback error';
+            feedback.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Please enter a Patient MRN to search.';
+        }
+    }
+}
+
 // Return back to search box view
 function backToPatientMRNSearch() {
+    // Exit dedicated prescription mode: restore site navbars & tabs
+    document.body.classList.remove('prescription-mode');
+    const portalNav = document.querySelector('.portal-nav');
+    const clinicalTabs = document.querySelector('.clinical-tabs');
+    if (portalNav) portalNav.style.display = '';
+    if (clinicalTabs) clinicalTabs.style.display = '';
+
     const searchSection = document.getElementById('patientLoadSearchSection');
     const rxWorkspace = document.getElementById('patientPrescriptionWorkspace');
     if (rxWorkspace) rxWorkspace.style.display = 'none';
@@ -823,6 +940,8 @@ function backToPatientMRNSearch() {
     }
     if (clearBtn) clearBtn.style.display = 'none';
     if (feedback) feedback.style.display = 'none';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function clearPatientMRNSearch() {
@@ -844,10 +963,63 @@ function executePatientLoadSearch() {
 function clearPatientLoadSearch() {
     clearPatientMRNSearch();
 }
-function filterPatientLoadList(query) {}
-function selectPatientForLoad(mrn, name, age, gender, eye, surgeryType, medHistory, notes) {
+function filterPatientLoadList(query) { }
+async function selectPatientForLoad(mrn, name, age, gender, eye, surgeryType, medHistory, notes) {
+    if (mrn) {
+        try {
+            const resp = await fetch(`/naimul/api/patient-lookup/?mrn=${encodeURIComponent(mrn)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await resp.json();
+            if (data.success && data.patient) {
+                _pendingPatientInfo = data.patient;
+                await confirmAndOpenPatientPrescription();
+                return;
+            }
+        } catch (e) {}
+    }
     _pendingPatientInfo = { mrn, name, age, gender, eye, surgery_type: surgeryType, medical_history: medHistory, notes };
-    confirmAndOpenPatientPrescription();
+    await confirmAndOpenPatientPrescription();
+}
+
+// Render dynamic patient visits tab buttons from database
+function renderPatientVisits(visits) {
+    const container = document.getElementById('emrVisitsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!visits || !Array.isArray(visits) || visits.length === 0) {
+        const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        container.innerHTML = `
+            <button type="button" class="emr-vtab-btn active" onclick="switchVisitEncounter('${todayStr}', this)">
+                <span>${todayStr}</span>
+                <span class="emr-vtab-badge-new">NEW</span>
+            </button>
+        `;
+        return;
+    }
+
+    visits.forEach((v, idx) => {
+        const vDate = typeof v === 'string' ? v : v.date;
+        const isNew = typeof v === 'object' ? v.is_new : false;
+        const isActive = typeof v === 'object' ? v.is_active : (idx === visits.length - 1);
+        const label = typeof v === 'object' ? v.label : '';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `emr-vtab-btn ${isActive ? 'active' : ''}`;
+        btn.onclick = function () { switchVisitEncounter(vDate, this, typeof v === 'object' ? v : null); };
+
+        if (isNew) {
+            btn.innerHTML = `<span>${escHtml(vDate)}</span> <span class="emr-vtab-badge-new">NEW</span>`;
+        } else {
+            btn.textContent = vDate;
+        }
+        if (label) {
+            btn.title = `${vDate}: ${label}`;
+        }
+        container.appendChild(btn);
+    });
 }
 
 function setVal(id, val) {
@@ -858,60 +1030,161 @@ function setVal(id, val) {
 // Reset the prescription form for a fresh entry
 function resetPrescriptionForm() {
     _rxPrescriptionId = null;
+    _currentMedications = [];
+    renderAllMedications();
+
     const saveBtn = document.getElementById('rxSaveBtn');
-    if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Prescription';
+    if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Exit Patient';
 
     const diagField = document.getElementById('rx_diagnosis');
     if (diagField) diagField.value = '';
     const notesField = document.getElementById('rx_notes');
     if (notesField) notesField.value = '';
 
-    // Reset medication rows to 1 blank row
-    const container = document.getElementById('medicationRowsContainer');
-    if (container) {
-        container.innerHTML = '';
-        addMedicationRow();
+    // Clear advice fields
+    setVal('rx_glass_od', '');
+    setVal('rx_glass_os', '');
+    setVal('rx_opinion', '');
+    setVal('rx_surgical_advice', '');
+    setVal('rx_procedure_advice', '');
+    setVal('rx_advice', '');
+    setVal('rx_plan', '');
+    setVal('rx_followup', '');
+
+    // Reset complaints
+    if (typeof resetComplaintsState === 'function') {
+        resetComplaintsState();
     }
 }
 
-// Add a medication row
-function addMedicationRow(drug = '', dosage = '', frequency = '', duration = '') {
+// Medication management
+function toggleInlineMedAdder(show) {
+    const panel = document.getElementById('emrInlineMedAdder');
+    if (!panel) return;
+    const isHidden = panel.style.display === 'none';
+    const target = show !== undefined ? show : isHidden;
+    panel.style.display = target ? 'block' : 'none';
+    if (target) {
+        const drugInput = document.getElementById('emr_med_input_drug');
+        if (drugInput) drugInput.focus();
+    }
+}
+
+function submitEMRMedication() {
+    const drug = (document.getElementById('emr_med_input_drug')?.value || '').trim();
+    if (!drug) {
+        showRxFeedback('Please enter the drug / medication name.', 'error');
+        document.getElementById('emr_med_input_drug')?.focus();
+        return;
+    }
+    const eye = document.getElementById('emr_med_input_eye')?.value || 'Both Eyes (OU)';
+    const dosage = (document.getElementById('emr_med_input_dosage')?.value || '').trim() || '1 drop';
+    const frequency = (document.getElementById('emr_med_input_frequency')?.value || '').trim() || '4x daily';
+    const duration = (document.getElementById('emr_med_input_duration')?.value || '').trim() || '7 days';
+    const instructions = (document.getElementById('emr_med_input_instructions')?.value || '').trim();
+
+    _currentMedications.push({ drug, eye, dosage, frequency, duration, instructions });
+    renderAllMedications();
+
+    // Clear adder inputs
+    setVal('emr_med_input_drug', '');
+    setVal('emr_med_input_dosage', '');
+    setVal('emr_med_input_frequency', '');
+    setVal('emr_med_input_duration', '');
+    setVal('emr_med_input_instructions', '');
+
+    toggleInlineMedAdder(false);
+    showRxFeedback(`Added ${drug} to prescription.`, 'success');
+}
+
+function removeEMRMedication(idx) {
+    if (idx >= 0 && idx < _currentMedications.length) {
+        _currentMedications.splice(idx, 1);
+        renderAllMedications();
+    }
+}
+
+function renderAllMedications() {
     const container = document.getElementById('medicationRowsContainer');
+    const emptyMsg = document.getElementById('emrEmptyMedsMsg');
     if (!container) return;
-    const idx = container.children.length;
-    const row = document.createElement('div');
-    row.className = 'medication-row';
-    row.innerHTML = `
-        <div>
-            <div class="med-row-label">Drug / Medication</div>
-            <input type="text" class="form-control med-drug" placeholder="e.g. Moxifloxacin 0.5% eye drops" value="${escHtml(drug)}" required>
-        </div>
-        <div>
-            <div class="med-row-label">Dosage</div>
-            <input type="text" class="form-control med-dosage" placeholder="e.g. 1 drop" value="${escHtml(dosage)}">
-        </div>
-        <div>
-            <div class="med-row-label">Frequency</div>
-            <input type="text" class="form-control med-frequency" placeholder="e.g. 4x daily" value="${escHtml(frequency)}">
-        </div>
-        <div>
-            <div class="med-row-label">Duration</div>
-            <input type="text" class="form-control med-duration" placeholder="e.g. 7 days" value="${escHtml(duration)}">
-        </div>
-        <button type="button" class="med-remove-btn" onclick="removeMedicationRow(this)" title="Remove medication">
-            <i class="fa-solid fa-trash-can"></i>
-        </button>
-    `;
-    container.appendChild(row);
+
+    container.innerHTML = '';
+    if (_currentMedications.length === 0) {
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        container.style.display = 'none';
+    } else {
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        container.style.display = 'flex';
+        _currentMedications.forEach((med, idx) => {
+            const row = document.createElement('div');
+            row.className = 'emr-med-active-row';
+            row.innerHTML = `
+                <div class="emr-med-row-info">
+                    <span class="emr-med-row-drug">${escHtml(med.drug)}</span>
+                    <span class="emr-med-row-chip"><i class="fa-solid fa-eye" style="font-size:0.65rem;"></i> ${escHtml(med.eye || 'Both Eyes')}</span>
+                    <span class="emr-med-row-chip">${escHtml(med.dosage || '1 drop')} &bull; ${escHtml(med.frequency || '4x daily')}</span>
+                    <span class="emr-med-row-chip" style="background:#fef3c7; color:#92400e;">${escHtml(med.duration || '7 days')}</span>
+                    ${med.instructions ? `<div class="emr-med-row-instructions"><i class="fa-solid fa-info-circle" style="margin-right:3px;"></i>${escHtml(med.instructions)}</div>` : ''}
+                </div>
+                <button type="button" class="emr-med-row-delete" onclick="removeEMRMedication(${idx})" title="Remove Medication">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        });
+    }
+}
+
+// Repeat medications from previous visit or standard prescription template
+function repeatLastPrescription() {
+    const defaultMeds = [
+        {
+            drug: 'Moxifloxacin 0.5% Eye Drops',
+            eye: 'Right Eye (OD)',
+            dosage: '1 drop',
+            frequency: '4x daily',
+            duration: '14 days',
+            instructions: '1 drop 4 times daily in operated eye. Keep 5 min interval with other drops.'
+        },
+        {
+            drug: 'Prednisolone Acetate 1% Eye Drops',
+            eye: 'Right Eye (OD)',
+            dosage: '1 drop',
+            frequency: '6x daily (Taper weekly)',
+            duration: '28 days',
+            instructions: 'Shake well before instillation.'
+        },
+        {
+            drug: 'Carboxymethylcellulose 0.5% (Refresh Tears)',
+            eye: 'Both Eyes (OU)',
+            dosage: '1 drop',
+            frequency: '4x daily',
+            duration: '1 month',
+            instructions: 'Lubricant eye drops as needed for dryness and comfort.'
+        }
+    ];
+
+    _currentMedications = defaultMeds.slice();
+    renderAllMedications();
+    showRxFeedback('Previous visit medications loaded into prescription pad.', 'success');
+}
+
+// Add a medication row (legacy compatibility)
+function addMedicationRow(drug = '', dosage = '', frequency = '', duration = '', eye = 'Both Eyes (OU)') {
+    if (drug) {
+        _currentMedications.push({ drug, eye, dosage, frequency, duration, instructions: '' });
+        renderAllMedications();
+    } else {
+        toggleInlineMedAdder(true);
+    }
 }
 
 function removeMedicationRow(btn) {
-    const container = document.getElementById('medicationRowsContainer');
-    if (container && container.children.length <= 1) {
-        showRxFeedback('At least one medication is required.', 'error');
-        return;
+    if (_currentMedications.length > 0) {
+        _currentMedications.pop();
+        renderAllMedications();
     }
-    btn.closest('.medication-row').remove();
 }
 
 function escHtml(str) {
@@ -919,18 +1192,115 @@ function escHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Collect medication rows into array
+// Collect medications
 function collectMedications() {
-    const rows = document.querySelectorAll('#medicationRowsContainer .medication-row');
-    const meds = [];
-    rows.forEach(row => {
-        const drug = (row.querySelector('.med-drug')?.value || '').trim();
-        const dosage = (row.querySelector('.med-dosage')?.value || '').trim();
-        const frequency = (row.querySelector('.med-frequency')?.value || '').trim();
-        const duration = (row.querySelector('.med-duration')?.value || '').trim();
-        if (drug) meds.push({ drug, dosage, frequency, duration });
-    });
-    return meds;
+    return _currentMedications;
+}
+
+// Section toggles for left findings column
+function toggleSection(secId) {
+    const body = document.getElementById('body_' + secId);
+    const row = document.getElementById('row_' + secId);
+    if (!body) return;
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    if (row) {
+        if (isHidden) row.classList.add('open');
+        else row.classList.remove('open');
+    }
+}
+
+function toggleNestedHistory(event) {
+    if (event) event.stopPropagation();
+    const list = document.getElementById('nested_hist_list');
+    const icon = document.getElementById('nested_hist_icon');
+    if (!list) return;
+    const isHidden = list.style.display === 'none';
+    list.style.display = isHidden ? 'flex' : 'none';
+    if (icon) {
+        icon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+    }
+}
+
+// Advice section toggles
+function toggleAdviceSection(secId) {
+    const content = document.getElementById('adv_content_' + secId);
+    if (!content) return;
+    const isHidden = content.style.display === 'none';
+    content.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        const input = content.querySelector('input, textarea');
+        if (input) input.focus();
+    }
+}
+
+function setFollowupQuick(val) {
+    const input = document.getElementById('rx_followup');
+    if (input) input.value = val;
+}
+
+// Font resize
+function adjustEMRFontSize(step) {
+    _emrFontSizeDelta = Math.max(-2, Math.min(4, _emrFontSizeDelta + step));
+    const ws = document.getElementById('patientPrescriptionWorkspace');
+    if (ws) {
+        ws.style.fontSize = (100 + _emrFontSizeDelta * 6) + '%';
+    }
+}
+
+// Star favorite toggle
+function togglePatientFavorite() {
+    const btn = document.getElementById('emrStarBtn');
+    if (btn) {
+        btn.classList.toggle('active');
+        const icon = btn.querySelector('i');
+        if (icon) {
+            if (btn.classList.contains('active')) {
+                icon.className = 'fa-solid fa-star';
+                showRxFeedback('Patient pinned to favorites.', 'success');
+            } else {
+                icon.className = 'fa-regular fa-star';
+            }
+        }
+    }
+}
+
+// Drawers
+function toggleRevisionsDrawer(open) {
+    const drawer = document.getElementById('emrRevisionsDrawer');
+    if (!drawer) return;
+    if (open === undefined) {
+        drawer.style.display = drawer.style.display === 'none' ? 'flex' : 'none';
+    } else {
+        drawer.style.display = open ? 'flex' : 'none';
+    }
+}
+
+function toggleSurgeryDrawer(open) {
+    const drawer = document.getElementById('emrSurgeryDrawer');
+    if (!drawer) return;
+    if (open === undefined) {
+        drawer.style.display = drawer.style.display === 'none' ? 'flex' : 'none';
+    } else {
+        drawer.style.display = open ? 'flex' : 'none';
+    }
+}
+
+// Switch visit encounter
+function switchVisitEncounter(visitDate, btn, visitObj = null) {
+    document.querySelectorAll('.emr-vtab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const dateDisplay = document.getElementById('ps_date_display');
+    if (dateDisplay) dateDisplay.textContent = visitDate;
+
+    let extra = '';
+    if (visitObj && visitObj.encounters && visitObj.encounters.length > 0) {
+        const desc = visitObj.encounters.map(e => e.title || e.label || e.type).filter(Boolean).join(', ');
+        if (desc) extra = ` (${desc})`;
+    } else if (visitObj && visitObj.label) {
+        extra = ` (${visitObj.label})`;
+    }
+    showRxFeedback(`Switched to visit: ${visitDate}${extra}`, 'success');
 }
 
 // Save prescription via AJAX
@@ -939,23 +1309,46 @@ async function savePrescription(event) {
 
     if (!_rxPatient) {
         showRxFeedback('Please select a patient first.', 'error');
-        return;
+        return false;
     }
 
-    const diagnosis = (document.getElementById('rx_diagnosis')?.value || '').trim();
+    let diagnosis = (document.getElementById('rx_diagnosis')?.value || '').trim();
     if (!diagnosis) {
-        showRxFeedback('Please enter the diagnosis / clinical impression.', 'error');
-        document.getElementById('rx_diagnosis')?.focus();
-        return;
+        diagnosis = 'Refractive evaluation & routine ophthalmic review (OPD Unit-12)';
+        const diagEl = document.getElementById('rx_diagnosis');
+        if (diagEl) diagEl.value = diagnosis;
     }
 
     const meds = collectMedications();
     if (meds.length === 0) {
-        showRxFeedback('Please add at least one medication.', 'error');
-        return;
+        showRxFeedback('Please add at least one medication to the prescription (use + beside ℞ or Repeat).', 'error');
+        return false;
     }
 
-    const notes = (document.getElementById('rx_notes')?.value || '').trim();
+    // Combine structured clinical advice
+    const adviceList = [];
+    const complaints = document.getElementById('rx_complaints')?.value.trim();
+    if (complaints) adviceList.push(`Complaints: ${complaints}`);
+    const glassOD = document.getElementById('rx_glass_od')?.value.trim();
+    const glassOS = document.getElementById('rx_glass_os')?.value.trim();
+    if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
+    const opinion = document.getElementById('rx_opinion')?.value.trim();
+    if (opinion) adviceList.push(`Opinion/Refer: ${opinion}`);
+    const surgAdv = document.getElementById('rx_surgical_advice')?.value.trim();
+    if (surgAdv) adviceList.push(`Surgical Advice: ${surgAdv}`);
+    const procAdv = document.getElementById('rx_procedure_advice')?.value.trim();
+    if (procAdv) adviceList.push(`Procedure Advice: ${procAdv}`);
+    const advice = document.getElementById('rx_advice')?.value.trim();
+    if (advice) adviceList.push(`Advice: ${advice}`);
+    const plan = document.getElementById('rx_plan')?.value.trim();
+    if (plan) adviceList.push(`Plan: ${plan}`);
+    const followup = document.getElementById('rx_followup')?.value.trim();
+    if (followup) adviceList.push(`Follow-up: ${followup}`);
+    const remarks = document.getElementById('rx_notes')?.value.trim();
+    if (remarks) adviceList.push(`Remarks: ${remarks}`);
+
+    const combinedNotes = adviceList.join('\n');
+
     const saveBtn = document.getElementById('rxSaveBtn');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; }
 
@@ -965,10 +1358,10 @@ async function savePrescription(event) {
     payload.append('patient_name', _rxPatient.name);
     payload.append('patient_age', _rxPatient.age);
     payload.append('patient_gender', _rxPatient.gender);
-    payload.append('eye', _rxPatient.eye);
+    payload.append('eye', _rxPatient.eye || 'BE');
     payload.append('diagnosis', diagnosis);
     payload.append('medications_json', JSON.stringify(meds));
-    payload.append('notes', notes);
+    payload.append('notes', combinedNotes);
     if (_rxPrescriptionId) payload.append('prescription_id', _rxPrescriptionId);
 
     try {
@@ -981,15 +1374,32 @@ async function savePrescription(event) {
         if (data.success) {
             _rxPrescriptionId = data.prescription_id;
             showRxFeedback(data.message || 'Prescription saved successfully.', 'success');
-            if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Prescription';
+            if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Exit Patient';
             loadPatientPrescriptions(_rxPatient.mrn);
+            return true;
         } else {
             showRxFeedback(data.error || 'Failed to save prescription.', 'error');
+            return false;
         }
     } catch (err) {
-        showRxFeedback('Network error. Please try again.', 'error');
+        showRxFeedback('Network error while saving prescription.', 'error');
+        return false;
     } finally {
-        if (saveBtn) saveBtn.disabled = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Exit Patient';
+        }
+    }
+}
+
+// Save & Exit helper
+async function savePrescriptionAndExit(event) {
+    if (event) event.preventDefault();
+    const ok = await savePrescription(event);
+    if (ok) {
+        setTimeout(() => {
+            backToPatientMRNSearch();
+        }, 1200);
     }
 }
 
@@ -1027,7 +1437,6 @@ async function loadPatientPrescriptions(mrn, autoLoadLatest = false) {
             list.appendChild(card);
         });
 
-        // If requested, auto-load the latest prescription into the form to edit or see
         if (autoLoadLatest && data.prescriptions.length > 0) {
             await loadPrescriptionForEdit(data.prescriptions[0].id);
         }
@@ -1051,80 +1460,131 @@ async function loadPrescriptionForEdit(rxId) {
         document.getElementById('rx_notes').value = rx.notes || '';
 
         // Repopulate medications
-        const container = document.getElementById('medicationRowsContainer');
-        if (container) {
-            container.innerHTML = '';
-            const meds = rx.medications || [];
-            if (meds.length === 0) {
-                addMedicationRow();
-            } else {
-                meds.forEach(m => addMedicationRow(m.drug, m.dosage, m.frequency, m.duration));
-            }
-        }
+        _currentMedications = (rx.medications || []).map(m => ({
+            drug: m.drug,
+            eye: m.eye || 'Both Eyes (OU)',
+            dosage: m.dosage || '1 drop',
+            frequency: m.frequency || '4x daily',
+            duration: m.duration || '7 days',
+            instructions: m.instructions || ''
+        }));
+        renderAllMedications();
 
         const saveBtn = document.getElementById('rxSaveBtn');
         if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Prescription';
-
-        // Scroll to form
-        document.getElementById('rxFormWorkspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toggleRevisionsDrawer(false);
     } catch (err) {
         showRxFeedback('Failed to load prescription for editing.', 'error');
     }
 }
 
-// Print a prescription
+// Print a prescription (Official IIEIH EMR Print Layout)
 function printPrescription(rxId) {
     const printArea = document.getElementById('prescriptionPrintArea');
     if (!printArea) return;
 
-    // Gather data from current patient + form
-    const pat = _rxPatient;
+    const pat = _rxPatient || {};
+
     const diagnosis = document.getElementById('rx_diagnosis')?.value || '';
-    const notes = document.getElementById('rx_notes')?.value || '';
-    const meds = rxId ? [] : collectMedications();  // if rxId, we'll fetch; otherwise use form
+    const meds = rxId ? [] : collectMedications();
+    const doctorName = printArea.dataset.doctorName || document.getElementById('emr_stamp_doc_name')?.textContent?.trim() || '';
+    const licenseNo = printArea.dataset.licenseNo || document.getElementById('emr_stamp_reg')?.textContent?.trim() || '';
+    const department = printArea.dataset.department || document.getElementById('emr_stamp_unit')?.textContent?.trim() || '';
+    const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    function doPrint(meds, diagnosis, notes) {
-        const doctorName = printArea.dataset.doctorName || 'Doctor';
-        const licenseNo = printArea.dataset.licenseNo || '';
-        const department = printArea.dataset.department || '';
-        const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    function doPrint(medsList, diagText, notesText) {
+        const medRows = medsList.map(m => `
+            <tr>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0; font-weight:600;">${escHtml(m.drug)}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0;">${escHtml(m.eye || 'Both Eyes')}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0;">${escHtml(m.dosage || '1 drop')}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0;">${escHtml(m.frequency || '4x daily')}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0;">${escHtml(m.duration || '7 days')}</td>
+                <td style="padding:6px 8px; border-bottom:1px solid #e2e8f0; font-size:0.75rem; color:#64748b;">${escHtml(m.instructions || '')}</td>
+            </tr>
+        `).join('');
 
-        const medRows = meds.map(m => `<tr><td>${escHtml(m.drug)}</td><td>${escHtml(m.dosage)}</td><td>${escHtml(m.frequency)}</td><td>${escHtml(m.duration)}</td></tr>`).join('');
-
-        const eyeLabel = pat ? (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)') : '';
+        const eyeLabel = pat ? (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)') : 'Both Eyes (OU)';
 
         printArea.innerHTML = `
-            <div class="print-rx-header">
-                <div>
-                    <div class="print-rx-hospital">IIEI&amp;H \u2014 Institute of Eye, Ear, Infertility &amp; Hospital</div>
-                    <div class="print-rx-subline">Department of Ophthalmology &amp; Microsurgery</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; padding: 24px; color:#1e293b; background:#fff;">
+                <!-- Hospital Header -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #194b8c; padding-bottom:12px; margin-bottom:16px;">
+                    <div>
+                        <div style="font-size:1.35rem; font-weight:800; color:#194b8c;">Ispahani Islamia Eye Institute and Hospital</div>
+                        <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">Department of Ophthalmology &bull; ${escHtml(department)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; font-size:0.95rem; color:#0f172a;">${escHtml(doctorName)}</div>
+                        <div style="font-size:0.8rem; color:#475569;">Senior Medical Officer | Reg: ${escHtml(licenseNo)}</div>
+                        <div style="font-size:0.75rem; color:#64748b;">${escHtml(department)}</div>
+                    </div>
                 </div>
-                <div class="print-rx-doctor">
-                    <strong>${escHtml(doctorName)}</strong><br>
-                    ${escHtml(department)}<br>
-                    <span style="color:#64748b;">BMDC: ${escHtml(licenseNo)}</span>
+
+                <!-- Patient Meta Banner -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; flex-wrap:wrap; font-size:0.82rem;">
+                    <div>
+                        <div style="font-size:1.05rem; font-weight:800; color:#0f172a; text-transform:uppercase;">${escHtml(pat?.name || '')}</div>
+                        <div style="color:#475569; margin-top:2px;">${pat?.age || ''} yrs / ${escHtml(pat?.gender || '')} &bull; ${escHtml(pat?.city || '')}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; color:#0f172a;">MRN: ${escHtml(pat?.mrn || '')} &bull; UIN: ${escHtml(pat?.uin || '')}</div>
+                        <div style="color:#64748b; margin-top:2px;">Date: ${now} at ${timeStr}${pat?.registration_date ? ` &bull; Reg: ${escHtml(pat.registration_date)}` : ''}</div>
+                    </div>
                 </div>
-            </div>
-            <div class="print-rx-patient-band">
-                <div><div class="print-rx-label">Patient Name</div><div class="print-rx-value">${escHtml(pat?.name || '')}</div></div>
-                <div><div class="print-rx-label">MRN</div><div class="print-rx-value">${escHtml(pat?.mrn || '')}</div></div>
-                <div><div class="print-rx-label">Age / Gender</div><div class="print-rx-value">${pat?.age || ''} yrs / ${escHtml(pat?.gender || '')}</div></div>
-                <div><div class="print-rx-label">Eye</div><div class="print-rx-value">${eyeLabel}</div></div>
-                <div><div class="print-rx-label">Date</div><div class="print-rx-value">${now}</div></div>
-            </div>
-            <div class="print-rx-symbol">&#8478;</div>
-            <div class="print-rx-diagnosis"><strong>Diagnosis / Clinical Impression:</strong> ${escHtml(diagnosis)}</div>
-            <table class="print-med-table">
-                <thead><tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead>
-                <tbody>${medRows || '<tr><td colspan="4" style="color:#94a3b8;">No medications listed</td></tr>'}</tbody>
-            </table>
-            ${notes ? `<div class="print-rx-notes"><strong>Instructions / Notes:</strong> ${escHtml(notes)}</div>` : ''}
-            <div class="print-rx-footer">
-                <div>Printed: ${now}</div>
-                <div class="print-rx-sig">
-                    <div>Prescribing Doctor</div>
-                    <div class="print-rx-sig-line"></div>
-                    <div style="font-weight:600;">${escHtml(doctorName)}</div>
+
+                <!-- Clinical Quick Glance -->
+                <div style="background:#fbf5d5; border:1px solid #e8e0b5; border-radius:4px; padding:6px 12px; margin-bottom:16px; font-size:0.78rem; display:flex; gap:16px;">
+                    <div><strong>UCVA:</strong> ${document.getElementById('emr_ucva_od')?.value || '-'} / ${document.getElementById('emr_ucva_os')?.value || '-'}</div>
+                    <div><strong>BCVA:</strong> ${document.getElementById('emr_bcva_od')?.value || '-'} / ${document.getElementById('emr_bcva_os')?.value || '-'}</div>
+                    <div><strong>IOP:</strong> ${document.getElementById('emr_iop_od')?.value || '-'} / ${document.getElementById('emr_iop_os')?.value || '-'} mmHg</div>
+                    <div><strong>Operative Eye:</strong> ${eyeLabel}</div>
+                </div>
+
+                <!-- Diagnosis -->
+                <div style="margin-bottom:14px; font-size:0.88rem;">
+                    <strong>Diagnosis / Clinical Impression:</strong> ${escHtml(diagText)}
+                </div>
+
+                <!-- Rx Calligraphic Header -->
+                <div style="font-family:Georgia,serif; font-style:italic; font-size:2.2rem; color:#194b8c; margin-bottom:8px;">&#8478;</div>
+
+                <!-- Medications Table -->
+                <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:0.82rem;">
+                    <thead>
+                        <tr style="background:#eaeff5; border-bottom:1px solid #cbd5e1; text-align:left;">
+                            <th style="padding:6px 8px;">Medication</th>
+                            <th style="padding:6px 8px;">Eye</th>
+                            <th style="padding:6px 8px;">Dosage</th>
+                            <th style="padding:6px 8px;">Frequency</th>
+                            <th style="padding:6px 8px;">Duration</th>
+                            <th style="padding:6px 8px;">Instructions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${medRows || '<tr><td colspan="6" style="padding:10px; text-align:center; color:#94a3b8;">No medications prescribed</td></tr>'}
+                    </tbody>
+                </table>
+
+                <!-- Advice / Notes -->
+                ${notesText ? `
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:10px 12px; margin-bottom:20px; font-size:0.8rem; white-space:pre-line;">
+                        <strong>Instructions &amp; Advice:</strong><br>${escHtml(notesText)}
+                    </div>
+                ` : ''}
+
+                <!-- Doctor Signature Block -->
+                <div style="margin-top:36px; display:flex; justify-content:space-between; align-items:flex-end;">
+                    <div style="font-size:0.72rem; color:#94a3b8;">
+                        Printed from IIEIH Hospital EMR System &bull; ${now}
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="width:160px; border-top:1px solid #1e293b; margin-bottom:4px; display:inline-block;"></div>
+                        <div style="font-weight:700; font-size:0.85rem; color:#0f172a;">${escHtml(doctorName)}</div>
+                        <div style="font-size:0.75rem; color:#475569;">Senior Medical Officer | Reg: ${escHtml(licenseNo)}</div>
+                        <div style="font-size:0.72rem; color:#64748b;">${escHtml(department)}</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -1139,13 +1599,24 @@ function printPrescription(rxId) {
                 if (rx) doPrint(rx.medications || [], rx.diagnosis || '', rx.notes || '');
             });
     } else {
-        doPrint(meds, diagnosis, notes);
+        const adviceList = [];
+        const glassOD = document.getElementById('rx_glass_od')?.value.trim();
+        const glassOS = document.getElementById('rx_glass_os')?.value.trim();
+        if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
+        const advice = document.getElementById('rx_advice')?.value.trim();
+        if (advice) adviceList.push(`Advice: ${advice}`);
+        const plan = document.getElementById('rx_plan')?.value.trim();
+        if (plan) adviceList.push(`Plan: ${plan}`);
+        const followup = document.getElementById('rx_followup')?.value.trim();
+        if (followup) adviceList.push(`Follow-up: ${followup}`);
+        const remarks = document.getElementById('rx_notes')?.value.trim();
+        if (remarks) adviceList.push(`Remarks: ${remarks}`);
+        doPrint(meds, diagnosis, adviceList.join('\n'));
     }
 }
 
 // Show feedback toast
 function showRxFeedback(message, type = 'success') {
-    // Remove existing
     document.querySelectorAll('.rx-feedback-toast').forEach(el => el.remove());
     const toast = document.createElement('div');
     toast.className = `rx-feedback-toast ${type}`;
@@ -1155,7 +1626,7 @@ function showRxFeedback(message, type = 'success') {
 }
 
 // Initialize Patient Load tab on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const mrnInput = document.getElementById('patientLoadMRNInput');
     const mrnSearchBtn = document.getElementById('patientLoadMRNSearchBtn');
     const mrnClearBtn = document.getElementById('patientLoadMRNClearBtn');
@@ -1165,16 +1636,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (mrnInput) {
-        // Press Enter to search MRN
-        mrnInput.addEventListener('keydown', function(e) {
+        mrnInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 searchPatientByMRN();
             }
         });
 
-        // Toggle clear button
-        mrnInput.addEventListener('input', function() {
+        mrnInput.addEventListener('input', function () {
             if (mrnClearBtn) {
                 mrnClearBtn.style.display = mrnInput.value.trim() ? 'flex' : 'none';
             }
@@ -1185,37 +1654,320 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Modal background click and Escape key listeners for patientInfoModal
     const patientModal = document.getElementById('patientInfoModal');
     if (patientModal) {
-        patientModal.addEventListener('click', function(e) {
+        patientModal.addEventListener('click', function (e) {
             if (e.target === patientModal) {
                 closePatientInfoModal();
             }
         });
     }
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('patientInfoModal');
-            if (modal && modal.style.display === 'flex') {
+    document.addEventListener('keydown', function (e) {
+        const pModal = document.getElementById('patientInfoModal');
+        if (pModal && (pModal.style.display === 'flex' || pModal.style.display === 'block')) {
+            if (e.key === 'Escape') {
                 closePatientInfoModal();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAndOpenPatientPrescription();
+            }
+        }
+
+        const cModal = document.getElementById('complaintsModal');
+        if (cModal && (cModal.style.display === 'flex' || cModal.style.display === 'block')) {
+            if (e.key === 'Escape') {
+                closeComplaintsModal();
             }
         }
     });
 
-    // Add first medication row if workspace is empty
-    const container = document.getElementById('medicationRowsContainer');
-    if (container && container.children.length === 0) {
-        addMedicationRow();
-    }
+    // Close complaints modal when clicking backdrop
+    document.getElementById('complaintsModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeComplaintsModal();
+        }
+    });
 });
 
-// Window globals for Patient Load
+// ==========================================================================
+// COMPLAINTS POPUP MODAL (Hospital EMR Standard)
+// ==========================================================================
+
+let _currentComplaints = [];
+let _complaintSelectedEye = 'BE';
+let _complaintVisitMeta = {
+    purpose: '',
+    remarks: '',
+    informant: 'Patient',
+    specify_informant: ''
+};
+
+function openComplaintsModal() {
+    const modal = document.getElementById('complaintsModal');
+    if (!modal) return;
+
+    const searchInput = document.getElementById('complaintSearchInput');
+    const purposeSelect = document.getElementById('complaintPurposeOfVisit');
+    const remarksInput = document.getElementById('complaintRemarks');
+    const informantSelect = document.getElementById('complaintInformant');
+    const specInfInput = document.getElementById('complaintSpecifyInformant');
+
+    if (purposeSelect) purposeSelect.value = _complaintVisitMeta.purpose || '';
+    if (remarksInput) remarksInput.value = _complaintVisitMeta.remarks || '';
+    if (informantSelect) informantSelect.value = _complaintVisitMeta.informant || 'Patient';
+    if (specInfInput) specInfInput.value = _complaintVisitMeta.specify_informant || '';
+
+    setComplaintEye(_complaintSelectedEye || 'BE');
+    onInformantChange();
+    renderComplaintsSummary();
+    onComplaintInputChange();
+
+    modal.style.display = 'flex';
+    if (searchInput) {
+        setTimeout(() => searchInput.focus(), 150);
+    }
+}
+
+function closeComplaintsModal() {
+    const modal = document.getElementById('complaintsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function selectTopComplaint(name) {
+    const searchInput = document.getElementById('complaintSearchInput');
+    if (searchInput) {
+        searchInput.value = name;
+        onComplaintInputChange();
+        const durInput = document.getElementById('complaintDurationNum');
+        if (durInput && !durInput.value) {
+            durInput.focus();
+        } else {
+            const addBtn = document.getElementById('btnAddComplaint');
+            if (addBtn && !addBtn.disabled) addBtn.focus();
+        }
+    }
+    document.querySelectorAll('.complaint-quick-pill').forEach(btn => {
+        if (btn.textContent.trim().toLowerCase() === name.toLowerCase()) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function setComplaintEye(eye) {
+    _complaintSelectedEye = eye || 'BE';
+    document.querySelectorAll('#complaintEyeSegment .eye-seg-btn').forEach(btn => {
+        if (btn.dataset.eye === _complaintSelectedEye) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function onComplaintInputChange() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    const addBtn = document.getElementById('btnAddComplaint');
+    if (!addBtn) return;
+
+    const val = (searchInput?.value || '').trim();
+    if (val.length > 0) {
+        addBtn.disabled = false;
+        addBtn.classList.remove('disabled');
+    } else {
+        addBtn.disabled = true;
+        addBtn.classList.add('disabled');
+    }
+}
+
+function handleComplaintInputKey(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addCurrentComplaint();
+    }
+}
+
+function addCurrentComplaint() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    const durNum = document.getElementById('complaintDurationNum');
+    const durUnit = document.getElementById('complaintDurationUnit');
+    const name = (searchInput?.value || '').trim();
+
+    if (!name) return;
+
+    let durationStr = '';
+    const num = (durNum?.value || '').trim();
+    const unit = durUnit?.value || 'Days';
+    if (num) {
+        durationStr = `${num} ${unit}`;
+    }
+
+    const eyeCode = _complaintSelectedEye || 'BE';
+    const eyeLabel = eyeCode === 'RE' ? 'Right Eye (OD)' : eyeCode === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)';
+
+    _currentComplaints.push({
+        name: name,
+        eye: eyeCode,
+        eye_label: eyeLabel,
+        duration: durationStr
+    });
+
+    renderComplaintsSummary();
+
+    if (searchInput) searchInput.value = '';
+    if (durNum) durNum.value = '';
+    document.querySelectorAll('.complaint-quick-pill').forEach(p => p.classList.remove('active'));
+    onComplaintInputChange();
+    if (searchInput) searchInput.focus();
+}
+
+function removeComplaintItem(index) {
+    if (index >= 0 && index < _currentComplaints.length) {
+        _currentComplaints.splice(index, 1);
+        renderComplaintsSummary();
+    }
+}
+
+function renderComplaintsSummary() {
+    const body = document.getElementById('complaintsSummaryBody');
+    if (!body) return;
+
+    if (_currentComplaints.length === 0) {
+        body.innerHTML = '<div class="complaints-empty-msg">No complaints added yet.</div>';
+        return;
+    }
+
+    body.innerHTML = _currentComplaints.map((item, idx) => `
+        <div class="complaint-summary-chip">
+            <span class="summary-chip-text">${escHtml(item.name)}</span>
+            <span class="summary-chip-eye" title="${escHtml(item.eye_label)}">${escHtml(item.eye)}</span>
+            ${item.duration ? `<span class="summary-chip-dur"><i class="fa-regular fa-clock" style="margin-right:2px;"></i>${escHtml(item.duration)}</span>` : ''}
+            <button type="button" class="btn-remove-summary-chip" onclick="removeComplaintItem(${idx})" title="Remove complaint">&times;</button>
+        </div>
+    `).join('');
+}
+
+function onInformantChange() {
+    const informantSelect = document.getElementById('complaintInformant');
+    const specInfInput = document.getElementById('complaintSpecifyInformant');
+    if (!informantSelect || !specInfInput) return;
+    const val = informantSelect.value;
+    if (val === 'Patient') {
+        specInfInput.placeholder = 'Specify Informant (Optional)';
+    } else {
+        specInfInput.placeholder = `Specify ${val} details / name...`;
+    }
+}
+
+function saveComplaintsModal() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    if (searchInput && searchInput.value.trim()) {
+        addCurrentComplaint();
+    }
+
+    _complaintVisitMeta.purpose = document.getElementById('complaintPurposeOfVisit')?.value || '';
+    _complaintVisitMeta.remarks = document.getElementById('complaintRemarks')?.value || '';
+    _complaintVisitMeta.informant = document.getElementById('complaintInformant')?.value || 'Patient';
+    _complaintVisitMeta.specify_informant = document.getElementById('complaintSpecifyInformant')?.value || '';
+
+    updateEMRComplaintsDisplay();
+    closeComplaintsModal();
+
+    showRxFeedback(`Complaints saved (${_currentComplaints.length} item${_currentComplaints.length === 1 ? '' : 's'}).`, 'success');
+}
+
+function updateEMRComplaintsDisplay() {
+    const displayEl = document.getElementById('emr_complaints_display');
+    const rxComplaints = document.getElementById('rx_complaints');
+
+    if (!displayEl) return;
+
+    if (_currentComplaints.length === 0 && !_complaintVisitMeta.purpose && !_complaintVisitMeta.remarks) {
+        displayEl.innerHTML = `
+            <div class="emr-empty-complaints-hint">
+                <i class="fa-regular fa-comment-dots"></i>
+                <span>Click to record complaints...</span>
+            </div>
+        `;
+        if (rxComplaints) rxComplaints.value = '';
+        return;
+    }
+
+    const textLines = [];
+    _currentComplaints.forEach(c => {
+        let line = c.name;
+        const details = [];
+        if (c.eye) details.push(c.eye);
+        if (c.duration) details.push(c.duration);
+        if (details.length > 0) line += ` (${details.join(', ')})`;
+        textLines.push(line);
+    });
+
+    const metaParts = [];
+    if (_complaintVisitMeta.purpose) metaParts.push(`Purpose: ${_complaintVisitMeta.purpose}`);
+    if (_complaintVisitMeta.informant && _complaintVisitMeta.informant !== 'Patient') {
+        let inf = `Informant: ${_complaintVisitMeta.informant}`;
+        if (_complaintVisitMeta.specify_informant) inf += ` - ${_complaintVisitMeta.specify_informant}`;
+        metaParts.push(inf);
+    }
+    if (_complaintVisitMeta.remarks) metaParts.push(`Remarks: ${_complaintVisitMeta.remarks}`);
+
+    let fullSummaryText = textLines.join('; ');
+    if (metaParts.length > 0) {
+        fullSummaryText += (fullSummaryText ? ' | ' : '') + metaParts.join(' | ');
+    }
+
+    if (rxComplaints) {
+        rxComplaints.value = fullSummaryText;
+    }
+
+    let html = '<div class="emr-complaints-pill-list">';
+    _currentComplaints.forEach(c => {
+        html += `
+            <div class="emr-complaint-badge-row">
+                <div class="emr-complaint-badge-left">
+                    <span class="emr-complaint-name-tag">${escHtml(c.name)}</span>
+                    <span class="emr-complaint-eye-tag">${escHtml(c.eye)}</span>
+                    ${c.duration ? `<span class="emr-complaint-dur-tag">${escHtml(c.duration)}</span>` : ''}
+                </div>
+                <span class="emr-complaints-edit-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></span>
+            </div>
+        `;
+    });
+
+    if (metaParts.length > 0) {
+        html += `<div class="emr-complaint-meta-note">${escHtml(metaParts.join(' • '))}</div>`;
+    }
+    html += '</div>';
+
+    displayEl.innerHTML = html;
+}
+
+function resetComplaintsState() {
+    _currentComplaints = [];
+    _complaintSelectedEye = 'BE';
+    _complaintVisitMeta = {
+        purpose: '',
+        remarks: '',
+        informant: 'Patient',
+        specify_informant: ''
+    };
+    updateEMRComplaintsDisplay();
+    renderComplaintsSummary();
+}
+
+function orderComplaintsReworkup() {
+    showRxFeedback('Clinical re-workup requested. Flagged for optometry review.', 'success');
+}
+
+// Window globals for Patient Load & EMR
 window.searchPatientByMRN = searchPatientByMRN;
 window.clearPatientMRNSearch = clearPatientMRNSearch;
 window.closePatientInfoModal = closePatientInfoModal;
 window.confirmAndOpenPatientPrescription = confirmAndOpenPatientPrescription;
+window.loadSamplePatientEMR = loadSamplePatientEMR;
 window.backToPatientMRNSearch = backToPatientMRNSearch;
 window.loadPatientPrescriptions = loadPatientPrescriptions;
 window.loadPrescriptionForEdit = loadPrescriptionForEdit;
@@ -1227,4 +1979,33 @@ window.resetPrescriptionForm = resetPrescriptionForm;
 window.addMedicationRow = addMedicationRow;
 window.removeMedicationRow = removeMedicationRow;
 window.savePrescription = savePrescription;
+window.savePrescriptionAndExit = savePrescriptionAndExit;
 window.printPrescription = printPrescription;
+window.toggleInlineMedAdder = toggleInlineMedAdder;
+window.submitEMRMedication = submitEMRMedication;
+window.removeEMRMedication = removeEMRMedication;
+window.repeatLastPrescription = repeatLastPrescription;
+window.toggleSection = toggleSection;
+window.toggleNestedHistory = toggleNestedHistory;
+window.toggleAdviceSection = toggleAdviceSection;
+window.setFollowupQuick = setFollowupQuick;
+window.adjustEMRFontSize = adjustEMRFontSize;
+window.togglePatientFavorite = togglePatientFavorite;
+window.toggleRevisionsDrawer = toggleRevisionsDrawer;
+window.toggleSurgeryDrawer = toggleSurgeryDrawer;
+window.switchVisitEncounter = switchVisitEncounter;
+window.renderPatientVisits = renderPatientVisits;
+window.openComplaintsModal = openComplaintsModal;
+window.closeComplaintsModal = closeComplaintsModal;
+window.selectTopComplaint = selectTopComplaint;
+window.setComplaintEye = setComplaintEye;
+window.onComplaintInputChange = onComplaintInputChange;
+window.handleComplaintInputKey = handleComplaintInputKey;
+window.addCurrentComplaint = addCurrentComplaint;
+window.removeComplaintItem = removeComplaintItem;
+window.onInformantChange = onInformantChange;
+window.saveComplaintsModal = saveComplaintsModal;
+window.orderComplaintsReworkup = orderComplaintsReworkup;
+window.resetComplaintsState = resetComplaintsState;
+
+
