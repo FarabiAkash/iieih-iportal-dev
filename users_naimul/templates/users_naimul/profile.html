@@ -1030,13 +1030,19 @@
                             <!-- Left Column: Examination / Findings -->
                             <aside class="emr-left-findings-col">
                                 <!-- 1. Complaints -->
-                                <div class="emr-sec-row" id="row_complaints">
-                                    <div class="emr-sec-header" onclick="toggleSection('complaints')">
+                                <div class="emr-sec-row open" id="row_complaints">
+                                    <div class="emr-sec-header" onclick="openComplaintsModal()" title="Click to add or edit complaints">
                                         <span class="emr-sec-label">Complaints:</span>
-                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Complaints Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_complaints" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_complaints" rows="2" placeholder="e.g. Blurring of vision, eye strain..."></textarea>
+                                    <div class="emr-sec-body" id="body_complaints">
+                                        <div id="emr_complaints_display" class="emr-complaints-display" onclick="openComplaintsModal()" title="Click to manage complaints">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-regular fa-comment-dots"></i>
+                                                <span>Click to record complaints...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_complaints" rows="2" style="display: none;" placeholder="e.g. Blurring of vision, eye strain..."></textarea>
                                     </div>
                                 </div>
 
@@ -2161,6 +2167,165 @@
                             <button type="button" class="search-alert-ok-btn" onclick="closeSearchErrorModal()">
                                 <i class="fa-solid fa-magnifying-glass"></i> Try Another Search
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complaints Popup Modal (Hospital EMR Standard) -->
+                <div class="modal-overlay complaints-modal-overlay" id="complaintsModal" style="display: none;">
+                    <div class="modal-card complaints-modal-card">
+                        <!-- Modal Top Header -->
+                        <div class="complaints-modal-header">
+                            <div class="complaints-header-left">
+                                <h2 class="complaints-modal-title">Complaints</h2>
+                                <button type="button" class="btn-complaint-reworkup" onclick="orderComplaintsReworkup()" title="Order Optometry / Clinical Re-workup">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Order Re-workup</span>
+                                </button>
+                            </div>
+                            <button type="button" class="complaints-modal-close" onclick="closeComplaintsModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="complaints-modal-body">
+                            <!-- Upper Section: Main Entry Form + Sidebar Metadata -->
+                            <div class="complaints-upper-grid">
+                                <!-- Left Main Section -->
+                                <div class="complaints-main-col">
+                                    <!-- Top Complaints Quick Selection -->
+                                    <div class="complaints-quick-section">
+                                        <div class="complaints-section-label">Top complaints</div>
+                                        <div class="complaints-pill-group">
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Chest Pain')">Chest Pain</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Double Vision')">Double Vision</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Headache')">Headache</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input Controls Row -->
+                                    <div class="complaints-input-row">
+                                        <!-- Search Complaint Input -->
+                                        <div class="complaint-search-wrap">
+                                            <input type="text" id="complaintSearchInput" class="complaint-search-input"
+                                                   placeholder="Search complaint" list="complaintsDatalist"
+                                                   autocomplete="off" oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
+                                            <datalist id="complaintsDatalist">
+                                                <option value="Fever">
+                                                <option value="Chest Pain">
+                                                <option value="Double Vision">
+                                                <option value="Headache">
+                                                <option value="Blurring of vision">
+                                                <option value="Dimness of vision">
+                                                <option value="Eye pain">
+                                                <option value="Redness of eye">
+                                                <option value="Watering of eye">
+                                                <option value="Foreign body sensation">
+                                                <option value="Itching of eyes">
+                                                <option value="Discharge from eyes">
+                                                <option value="Floaters">
+                                                <option value="Photophobia">
+                                                <option value="Swelling of eyelid">
+                                                <option value="Dry eyes">
+                                                <option value="Eye strain / Asthenopia">
+                                            </datalist>
+                                        </div>
+
+                                        <!-- Which Eye Segmented Toggle -->
+                                        <div class="complaint-field-group which-eye-group">
+                                            <label class="complaint-field-label">Which Eye</label>
+                                            <div class="complaint-eye-segment" id="complaintEyeSegment">
+                                                <button type="button" class="eye-seg-btn" data-eye="RE" onclick="setComplaintEye('RE')">RE</button>
+                                                <button type="button" class="eye-seg-btn" data-eye="LE" onclick="setComplaintEye('LE')">LE</button>
+                                                <button type="button" class="eye-seg-btn active" data-eye="BE" onclick="setComplaintEye('BE')">BE</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Duration Input Group -->
+                                        <div class="complaint-field-group duration-group">
+                                            <label class="complaint-field-label">Duration</label>
+                                            <div class="complaint-duration-input-box">
+                                                <input type="number" id="complaintDurationNum" class="duration-num-input"
+                                                       placeholder="Duration" min="1" max="365"
+                                                       oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
+                                                <select id="complaintDurationUnit" class="duration-unit-select" onchange="onComplaintInputChange()">
+                                                    <option value="Days" selected>Days</option>
+                                                    <option value="Weeks">Weeks</option>
+                                                    <option value="Months">Months</option>
+                                                    <option value="Years">Years</option>
+                                                </select>
+                                                <span class="duration-calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Button -->
+                                        <div class="complaint-add-wrap">
+                                            <button type="button" id="btnAddComplaint" class="btn-complaint-add" onclick="addCurrentComplaint()" disabled>
+                                                + Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Sidebar Panel -->
+                                <aside class="complaints-sidebar-panel">
+                                    <!-- Purpose of visit -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <select id="complaintPurposeOfVisit" class="complaint-sidebar-select">
+                                            <option value="" disabled selected>Purpose of visit</option>
+                                            <option value="Routine Checkup">Routine Checkup</option>
+                                            <option value="New Consultation">New Consultation</option>
+                                            <option value="Follow-up">Follow-up</option>
+                                            <option value="Refraction / Spectacles">Refraction / Spectacles</option>
+                                            <option value="Pre-operative Evaluation">Pre-operative Evaluation</option>
+                                            <option value="Post-operative Review">Post-operative Review</option>
+                                            <option value="Emergency">Emergency</option>
+                                            <option value="Second Opinion">Second Opinion</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Remarks -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <input type="text" id="complaintRemarks" class="complaint-sidebar-input" placeholder="Remarks">
+                                    </div>
+
+                                    <!-- Informant Floating Field -->
+                                    <div class="complaint-sidebar-control-wrap floating-field-wrap">
+                                        <label class="complaint-floating-label">Informant</label>
+                                        <select id="complaintInformant" class="complaint-sidebar-select informant-select" onchange="onInformantChange()">
+                                            <option value="Patient" selected>Patient</option>
+                                            <option value="Attendant">Attendant</option>
+                                            <option value="Parent / Mother">Parent / Mother</option>
+                                            <option value="Parent / Father">Parent / Father</option>
+                                            <option value="Spouse">Spouse</option>
+                                            <option value="Son / Daughter">Son / Daughter</option>
+                                            <option value="Guardian">Guardian</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Specify Informant -->
+                                    <div class="complaint-sidebar-control-wrap">
+                                        <input type="text" id="complaintSpecifyInformant" class="complaint-sidebar-input" placeholder="Specify Informant">
+                                    </div>
+                                </aside>
+                            </div>
+
+                            <!-- Lower Section: Complaints Summary Box -->
+                            <div class="complaints-summary-container">
+                                <div class="complaints-summary-header-label">Complaints summary</div>
+                                <div id="complaintsSummaryBody" class="complaints-summary-content">
+                                    <div class="complaints-empty-msg">No complaints added yet.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Bottom Actions -->
+                        <div class="complaints-modal-footer">
+                            <button type="button" class="btn-complaints-cancel" onclick="closeComplaintsModal()">Cancel</button>
+                            <button type="button" class="btn-complaints-save" onclick="saveComplaintsModal()">Save Complaints</button>
                         </div>
                     </div>
                 </div>

@@ -1050,6 +1050,11 @@ function resetPrescriptionForm() {
     setVal('rx_advice', '');
     setVal('rx_plan', '');
     setVal('rx_followup', '');
+
+    // Reset complaints
+    if (typeof resetComplaintsState === 'function') {
+        resetComplaintsState();
+    }
 }
 
 // Medication management
@@ -1322,6 +1327,8 @@ async function savePrescription(event) {
 
     // Combine structured clinical advice
     const adviceList = [];
+    const complaints = document.getElementById('rx_complaints')?.value.trim();
+    if (complaints) adviceList.push(`Complaints: ${complaints}`);
     const glassOD = document.getElementById('rx_glass_od')?.value.trim();
     const glassOS = document.getElementById('rx_glass_os')?.value.trim();
     if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
@@ -1657,8 +1664,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.addEventListener('keydown', function (e) {
-        const modal = document.getElementById('patientInfoModal');
-        if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+        const pModal = document.getElementById('patientInfoModal');
+        if (pModal && (pModal.style.display === 'flex' || pModal.style.display === 'block')) {
             if (e.key === 'Escape') {
                 closePatientInfoModal();
             } else if (e.key === 'Enter') {
@@ -1666,8 +1673,294 @@ document.addEventListener('DOMContentLoaded', function () {
                 confirmAndOpenPatientPrescription();
             }
         }
+
+        const cModal = document.getElementById('complaintsModal');
+        if (cModal && (cModal.style.display === 'flex' || cModal.style.display === 'block')) {
+            if (e.key === 'Escape') {
+                closeComplaintsModal();
+            }
+        }
+    });
+
+    // Close complaints modal when clicking backdrop
+    document.getElementById('complaintsModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeComplaintsModal();
+        }
     });
 });
+
+// ==========================================================================
+// COMPLAINTS POPUP MODAL (Hospital EMR Standard)
+// ==========================================================================
+
+let _currentComplaints = [];
+let _complaintSelectedEye = 'BE';
+let _complaintVisitMeta = {
+    purpose: '',
+    remarks: '',
+    informant: 'Patient',
+    specify_informant: ''
+};
+
+function openComplaintsModal() {
+    const modal = document.getElementById('complaintsModal');
+    if (!modal) return;
+
+    const searchInput = document.getElementById('complaintSearchInput');
+    const purposeSelect = document.getElementById('complaintPurposeOfVisit');
+    const remarksInput = document.getElementById('complaintRemarks');
+    const informantSelect = document.getElementById('complaintInformant');
+    const specInfInput = document.getElementById('complaintSpecifyInformant');
+
+    if (purposeSelect) purposeSelect.value = _complaintVisitMeta.purpose || '';
+    if (remarksInput) remarksInput.value = _complaintVisitMeta.remarks || '';
+    if (informantSelect) informantSelect.value = _complaintVisitMeta.informant || 'Patient';
+    if (specInfInput) specInfInput.value = _complaintVisitMeta.specify_informant || '';
+
+    setComplaintEye(_complaintSelectedEye || 'BE');
+    onInformantChange();
+    renderComplaintsSummary();
+    onComplaintInputChange();
+
+    modal.style.display = 'flex';
+    if (searchInput) {
+        setTimeout(() => searchInput.focus(), 150);
+    }
+}
+
+function closeComplaintsModal() {
+    const modal = document.getElementById('complaintsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function selectTopComplaint(name) {
+    const searchInput = document.getElementById('complaintSearchInput');
+    if (searchInput) {
+        searchInput.value = name;
+        onComplaintInputChange();
+        const durInput = document.getElementById('complaintDurationNum');
+        if (durInput && !durInput.value) {
+            durInput.focus();
+        } else {
+            const addBtn = document.getElementById('btnAddComplaint');
+            if (addBtn && !addBtn.disabled) addBtn.focus();
+        }
+    }
+    document.querySelectorAll('.complaint-quick-pill').forEach(btn => {
+        if (btn.textContent.trim().toLowerCase() === name.toLowerCase()) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function setComplaintEye(eye) {
+    _complaintSelectedEye = eye || 'BE';
+    document.querySelectorAll('#complaintEyeSegment .eye-seg-btn').forEach(btn => {
+        if (btn.dataset.eye === _complaintSelectedEye) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function onComplaintInputChange() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    const addBtn = document.getElementById('btnAddComplaint');
+    if (!addBtn) return;
+
+    const val = (searchInput?.value || '').trim();
+    if (val.length > 0) {
+        addBtn.disabled = false;
+        addBtn.classList.remove('disabled');
+    } else {
+        addBtn.disabled = true;
+        addBtn.classList.add('disabled');
+    }
+}
+
+function handleComplaintInputKey(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addCurrentComplaint();
+    }
+}
+
+function addCurrentComplaint() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    const durNum = document.getElementById('complaintDurationNum');
+    const durUnit = document.getElementById('complaintDurationUnit');
+    const name = (searchInput?.value || '').trim();
+
+    if (!name) return;
+
+    let durationStr = '';
+    const num = (durNum?.value || '').trim();
+    const unit = durUnit?.value || 'Days';
+    if (num) {
+        durationStr = `${num} ${unit}`;
+    }
+
+    const eyeCode = _complaintSelectedEye || 'BE';
+    const eyeLabel = eyeCode === 'RE' ? 'Right Eye (OD)' : eyeCode === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)';
+
+    _currentComplaints.push({
+        name: name,
+        eye: eyeCode,
+        eye_label: eyeLabel,
+        duration: durationStr
+    });
+
+    renderComplaintsSummary();
+
+    if (searchInput) searchInput.value = '';
+    if (durNum) durNum.value = '';
+    document.querySelectorAll('.complaint-quick-pill').forEach(p => p.classList.remove('active'));
+    onComplaintInputChange();
+    if (searchInput) searchInput.focus();
+}
+
+function removeComplaintItem(index) {
+    if (index >= 0 && index < _currentComplaints.length) {
+        _currentComplaints.splice(index, 1);
+        renderComplaintsSummary();
+    }
+}
+
+function renderComplaintsSummary() {
+    const body = document.getElementById('complaintsSummaryBody');
+    if (!body) return;
+
+    if (_currentComplaints.length === 0) {
+        body.innerHTML = '<div class="complaints-empty-msg">No complaints added yet.</div>';
+        return;
+    }
+
+    body.innerHTML = _currentComplaints.map((item, idx) => `
+        <div class="complaint-summary-chip">
+            <span class="summary-chip-text">${escHtml(item.name)}</span>
+            <span class="summary-chip-eye" title="${escHtml(item.eye_label)}">${escHtml(item.eye)}</span>
+            ${item.duration ? `<span class="summary-chip-dur"><i class="fa-regular fa-clock" style="margin-right:2px;"></i>${escHtml(item.duration)}</span>` : ''}
+            <button type="button" class="btn-remove-summary-chip" onclick="removeComplaintItem(${idx})" title="Remove complaint">&times;</button>
+        </div>
+    `).join('');
+}
+
+function onInformantChange() {
+    const informantSelect = document.getElementById('complaintInformant');
+    const specInfInput = document.getElementById('complaintSpecifyInformant');
+    if (!informantSelect || !specInfInput) return;
+    const val = informantSelect.value;
+    if (val === 'Patient') {
+        specInfInput.placeholder = 'Specify Informant (Optional)';
+    } else {
+        specInfInput.placeholder = `Specify ${val} details / name...`;
+    }
+}
+
+function saveComplaintsModal() {
+    const searchInput = document.getElementById('complaintSearchInput');
+    if (searchInput && searchInput.value.trim()) {
+        addCurrentComplaint();
+    }
+
+    _complaintVisitMeta.purpose = document.getElementById('complaintPurposeOfVisit')?.value || '';
+    _complaintVisitMeta.remarks = document.getElementById('complaintRemarks')?.value || '';
+    _complaintVisitMeta.informant = document.getElementById('complaintInformant')?.value || 'Patient';
+    _complaintVisitMeta.specify_informant = document.getElementById('complaintSpecifyInformant')?.value || '';
+
+    updateEMRComplaintsDisplay();
+    closeComplaintsModal();
+
+    showRxFeedback(`Complaints saved (${_currentComplaints.length} item${_currentComplaints.length === 1 ? '' : 's'}).`, 'success');
+}
+
+function updateEMRComplaintsDisplay() {
+    const displayEl = document.getElementById('emr_complaints_display');
+    const rxComplaints = document.getElementById('rx_complaints');
+
+    if (!displayEl) return;
+
+    if (_currentComplaints.length === 0 && !_complaintVisitMeta.purpose && !_complaintVisitMeta.remarks) {
+        displayEl.innerHTML = `
+            <div class="emr-empty-complaints-hint">
+                <i class="fa-regular fa-comment-dots"></i>
+                <span>Click to record complaints...</span>
+            </div>
+        `;
+        if (rxComplaints) rxComplaints.value = '';
+        return;
+    }
+
+    const textLines = [];
+    _currentComplaints.forEach(c => {
+        let line = c.name;
+        const details = [];
+        if (c.eye) details.push(c.eye);
+        if (c.duration) details.push(c.duration);
+        if (details.length > 0) line += ` (${details.join(', ')})`;
+        textLines.push(line);
+    });
+
+    const metaParts = [];
+    if (_complaintVisitMeta.purpose) metaParts.push(`Purpose: ${_complaintVisitMeta.purpose}`);
+    if (_complaintVisitMeta.informant && _complaintVisitMeta.informant !== 'Patient') {
+        let inf = `Informant: ${_complaintVisitMeta.informant}`;
+        if (_complaintVisitMeta.specify_informant) inf += ` - ${_complaintVisitMeta.specify_informant}`;
+        metaParts.push(inf);
+    }
+    if (_complaintVisitMeta.remarks) metaParts.push(`Remarks: ${_complaintVisitMeta.remarks}`);
+
+    let fullSummaryText = textLines.join('; ');
+    if (metaParts.length > 0) {
+        fullSummaryText += (fullSummaryText ? ' | ' : '') + metaParts.join(' | ');
+    }
+
+    if (rxComplaints) {
+        rxComplaints.value = fullSummaryText;
+    }
+
+    let html = '<div class="emr-complaints-pill-list">';
+    _currentComplaints.forEach(c => {
+        html += `
+            <div class="emr-complaint-badge-row">
+                <div class="emr-complaint-badge-left">
+                    <span class="emr-complaint-name-tag">${escHtml(c.name)}</span>
+                    <span class="emr-complaint-eye-tag">${escHtml(c.eye)}</span>
+                    ${c.duration ? `<span class="emr-complaint-dur-tag">${escHtml(c.duration)}</span>` : ''}
+                </div>
+                <span class="emr-complaints-edit-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></span>
+            </div>
+        `;
+    });
+
+    if (metaParts.length > 0) {
+        html += `<div class="emr-complaint-meta-note">${escHtml(metaParts.join(' • '))}</div>`;
+    }
+    html += '</div>';
+
+    displayEl.innerHTML = html;
+}
+
+function resetComplaintsState() {
+    _currentComplaints = [];
+    _complaintSelectedEye = 'BE';
+    _complaintVisitMeta = {
+        purpose: '',
+        remarks: '',
+        informant: 'Patient',
+        specify_informant: ''
+    };
+    updateEMRComplaintsDisplay();
+    renderComplaintsSummary();
+}
+
+function orderComplaintsReworkup() {
+    showRxFeedback('Clinical re-workup requested. Flagged for optometry review.', 'success');
+}
 
 // Window globals for Patient Load & EMR
 window.searchPatientByMRN = searchPatientByMRN;
@@ -1702,4 +1995,17 @@ window.toggleRevisionsDrawer = toggleRevisionsDrawer;
 window.toggleSurgeryDrawer = toggleSurgeryDrawer;
 window.switchVisitEncounter = switchVisitEncounter;
 window.renderPatientVisits = renderPatientVisits;
+window.openComplaintsModal = openComplaintsModal;
+window.closeComplaintsModal = closeComplaintsModal;
+window.selectTopComplaint = selectTopComplaint;
+window.setComplaintEye = setComplaintEye;
+window.onComplaintInputChange = onComplaintInputChange;
+window.handleComplaintInputKey = handleComplaintInputKey;
+window.addCurrentComplaint = addCurrentComplaint;
+window.removeComplaintItem = removeComplaintItem;
+window.onInformantChange = onInformantChange;
+window.saveComplaintsModal = saveComplaintsModal;
+window.orderComplaintsReworkup = orderComplaintsReworkup;
+window.resetComplaintsState = resetComplaintsState;
+
 
