@@ -720,12 +720,63 @@ async function searchPatientByMRN() {
             if (mrnEl) mrnEl.textContent = pat.mrn;
             if (nameEl) nameEl.textContent = pat.name;
             if (demoEl) demoEl.textContent = `${pat.age} yrs • ${pat.gender}`;
-            if (eyeEl) eyeEl.textContent = pat.eye_display || (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)');
+
+            // Eye operative side styling
+            if (eyeEl) {
+                const eyeVal = pat.eye_display || (pat.eye === 'RE' ? 'Right Eye (OD)' : pat.eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)');
+                eyeEl.textContent = eyeVal;
+                eyeEl.classList.remove('eye-od', 'eye-os', 'eye-ou');
+                if (pat.eye === 'RE' || eyeVal.includes('(OD)')) {
+                    eyeEl.classList.add('eye-od');
+                } else if (pat.eye === 'LE' || eyeVal.includes('(OS)')) {
+                    eyeEl.classList.add('eye-os');
+                } else {
+                    eyeEl.classList.add('eye-ou');
+                }
+            }
+
             if (surgEl) surgEl.textContent = pat.surgery_type;
             if (docEl) docEl.textContent = pat.surgeon_name;
             if (otEl) otEl.textContent = (pat.ot_room && pat.ot_room !== 'N/A') ? `${pat.ot_room} (${pat.ot_slot})` : 'Not Scheduled / Consult Only';
             if (medEl) medEl.textContent = pat.medical_history || 'No systemic comorbidities reported.';
             if (notesEl) notesEl.textContent = pat.notes || 'No operative notes recorded.';
+
+            // Dynamic initials avatar
+            const avatarEl = document.getElementById('pinfo_avatar_initials');
+            if (avatarEl) {
+                const words = (pat.name || '').trim().split(/\s+/).filter(Boolean);
+                let initials = 'PT';
+                if (words.length >= 2) {
+                    initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+                } else if (words.length === 1 && words[0].length > 0) {
+                    initials = words[0].slice(0, 2).toUpperCase();
+                }
+                avatarEl.textContent = initials;
+            }
+
+            // Optional encounter date pill
+            const dateWrap = document.getElementById('pinfo_date_wrap');
+            const dateEl = document.getElementById('pinfo_date');
+            if (dateWrap && dateEl) {
+                if (pat.date && pat.date !== 'N/A') {
+                    dateEl.textContent = pat.date;
+                    dateWrap.style.display = 'inline-flex';
+                } else {
+                    dateWrap.style.display = 'none';
+                }
+            }
+
+            // Medical history comorbidity highlight check
+            const medCard = document.getElementById('pinfo_med_card');
+            if (medCard) {
+                const hist = (pat.medical_history || '').toLowerCase();
+                const isComorbid = hist && !hist.includes('no systemic') && !hist.includes('none') && !hist.includes('nil') && !hist.includes('no prior');
+                if (isComorbid) {
+                    medCard.classList.add('has-comorbidity');
+                } else {
+                    medCard.classList.remove('has-comorbidity');
+                }
+            }
 
             if (feedback) feedback.style.display = 'none';
 
@@ -1196,10 +1247,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('patientInfoModal');
-            if (modal && modal.style.display === 'flex') {
+        const modal = document.getElementById('patientInfoModal');
+        if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+            if (e.key === 'Escape') {
                 closePatientInfoModal();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAndOpenPatientPrescription();
             }
         }
     });

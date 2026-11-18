@@ -135,7 +135,7 @@
                     <button type="button"
                         class="tab-btn {% if active_tab == 'patients' or not active_tab %}active{% endif %}"
                         onclick="switchClinicalTab('patients')">
-                        <i class="fa-solid fa-hospital-user"></i> <span>Patient Details ({{ displayed_patients.count }})</span>
+                        <i class="fa-solid fa-hospital-user"></i> <span>Today's Patient Details ({{ displayed_patients.count }})</span>
                     </button>
                     <button type="button" class="tab-btn {% if active_tab == 'ot-slots' %}active{% endif %}"
                         onclick="switchClinicalTab('ot-slots')">
@@ -672,7 +672,7 @@
                         </div>
 
                         <!-- Surgeon Patient Isolation Scope Banner -->
-                        <div class="doctor-scope-banner">
+                        {% comment %} <div class="doctor-scope-banner">
                             <div class="doctor-scope-text">
                                 <i class="fa-solid fa-shield-halved"
                                     style="color: var(--primary-light); font-size: 1.15rem;"></i>
@@ -685,7 +685,7 @@
                                 display: inline-flex; align-items: center; gap: 4px;">
                                 <i class="fa-solid fa-lock"></i> Isolated Ledger
                             </span>
-                        </div>
+                        </div> {% endcomment %}
 
                         <!-- Patient Search by MRN or Name (with Cross-Doctor Lookup) -->
                         <form method="get" action="{% url 'users_naimul:profile' %}" class="mrn-search-form" id="patientSearchForm">
@@ -1773,72 +1773,147 @@
                 </div>
 
                 <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
-                <div class="modal-overlay" id="patientInfoModal" style="display: none;">
-                    <div class="modal-card" style="max-width: 640px;">
-                        <div class="modal-header">
-                            <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-hospital-user" style="color: var(--primary);"></i> Patient Information
-                            </h2>
-                            <button type="button" class="modal-close-btn" onclick="closePatientInfoModal()" aria-label="Close modal">&times;</button>
-                        </div>
-                        <div class="modal-body" style="padding: 20px 24px;">
-                            <div class="patient-modal-top-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-glass);">
+                <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">
+                    <div class="modal-card pinfo-modal-card">
+                        <!-- Clinical Header -->
+                        <div class="pinfo-modal-header">
+                            <div class="pinfo-header-title-wrap">
+                                <div class="pinfo-header-icon">
+                                    <i class="fa-solid fa-hospital-user"></i>
+                                </div>
                                 <div>
-                                    <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Patient MRN</span>
-                                    <span class="badge-mrn" id="pinfo_mrn" style="font-size: 0.95rem; font-weight: 700; padding: 4px 10px;">--</span>
+                                    <h2 class="pinfo-header-title">Patient Clinical Profile</h2>
+                                    <p class="pinfo-header-subtitle">Hospital Registry Verification &bull; Ready to Load</p>
                                 </div>
-                                <div style="text-align: right;">
-                                    <span style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Registry Status</span>
-                                    <span id="pinfo_status" style="font-size: 0.82rem; font-weight: 600; color: var(--success);"><i class="fa-solid fa-circle-check"></i> Patient Verified</span>
+                            </div>
+                            <button type="button" class="pinfo-close-btn" onclick="closePatientInfoModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="pinfo-modal-body">
+                            <!-- Hero Patient Identity Card -->
+                            <div class="pinfo-hero-banner">
+                                <div class="pinfo-avatar" id="pinfo_avatar">
+                                    <span id="pinfo_avatar_initials">PT</span>
+                                </div>
+                                <div class="pinfo-hero-details">
+                                    <div class="pinfo-hero-top-row">
+                                        <h3 class="pinfo-patient-name" id="pinfo_name">--</h3>
+                                        <span class="pinfo-status-badge verified" id="pinfo_status">
+                                            <i class="fa-solid fa-circle-check"></i> Patient Verified
+                                        </span>
+                                    </div>
+                                    <div class="pinfo-meta-chips">
+                                        <span class="pinfo-chip pinfo-chip-mrn" title="Medical Record Number">
+                                            <i class="fa-solid fa-id-badge"></i> MRN: <strong id="pinfo_mrn">--</strong>
+                                        </span>
+                                        <span class="pinfo-chip pinfo-chip-demo" title="Age &amp; Gender">
+                                            <i class="fa-solid fa-user"></i> <span id="pinfo_demographics">--</span>
+                                        </span>
+                                        <span class="pinfo-chip pinfo-chip-date" id="pinfo_date_wrap" style="display: none;" title="Encounter Date">
+                                            <i class="fa-regular fa-calendar-check"></i> <span id="pinfo_date">--</span>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="dossier-grid">
-                                <div class="dossier-field">
-                                    <label>Full Patient Name</label>
-                                    <p id="pinfo_name" style="font-size: 1rem; font-weight: 700;">--</p>
+                            <!-- Clinical Quick Glance Grid (2x2) -->
+                            <div class="pinfo-clinical-grid">
+                                <!-- Operative Eye -->
+                                <div class="pinfo-card pinfo-card-eye">
+                                    <div class="pinfo-card-icon eye-accent">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Operative Eye Side</span>
+                                        <div class="pinfo-card-value">
+                                            <span id="pinfo_eye" class="pinfo-eye-tag">--</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="dossier-field">
-                                    <label>Age &amp; Gender</label>
-                                    <p id="pinfo_demographics">--</p>
+
+                                <!-- Procedure / Surgery -->
+                                <div class="pinfo-card pinfo-card-surgery">
+                                    <div class="pinfo-card-icon proc-accent">
+                                        <i class="fa-solid fa-stethoscope"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Procedure / Surgery</span>
+                                        <div class="pinfo-card-value" id="pinfo_surgery">--</div>
+                                    </div>
                                 </div>
-                                <div class="dossier-field">
-                                    <label>Eye Operative Side</label>
-                                    <p id="pinfo_eye" style="color: var(--primary); font-weight: 600;">--</p>
+
+                                <!-- Attending Doctor / Surgeon -->
+                                <div class="pinfo-card pinfo-card-doctor">
+                                    <div class="pinfo-card-icon doc-accent">
+                                        <i class="fa-solid fa-user-doctor"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">Attending Doctor / Surgeon</span>
+                                        <div class="pinfo-card-value" id="pinfo_doctor">--</div>
+                                    </div>
                                 </div>
-                                <div class="dossier-field">
-                                    <label>Surgery / Procedure</label>
-                                    <p id="pinfo_surgery">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>Attending Surgeon / Doctor</label>
-                                    <p id="pinfo_doctor">--</p>
-                                </div>
-                                <div class="dossier-field">
-                                    <label>OT Suite &amp; Slot</label>
-                                    <p id="pinfo_ot_details">--</p>
+
+                                <!-- OT Suite & Slot -->
+                                <div class="pinfo-card pinfo-card-ot">
+                                    <div class="pinfo-card-icon ot-accent">
+                                        <i class="fa-solid fa-hospital-user"></i>
+                                    </div>
+                                    <div class="pinfo-card-content">
+                                        <span class="pinfo-card-label">OT Suite &amp; Slot</span>
+                                        <div class="pinfo-card-value" id="pinfo_ot_details">--</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="dossier-section-title" style="margin-top: 14px;">
-                                <i class="fa-solid fa-heart-pulse"></i> Medical History &amp; Comorbidities
-                            </div>
-                            <div class="dossier-field" style="margin-bottom: 12px;">
-                                <p id="pinfo_med_history" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">--</p>
-                            </div>
+                            <!-- Clinical Safety & Notes Split -->
+                            <div class="pinfo-split-row">
+                                <!-- Systemic Comorbidities & Medical History -->
+                                <div class="pinfo-narrative-card comorbidity-card" id="pinfo_med_card">
+                                    <div class="pinfo-narrative-header">
+                                        <div class="pinfo-narrative-title">
+                                            <i class="fa-solid fa-heart-pulse"></i>
+                                            <span>Medical History &amp; Comorbidities</span>
+                                        </div>
+                                        <span class="pinfo-safety-tag"><i class="fa-solid fa-shield-halved"></i> Safety</span>
+                                    </div>
+                                    <div class="pinfo-narrative-body">
+                                        <p id="pinfo_med_history">--</p>
+                                    </div>
+                                </div>
 
-                            <div class="dossier-section-title">
-                                <i class="fa-solid fa-clipboard"></i> Clinical Notes
-                            </div>
-                            <div class="dossier-field">
-                                <p id="pinfo_notes" style="font-weight: 500; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">--</p>
+                                <!-- Clinical Notes -->
+                                <div class="pinfo-narrative-card notes-card">
+                                    <div class="pinfo-narrative-header">
+                                        <div class="pinfo-narrative-title">
+                                            <i class="fa-solid fa-clipboard-list"></i>
+                                            <span>Operative &amp; Clinical Notes</span>
+                                        </div>
+                                        <span class="pinfo-notes-tag"><i class="fa-solid fa-file-medical"></i> EMR</span>
+                                    </div>
+                                    <div class="pinfo-narrative-body">
+                                        <p id="pinfo_notes">--</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-glass); display: flex; justify-content: flex-end; gap: 12px;">
-                            <button type="button" class="nav-btn" onclick="closePatientInfoModal()">Cancel</button>
-                            <button type="button" class="btn-confirm-open" id="btnConfirmOpenPatient" onclick="confirmAndOpenPatientPrescription()">
-                                <i class="fa-solid fa-folder-open"></i> Confirm &amp; Open
-                            </button>
+
+                        <!-- Modal Footer -->
+                        <div class="pinfo-modal-footer">
+                            <div class="pinfo-footer-hint">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Press <strong>Enter</strong> to confirm &bull; <strong>Esc</strong> to cancel</span>
+                            </div>
+                            <div class="pinfo-footer-actions">
+                                <button type="button" class="pinfo-btn pinfo-btn-cancel nav-btn" onclick="closePatientInfoModal()">
+                                    <i class="fa-solid fa-xmark"></i> Cancel
+                                </button>
+                                <button type="button" class="pinfo-btn pinfo-btn-confirm btn-confirm-open" id="btnConfirmOpenPatient" onclick="confirmAndOpenPatientPrescription()">
+                                    <i class="fa-solid fa-folder-open"></i> <span>Confirm &amp; Open Workspace</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
