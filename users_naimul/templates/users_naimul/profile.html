@@ -806,6 +806,7 @@
                                                 title="Ocular Diagnostic Report">
                                                 <i class="fa-solid fa-eye"></i> Report
                                             </button>
+                                            {% if is_admin or doctor_kw_lower in s.surgeon_name|lower %}
                                             <button type="button" class="btn-action-edit"
                                                 onclick="openEditSurgeryModal('{{ s.id }}', '{{ s.patient_mrn }}', 
                                                 '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', '{{ s.eye }}', 
@@ -814,6 +815,13 @@
                                                 title="Edit Surgery Record">
                                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                                             </button>
+                                            {% else %}
+                                            <button type="button" class="btn-action-edit" disabled
+                                                title="You can only edit your own patients"
+                                                style="opacity: 0.4; cursor: not-allowed;">
+                                                <i class="fa-solid fa-lock"></i> Edit
+                                            </button>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% empty %}
@@ -847,41 +855,116 @@
                          style="display:none;">
                     </div>
 
-                    <!-- 1. SEARCH BOX VIEW (Default: Only show search box) -->
-                    <div id="patientLoadSearchSection" class="patient-search-section">
-                        <div class="patient-search-hero-card">
-                            <div class="patient-search-hero-icon">
-                                <i class="fa-solid fa-id-card-clip"></i>
+                    <!-- 1. PATIENT LOAD SEARCH SECTION (Fixed Card Layout) -->
+                    <div id="patientLoadSearchSection" class="patient-load-card card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">
+                                    <i class="fa-solid fa-prescription-bottle-medical"></i> Patient Load &mdash; Prescription Workspace
+                                </h2>
+                                {% comment %} <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                                    Search patient by MRN to load verified clinical profile and open prescription workspace
+                                </p> {% endcomment %}
                             </div>
-                            <h2 class="patient-search-hero-title">Patient Load &mdash; Prescription Workspace</h2>
+                            {% comment %} <span class="badge-pill badge-slot" style="font-size: 0.82rem;">
+                                Showing {{ displayed_patients.count }} Patient Case{% if displayed_patients.count != 1 %}s{% endif %}
+                            </span> {% endcomment %}
+                        </div>
 
-                            <div class="patient-search-hero-box">
-                                <div class="patient-search-input-wrap">
-                                    <i class="fa-solid fa-magnifying-glass patient-search-icon"></i>
-                                    <input type="text" id="patientLoadMRNInput" class="patient-search-hero-input"
-                                           placeholder="Enter Patient MRN (e.g. P26XXXXX)..."
+                        <!-- Fixed Patient Search Form / Bar -->
+                        <div class="mrn-search-form patient-load-search-form">
+                            <label for="patientLoadMRNInput" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                                <i class="fa-solid fa-magnifying-glass" style="color: var(--primary-light); margin-right: 6px;"></i>
+                                Search Patient by MRN Number (e.g. P26XXXXX or MRN-XXXX):
+                            </label>
+                            <div class="mrn-search-container patient-load-search-container">
+                                <div class="patient-load-input-wrapper">
+                                    <input type="text" id="patientLoadMRNInput" class="mrn-search-input patient-load-input"
+                                           placeholder="Enter Patient MRN (e.g. P2600001, MRN-1022)..."
                                            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
                                     <button type="button" id="patientLoadMRNClearBtn" class="patient-search-clear-btn"
                                             title="Clear search" style="display: none;" onclick="clearPatientMRNSearch()">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 </div>
-                                <button type="button" id="patientLoadMRNSearchBtn" class="patient-search-hero-btn" onclick="searchPatientByMRN()">
+                                <button type="button" id="patientLoadMRNSearchBtn" class="mrn-search-btn patient-load-search-btn" onclick="searchPatientByMRN()">
                                     <i class="fa-solid fa-magnifying-glass"></i>
                                     <span>Search MRN</span>
                                 </button>
                             </div>
 
-                            {% comment %} <div class="patient-search-quick-actions" style="margin-top: 14px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">Quick Test Prescription:</span>
-                                <button type="button" class="btn-sample-patient" onclick="loadSamplePatientEMR('P4574873')"
-                                    style="background: rgba(30, 64, 175, 0.08); border: 1px solid rgba(30, 64, 175, 0.25); color: #1e40af; border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="fa-solid fa-file-waveform"></i> AKIB ASHFAQ (P4574873) &bull; OPD (Unit-12)
-                                </button>
-                            </div> {% endcomment %}
-
                             <div id="patientMRNSearchFeedback" class="patient-search-feedback" style="display: none;"></div>
                         </div>
+
+                        {% comment %} <!-- Quick Patient Selection Table / Quick Launch for Today's Patients -->
+                        <div class="patient-load-quick-section">
+                            <div class="patient-load-quick-header">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-clipboard-user" style="color: var(--primary-light);"></i>
+                                    <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Today's Patient Cases &mdash; Quick Load</span>
+                                </div>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">Click "Load Patient" on any row to open the prescription workspace</span>
+                            </div>
+
+                            <div class="table-responsive" style="margin-top: 10px; border-radius: 12px; border: 1px solid var(--border-glass);">
+                                <table class="table-modern" style="margin-bottom: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient MRN</th>
+                                            <th>Patient Name &amp; Demographics</th>
+                                            <th>Eye</th>
+                                            <th>Procedure / Reason</th>
+                                            <th>Attending Doctor</th>
+                                            <th>OT / Clinic Slot</th>
+                                            <th style="text-align: right;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in displayed_patients %}
+                                        <tr>
+                                            <td>
+                                                <button type="button" class="badge-mrn" style="cursor: pointer; border: none;" onclick="loadSamplePatientEMR('{{ s.patient_mrn }}')" title="Click to load this patient">
+                                                    {{ s.patient_mrn }}
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <strong>{{ s.patient_name }}</strong>
+                                                <div style="font-size: 0.76rem; color: var(--text-muted);">{{ s.patient_age }} yrs &bull; {{ s.patient_gender }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge-pill {% if s.eye == 'RE' %}badge-re{% elif s.eye == 'LE' %}badge-le{% else %}badge-be{% endif %}">
+                                                    {{ s.get_eye_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 500;">{{ s.surgery_type }}</span>
+                                            </td>
+                                            <td>
+                                                <span style="font-size: 0.84rem; font-weight: 600;">{{ s.surgeon_name }}</span>
+                                            </td>
+                                            <td>
+                                                <span style="color: var(--primary-light); font-weight: 600;">{{ s.ot_room }}</span>
+                                                <div style="font-size: 0.74rem; color: var(--text-muted);">{{ s.ot_slot }}</div>
+                                            </td>
+                                            <td style="text-align: right; white-space: nowrap;">
+                                                <button type="button" class="btn-load-patient-direct" onclick="loadSamplePatientEMR('{{ s.patient_mrn }}')" title="Load Patient Prescription Workspace">
+                                                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Load Patient
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                                <i class="fa-solid fa-prescription-bottle" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.4; display: block;"></i>
+                                                <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">No patients currently assigned in today's active schedule.</p>
+                                                <p style="font-size: 0.8rem; margin: 0;">Enter an MRN number in the search box above to load any patient from the hospital database.</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div> {% endcomment %}
                     </div>
 
                     <!-- 2. PRESCRIPTION WORKSPACE (IIEIH EMR UI - Identical to Hospital System) -->
@@ -1048,12 +1131,13 @@
 
                                 <!-- 2. Vision -->
                                 <div class="emr-sec-row open" id="row_vision">
-                                    <div class="emr-sec-header" onclick="toggleSection('vision')">
+                                    <div class="emr-sec-header" onclick="openVisionModal()" title="Click to record vision">
                                         <span class="emr-sec-label">Vision:</span>
-                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Vision Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
                                     <div class="emr-sec-body" id="body_vision">
                                         <div class="emr-indented-line">Has spectacles: <strong id="emr_spectacles_val">No</strong></div>
+                                        <div id="emr_vision_summary_display"></div>
                                     </div>
                                 </div>
 
@@ -1301,7 +1385,7 @@
                                     <!-- 5. Advice(পরামর্শ) -->
                                     <div class="emr-adv-row" id="adv_sec_advice">
                                         <div class="emr-adv-header" onclick="toggleAdviceSection('advice')">
-                                            <span class="emr-adv-title">Advice(পরামর্শ):</span>
+                                            <span class="emr-adv-title">Advice:</span>
                                             <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_advice" style="display: none;">
@@ -1323,7 +1407,7 @@
                                     <!-- 7. Follow Up(ফলো আপ) -->
                                     <div class="emr-adv-row" id="adv_sec_followup">
                                         <div class="emr-adv-header" onclick="toggleAdviceSection('followup')">
-                                            <span class="emr-adv-title">Follow Up(ফলো আপ):</span>
+                                            <span class="emr-adv-title">Follow Up:</span>
                                             <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_followup" style="display: none;">
@@ -1619,6 +1703,7 @@
                                                 title="View Details">
                                                 <i class="fa-solid fa-clipboard-user"></i> View Details
                                             </button>
+                                            {% if is_admin or doctor_kw_lower in s.surgeon_name|lower %}
                                             <button type="button" class="btn-action-edit"
                                                 onclick="openEditSurgeryModal('{{ s.id }}', '{{ s.patient_mrn }}', 
                                                 '{{ s.patient_name }}', '{{ s.patient_age }}', '{{ s.patient_gender }}', 
@@ -1628,6 +1713,13 @@
                                                 title="Edit Surgery Record">
                                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                                             </button>
+                                            {% else %}
+                                            <button type="button" class="btn-action-edit" disabled
+                                                title="You can only edit your own patients"
+                                                style="opacity: 0.4; cursor: not-allowed;">
+                                                <i class="fa-solid fa-lock"></i> Edit
+                                            </button>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% empty %}
@@ -2198,10 +2290,14 @@
                                     <div class="complaints-quick-section">
                                         <div class="complaints-section-label">Top complaints</div>
                                         <div class="complaints-pill-group">
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Chest Pain')">Chest Pain</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Dimness of vision')">Dimness of vision</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Blurring of vision')">Blurring of vision</button>
                                             <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Double Vision')">Double Vision</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Eye pain')">Eye pain</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Redness of eye')">Redness of eye</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Watering of eye')">Watering of eye</button>
                                             <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Headache')">Headache</button>
+                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
                                         </div>
                                     </div>
 
@@ -2275,6 +2371,7 @@
                                     <div class="complaint-sidebar-control-wrap">
                                         <select id="complaintPurposeOfVisit" class="complaint-sidebar-select">
                                             <option value="" disabled selected>Purpose of visit</option>
+                                            <option value="Consultation">Consultation</option>
                                             <option value="Routine Checkup">Routine Checkup</option>
                                             <option value="New Consultation">New Consultation</option>
                                             <option value="Follow-up">Follow-up</option>
@@ -2329,6 +2426,181 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- =========================================================== -->
+                <!-- VISION POPUP MODAL                                            -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay vision-modal-overlay" id="visionModal" style="display: none;">
+                    <div class="modal-card vision-modal-card">
+
+                        <!-- Modal Header -->
+                        <div class="vision-modal-header">
+                            <div class="vision-header-left">
+                                <h2 class="vision-modal-title">Vision</h2>
+                                <button type="button" class="btn-vision-reworkup" onclick="orderVisionReworkup()" title="Order Re-workup">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Order Re-workup</span>
+                                </button>
+                            </div>
+                            <button type="button" class="vision-modal-close" onclick="closeVisionModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="vision-modal-body">
+
+                            <!-- Has Spectacles / Prescription Row -->
+                            <div class="vision-spectacles-row">
+                                <span class="vision-spectacles-label">Has Spectacles or Prescription?</span>
+                                <div class="vision-spectacles-toggle" id="visionSpectaclesToggle">
+                                    <button type="button" class="vision-spec-btn" data-val="Yes" onclick="setVisionSpectacles('Yes')">Yes</button>
+                                    <button type="button" class="vision-spec-btn active" data-val="No" onclick="setVisionSpectacles('No')">No</button>
+                                </div>
+                            </div>
+
+                            <!-- UCVA / Corrected VA heading row -->
+                            <div class="vision-va-heading-row">
+                                <span class="vision-va-heading-underline">UnCorrected V/A</span>
+                                <span class="vision-va-heading-underline">Corrected V/A</span>
+                            </div>
+
+                            <!-- Two-column VA entry grid -->
+                            <div class="vision-two-col-grid">
+
+                                <!-- ── LEFT: UnCorrected V/A ── -->
+                                <div class="vision-col">
+                                    <!-- UCVA Type Tabs -->
+                                    <div class="vision-ucva-tabs" id="visionUCVATabs">
+                                        <button type="button" class="vision-ucva-tab active" data-tab="ucva" onclick="switchVisionTab('ucva')">UCVA</button>
+                                        <button type="button" class="vision-ucva-tab" data-tab="ucva_with_ph" onclick="switchVisionTab('ucva_with_ph')">UCVA With PH</button>
+                                        <button type="button" class="vision-ucva-tab" data-tab="ucva_with_mph" onclick="switchVisionTab('ucva_with_mph')">UCVA with MPH</button>
+                                    </div>
+                                    <!-- RE / LE inputs -->
+                                    <div class="vision-entry-row">
+                                        <div class="vision-eye-box-wrap">
+                                            <label class="vision-eye-label">RE</label>
+                                            <input type="text" id="visionInputRE" class="vision-eye-input" placeholder="">
+                                        </div>
+                                        <div class="vision-eye-box-wrap">
+                                            <label class="vision-eye-label">LE</label>
+                                            <input type="text" id="visionInputLE" class="vision-eye-input" placeholder="">
+                                        </div>
+                                        <!-- Chart Type -->
+                                        <div class="vision-chart-wrap">
+                                            <label class="vision-chart-label">Chart type</label>
+                                            <select id="visionChartType" class="vision-chart-select">
+                                                <option value="Snellen-3Meter" selected>Snellen- 3 Meter</option>
+                                                <option value="Snellen-6Meter">Snellen- 6 Meter</option>
+                                                <option value="ETDRS">ETDRS</option>
+                                                <option value="LogMAR">LogMAR</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div><!-- /.vision-col (uncorrected) -->
+
+                                <!-- ── RIGHT: Corrected V/A ── -->
+                                <div class="vision-col">
+                                    <!-- CVA Type Tabs -->
+                                    <div class="vision-ucva-tabs" id="visionCVATabs">
+                                        <button type="button" class="vision-cva-tab active" data-tab="bcva" onclick="switchVisionCVATab('bcva')">BCVA</button>
+                                        <button type="button" class="vision-cva-tab" data-tab="bcva_with_ph" onclick="switchVisionCVATab('bcva_with_ph')">BCVA With PH</button>
+                                    </div>
+                                    <!-- RE / LE inputs -->
+                                    <div class="vision-entry-row">
+                                        <div class="vision-eye-box-wrap">
+                                            <label class="vision-eye-label">RE</label>
+                                            <input type="text" id="visionCVAInputRE" class="vision-eye-input" placeholder="">
+                                        </div>
+                                        <div class="vision-eye-box-wrap">
+                                            <label class="vision-eye-label">LE</label>
+                                            <input type="text" id="visionCVAInputLE" class="vision-eye-input" placeholder="">
+                                        </div>
+                                        <!-- Chart Type -->
+                                        <div class="vision-chart-wrap">
+                                            <label class="vision-chart-label">Chart type</label>
+                                            <select id="visionCVAChartType" class="vision-chart-select">
+                                                <option value="Snellen-3Meter" selected>Snellen- 3 Meter</option>
+                                                <option value="Snellen-6Meter">Snellen- 6 Meter</option>
+                                                <option value="ETDRS">ETDRS</option>
+                                                <option value="LogMAR">LogMAR</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div><!-- /.vision-col (corrected) -->
+
+                            </div><!-- /.vision-two-col-grid -->
+
+                            <!-- Summary panel (shared) -->
+                            <div class="vision-summary-panel" id="visionSummaryPanel">
+                                <div class="vision-summary-label">Summary</div>
+                                <div class="vision-summary-body" id="visionSummaryBody">
+                                    <div class="vision-summary-empty">No vision entries added yet.</div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks row -->
+                            <div class="vision-remarks-row">
+                                <input type="text" id="visionRemarks" class="vision-remarks-input" placeholder="Remarks">
+                                <button type="button" class="btn-vision-add" id="btnVisionAdd" onclick="addVisionEntry()">
+                                    <i class="fa-solid fa-plus"></i> Add
+                                </button>
+                            </div>
+
+                        </div><!-- /.vision-modal-body -->
+
+                        <!-- Partial (P) Floating Popup — shown when RE or LE is focused -->
+                        <div id="visionPartialPopup" class="vision-partial-popup" style="display:none;" onmousedown="event.preventDefault()">
+                            <div class="vision-partial-popup-header">
+                                <span class="vision-partial-popup-title">Partial (P)</span>
+                                <span class="vision-partial-popup-eye" id="visionPartialPopupEye"></span>
+                                <button type="button" class="vision-partial-popup-close" onclick="closeVisionPartialPopup()" title="Close">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="vision-partial-popup-body">
+                                <!-- Snellen fractions -->
+                                <div class="vision-partial-popup-section-label">Snellen</div>
+                                <div class="vision-partial-popup-pills">
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/6')">6/6</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/9')">6/9</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/12')">6/12</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/15')">6/15</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/18')">6/18</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/24')">6/24</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/36')">6/36</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('6/60')">6/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('5/60')">5/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('4/60')">4/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('3/60')">3/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('2/60')">2/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('1/60')">1/60</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('1/80')">1/80</button>
+                                    <button type="button" class="vision-partial-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('1/2/60')">1/2/60</button>
+                                </div>
+                                <!-- Qualitative -->
+                                <div class="vision-partial-popup-section-label" style="margin-top:8px;">Qualitative</div>
+                                <div class="vision-partial-popup-pills">
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('FCF')">FCF</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('HM')">HM</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('LP+')">LP+</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('NLP')">NLP</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('NIP')">NIP</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('N/K')">N/K</button>
+                                    <button type="button" class="vision-qual-pill" onmousedown="event.preventDefault()" onclick="setVisionQuick('NPL')">NPL</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="vision-modal-footer">
+                            <button type="button" class="btn-vision-cancel" onclick="closeVisionModal()">Cancel</button>
+                            <button type="button" class="btn-vision-save" onclick="saveVisionModal()">Save Vision</button>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- END VISION MODAL -->
 
                 <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
                 <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">

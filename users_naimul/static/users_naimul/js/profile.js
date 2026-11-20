@@ -707,7 +707,7 @@ async function searchPatientByMRN() {
 
     if (searchBtn) {
         searchBtn.disabled = true;
-        searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+        searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Searching...</span>';
     }
 
     try {
@@ -890,6 +890,11 @@ async function confirmAndOpenPatientPrescription() {
 
     // Reset prescription form to initial clean state
     resetPrescriptionForm();
+
+    // Check if there is an uncommitted complaints draft in sessionStorage
+    if (pat && pat.mrn) {
+        restoreComplaintsDraft(pat.mrn);
+    }
 
     // Load prescriptions for this patient
     await loadPatientPrescriptions(pat.mrn, true);
@@ -1320,10 +1325,6 @@ async function savePrescription(event) {
     }
 
     const meds = collectMedications();
-    if (meds.length === 0) {
-        showRxFeedback('Please add at least one medication to the prescription (use + beside ℞ or Repeat).', 'error');
-        return false;
-    }
 
     // Combine structured clinical advice
     const adviceList = [];
@@ -1362,6 +1363,8 @@ async function savePrescription(event) {
     payload.append('diagnosis', diagnosis);
     payload.append('medications_json', JSON.stringify(meds));
     payload.append('notes', combinedNotes);
+    payload.append('complaints_json', JSON.stringify(_currentComplaints || []));
+    payload.append('complaint_meta_json', JSON.stringify(_complaintVisitMeta || {}));
     if (_rxPrescriptionId) payload.append('prescription_id', _rxPrescriptionId);
 
     try {
@@ -1373,6 +1376,9 @@ async function savePrescription(event) {
         const data = await resp.json();
         if (data.success) {
             _rxPrescriptionId = data.prescription_id;
+            if (_rxPatient && _rxPatient.mrn) {
+                try { sessionStorage.removeItem('rx_draft_complaints_' + _rxPatient.mrn); } catch(e){}
+            }
             showRxFeedback(data.message || 'Prescription saved successfully.', 'success');
             if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Exit Patient';
             loadPatientPrescriptions(_rxPatient.mrn);
@@ -1457,7 +1463,94 @@ async function loadPrescriptionForEdit(rxId) {
 
         _rxPrescriptionId = rx.id;
         document.getElementById('rx_diagnosis').value = rx.diagnosis || '';
-        document.getElementById('rx_notes').value = rx.notes || '';
+
+        // Restore structured complaints
+        if (rx.complaints && Array.isArray(rx.complaints) && rx.complaints.length > 0) {
+            _currentComplaints = rx.complaints.slice();
+            _complaintVisitMeta = Object.assign({
+                purpose: '',
+                remarks: '',
+                informant: 'Patient',
+                specify_informant: ''
+            }, rx.complaint_meta || {});
+        } else if (rx.notes && rx.notes.includes('Complaints:')) {
+            parseComplaintsFromNotesText(rx.notes);
+        } else {
+            _currentComplaints = [];
+            _complaintVisitMeta = {
+                purpose: '',
+                remarks: '',
+                informant: 'Patient',
+                specify_informant: ''
+            };
+        }
+        updateEMRComplaintsDisplay();
+        renderComplaintsSummary();
+
+        // Sync complaints modal inputs
+        const purposeSelect = document.getElementById('complaintPurposeOfVisit');
+        const remarksInput = document.getElementById('complaintRemarks');
+        const informantSelect = document.getElementById('complaintInformant');
+        const specInfInput = document.getElementById('complaintSpecifyInformant');
+        if (purposeSelect) purposeSelect.value = _complaintVisitMeta.purpose || '';
+        if (remarksInput) remarksInput.value = _complaintVisitMeta.remarks || '';
+        if (informantSelect) informantSelect.value = _complaintVisitMeta.informant || 'Patient';
+        if (specInfInput) specInfInput.value = _complaintVisitMeta.specify_informant || '';
+        onInformantChange();
+
+        // Clear and restore structured advice fields without polluting rx_notes (Remarks)
+        setVal('rx_glass_od', '');
+        setVal('rx_glass_os', '');
+        setVal('rx_opinion', '');
+        setVal('rx_surgical_advice', '');
+        setVal('rx_procedure_advice', '');
+        setVal('rx_advice', '');
+        setVal('rx_plan', '');
+        setVal('rx_followup', '');
+
+        const remarksLines = [];
+        const rawNotes = (rx.notes || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const lines = rawNotes.split('\n');
+
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            if (trimmed.startsWith('Complaints:')) {
+                // Handled in complaints section
+                return;
+            } else if (trimmed.startsWith('Glass:')) {
+                const m = trimmed.match(/OD\s*\[(.*?)\]\s*\|\s*OS\s*\[(.*?)\]/i);
+                if (m) {
+                    const od = m[1].trim();
+                    const os = m[2].trim();
+                    if (od && od !== '-') setVal('rx_glass_od', od);
+                    if (os && os !== '-') setVal('rx_glass_os', os);
+                }
+            } else if (trimmed.startsWith('Opinion/Refer:')) {
+                setVal('rx_opinion', trimmed.substring('Opinion/Refer:'.length).trim());
+            } else if (trimmed.startsWith('Surgical Advice:')) {
+                setVal('rx_surgical_advice', trimmed.substring('Surgical Advice:'.length).trim());
+            } else if (trimmed.startsWith('Procedure Advice:')) {
+                setVal('rx_procedure_advice', trimmed.substring('Procedure Advice:'.length).trim());
+            } else if (trimmed.startsWith('Advice:')) {
+                setVal('rx_advice', trimmed.substring('Advice:'.length).trim());
+            } else if (trimmed.startsWith('Plan:')) {
+                setVal('rx_plan', trimmed.substring('Plan:'.length).trim());
+            } else if (trimmed.startsWith('Follow-up:')) {
+                setVal('rx_followup', trimmed.substring('Follow-up:'.length).trim());
+            } else if (trimmed.startsWith('Remarks:')) {
+                let cleaned = trimmed;
+                while (cleaned.toLowerCase().startsWith('remarks:')) {
+                    cleaned = cleaned.substring('remarks:'.length).trim();
+                }
+                if (cleaned) remarksLines.push(cleaned);
+            } else {
+                remarksLines.push(trimmed);
+            }
+        });
+
+        const remarksEl = document.getElementById('rx_notes');
+        if (remarksEl) remarksEl.value = remarksLines.join('\n');
 
         // Repopulate medications
         _currentMedications = (rx.medications || []).map(m => ({
@@ -1600,6 +1693,8 @@ function printPrescription(rxId) {
             });
     } else {
         const adviceList = [];
+        const complaints = document.getElementById('rx_complaints')?.value.trim();
+        if (complaints) adviceList.push(`Complaints: ${complaints}`);
         const glassOD = document.getElementById('rx_glass_od')?.value.trim();
         const glassOS = document.getElementById('rx_glass_os')?.value.trim();
         if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
@@ -1702,6 +1797,103 @@ let _complaintVisitMeta = {
     informant: 'Patient',
     specify_informant: ''
 };
+
+// Storage helper to preserve complaints drafts per patient MRN
+function saveComplaintsDraft(mrn, complaints, meta) {
+    if (!mrn) return;
+    try {
+        sessionStorage.setItem('rx_draft_complaints_' + mrn, JSON.stringify({
+            complaints: complaints || [],
+            meta: meta || {}
+        }));
+    } catch (e) {}
+}
+
+function restoreComplaintsDraft(mrn) {
+    if (!mrn) return false;
+    try {
+        const raw = sessionStorage.getItem('rx_draft_complaints_' + mrn);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (parsed && (Array.isArray(parsed.complaints) || parsed.meta)) {
+            _currentComplaints = Array.isArray(parsed.complaints) ? parsed.complaints.slice() : [];
+            _complaintVisitMeta = Object.assign({
+                purpose: '',
+                remarks: '',
+                informant: 'Patient',
+                specify_informant: ''
+            }, parsed.meta || {});
+            updateEMRComplaintsDisplay();
+            renderComplaintsSummary();
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+// Fallback parser when loading legacy prescriptions without structured complaints_json
+function parseComplaintsFromNotesText(notesText) {
+    _currentComplaints = [];
+    _complaintVisitMeta = { purpose: '', remarks: '', informant: 'Patient', specify_informant: '' };
+    if (!notesText) return;
+
+    const lines = notesText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('Complaints:')) {
+            const content = trimmed.substring('Complaints:'.length).trim();
+            const segments = content.split('|').map(s => s.trim());
+            const itemsStr = segments[0] || '';
+
+            for (let i = 1; i < segments.length; i++) {
+                const seg = segments[i];
+                if (seg.startsWith('Purpose:')) {
+                    _complaintVisitMeta.purpose = seg.substring('Purpose:'.length).trim();
+                } else if (seg.startsWith('Informant:')) {
+                    const inf = seg.substring('Informant:'.length).trim();
+                    if (inf.includes(' - ')) {
+                        const parts = inf.split(' - ');
+                        _complaintVisitMeta.informant = parts[0].trim();
+                        _complaintVisitMeta.specify_informant = parts.slice(1).join(' - ').trim();
+                    } else {
+                        _complaintVisitMeta.informant = inf;
+                    }
+                } else if (seg.startsWith('Remarks:')) {
+                    _complaintVisitMeta.remarks = seg.substring('Remarks:'.length).trim();
+                }
+            }
+
+            const itemTokens = itemsStr.split(';').map(t => t.trim()).filter(Boolean);
+            itemTokens.forEach(token => {
+                const match = token.match(/^([^(]+?)(?:\s*\(([^)]+)\))?$/);
+                if (match) {
+                    const name = match[1].trim();
+                    const details = match[2] ? match[2].trim() : '';
+                    let eye = 'BE';
+                    let dur = '';
+                    if (details) {
+                        const parts = details.split(',').map(p => p.trim());
+                        parts.forEach(p => {
+                            if (p === 'RE' || p === 'LE' || p === 'BE') {
+                                eye = p;
+                            } else {
+                                dur = p;
+                            }
+                        });
+                    }
+                    const eyeLabel = eye === 'RE' ? 'Right Eye (OD)' : eye === 'LE' ? 'Left Eye (OS)' : 'Both Eyes (OU)';
+                    _currentComplaints.push({
+                        name: name,
+                        eye: eye,
+                        eye_label: eyeLabel,
+                        duration: dur
+                    });
+                }
+            });
+            break;
+        }
+    }
+}
 
 function openComplaintsModal() {
     const modal = document.getElementById('complaintsModal');
@@ -1815,6 +2007,11 @@ function addCurrentComplaint() {
     });
 
     renderComplaintsSummary();
+    updateEMRComplaintsDisplay();
+
+    if (_rxPatient && _rxPatient.mrn) {
+        saveComplaintsDraft(_rxPatient.mrn, _currentComplaints, _complaintVisitMeta);
+    }
 
     if (searchInput) searchInput.value = '';
     if (durNum) durNum.value = '';
@@ -1827,7 +2024,44 @@ function removeComplaintItem(index) {
     if (index >= 0 && index < _currentComplaints.length) {
         _currentComplaints.splice(index, 1);
         renderComplaintsSummary();
+        updateEMRComplaintsDisplay();
+        if (_rxPatient && _rxPatient.mrn) {
+            saveComplaintsDraft(_rxPatient.mrn, _currentComplaints, _complaintVisitMeta);
+        }
     }
+}
+
+function editComplaintItem(index) {
+    if (index < 0 || index >= _currentComplaints.length) return;
+    const item = _currentComplaints[index];
+
+    openComplaintsModal();
+
+    const searchInput = document.getElementById('complaintSearchInput');
+    const durNum = document.getElementById('complaintDurationNum');
+    const durUnit = document.getElementById('complaintDurationUnit');
+
+    if (searchInput) searchInput.value = item.name || '';
+    setComplaintEye(item.eye || 'BE');
+
+    if (durNum && durUnit) {
+        durNum.value = '';
+        if (item.duration) {
+            const parts = item.duration.split(' ');
+            if (parts.length >= 2) {
+                durNum.value = parts[0];
+                durUnit.value = parts[1];
+            } else if (parts.length === 1 && !isNaN(parts[0])) {
+                durNum.value = parts[0];
+            }
+        }
+    }
+
+    _currentComplaints.splice(index, 1);
+    renderComplaintsSummary();
+    updateEMRComplaintsDisplay();
+    onComplaintInputChange();
+    if (searchInput) searchInput.focus();
 }
 
 function renderComplaintsSummary() {
@@ -1841,7 +2075,7 @@ function renderComplaintsSummary() {
 
     body.innerHTML = _currentComplaints.map((item, idx) => `
         <div class="complaint-summary-chip">
-            <span class="summary-chip-text">${escHtml(item.name)}</span>
+            <span class="summary-chip-text" onclick="editComplaintItem(${idx})" style="cursor:pointer;" title="Click to edit">${escHtml(item.name)}</span>
             <span class="summary-chip-eye" title="${escHtml(item.eye_label)}">${escHtml(item.eye)}</span>
             ${item.duration ? `<span class="summary-chip-dur"><i class="fa-regular fa-clock" style="margin-right:2px;"></i>${escHtml(item.duration)}</span>` : ''}
             <button type="button" class="btn-remove-summary-chip" onclick="removeComplaintItem(${idx})" title="Remove complaint">&times;</button>
@@ -1861,7 +2095,7 @@ function onInformantChange() {
     }
 }
 
-function saveComplaintsModal() {
+async function saveComplaintsModal() {
     const searchInput = document.getElementById('complaintSearchInput');
     if (searchInput && searchInput.value.trim()) {
         addCurrentComplaint();
@@ -1875,7 +2109,62 @@ function saveComplaintsModal() {
     updateEMRComplaintsDisplay();
     closeComplaintsModal();
 
-    showRxFeedback(`Complaints saved (${_currentComplaints.length} item${_currentComplaints.length === 1 ? '' : 's'}).`, 'success');
+    const complaintsSummary = document.getElementById('rx_complaints')?.value || '';
+
+    if (_rxPatient && _rxPatient.mrn) {
+        saveComplaintsDraft(_rxPatient.mrn, _currentComplaints, _complaintVisitMeta);
+    }
+
+    // Persist directly to database via AJAX
+    const saveBtn = document.querySelector('.btn-complaints-save');
+    const origHtml = saveBtn ? saveBtn.innerHTML : 'Save Complaints';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+
+    try {
+        const payload = new FormData();
+        payload.append('save_complaints', '1');
+        payload.append('complaints_json', JSON.stringify(_currentComplaints));
+        payload.append('complaint_meta_json', JSON.stringify(_complaintVisitMeta));
+        payload.append('complaints_summary', complaintsSummary);
+        if (_rxPrescriptionId) {
+            payload.append('prescription_id', _rxPrescriptionId);
+        }
+        if (_rxPatient) {
+            payload.append('patient_mrn', _rxPatient.mrn || '');
+            payload.append('patient_name', _rxPatient.name || '');
+            payload.append('patient_age', _rxPatient.age || 0);
+            payload.append('patient_gender', _rxPatient.gender || 'Male');
+            payload.append('eye', _rxPatient.eye || 'BE');
+        }
+
+        const resp = await fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getPatientLoadCsrf(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: payload
+        });
+        const data = await resp.json();
+        if (data.success) {
+            if (data.prescription_id && !_rxPrescriptionId) {
+                _rxPrescriptionId = data.prescription_id;
+            }
+            showRxFeedback(data.message || `Complaints saved (${_currentComplaints.length} item${_currentComplaints.length === 1 ? '' : 's'}).`, 'success');
+        } else {
+            showRxFeedback(data.error || 'Complaints recorded locally.', 'info');
+        }
+    } catch (err) {
+        showRxFeedback(`Complaints recorded locally (${_currentComplaints.length} item${_currentComplaints.length === 1 ? '' : 's'}).`, 'info');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origHtml;
+        }
+    }
 }
 
 function updateEMRComplaintsDisplay() {
@@ -1924,15 +2213,15 @@ function updateEMRComplaintsDisplay() {
     }
 
     let html = '<div class="emr-complaints-pill-list">';
-    _currentComplaints.forEach(c => {
+    _currentComplaints.forEach((c, idx) => {
         html += `
             <div class="emr-complaint-badge-row">
-                <div class="emr-complaint-badge-left">
+                <div class="emr-complaint-badge-left" onclick="event.stopPropagation(); editComplaintItem(${idx})" title="Click to edit ${escHtml(c.name)}">
                     <span class="emr-complaint-name-tag">${escHtml(c.name)}</span>
                     <span class="emr-complaint-eye-tag">${escHtml(c.eye)}</span>
                     ${c.duration ? `<span class="emr-complaint-dur-tag">${escHtml(c.duration)}</span>` : ''}
                 </div>
-                <span class="emr-complaints-edit-btn" title="Edit"><i class="fa-solid fa-pen-to-square"></i></span>
+                <span class="emr-complaints-edit-btn" onclick="event.stopPropagation(); editComplaintItem(${idx})" title="Edit ${escHtml(c.name)}"><i class="fa-solid fa-pen-to-square"></i></span>
             </div>
         `;
     });
@@ -2003,9 +2292,324 @@ window.onComplaintInputChange = onComplaintInputChange;
 window.handleComplaintInputKey = handleComplaintInputKey;
 window.addCurrentComplaint = addCurrentComplaint;
 window.removeComplaintItem = removeComplaintItem;
+window.editComplaintItem = editComplaintItem;
 window.onInformantChange = onInformantChange;
 window.saveComplaintsModal = saveComplaintsModal;
 window.orderComplaintsReworkup = orderComplaintsReworkup;
 window.resetComplaintsState = resetComplaintsState;
+window.saveComplaintsDraft = saveComplaintsDraft;
+window.restoreComplaintsDraft = restoreComplaintsDraft;
+window.parseComplaintsFromNotesText = parseComplaintsFromNotesText;
 
 
+
+
+// ==========================================================================
+// VISION POPUP MODAL
+// ==========================================================================
+
+let _visionEntries = [];           // { tab, re, le, chartType, cvaTab, cvaRe, cvaLe, cvaChartType, remarks }
+let _visionActiveTab = 'ucva';     // 'ucva' | 'ucva_with_ph' | 'ucva_with_mph'
+let _visionActiveCVATab = 'bcva';  // 'bcva' | 'bcva_with_ph'
+let _visionHasSpectacles = 'No';
+let _visionLastFocused = null;     // 're' | 'le' | 'cva_re' | 'cva_le' — which eye input is active
+
+function openVisionModal() {
+    const modal = document.getElementById('visionModal');
+    if (!modal) return;
+    setVisionSpectaclesUI(_visionHasSpectacles);
+    switchVisionTab(_visionActiveTab);
+    switchVisionCVATab(_visionActiveCVATab);
+    renderVisionSummary();
+    modal.style.display = 'flex';
+    // Don't auto-open the partial popup on open — wait for user to focus an eye input
+}
+
+function closeVisionModal() {
+    closeVisionPartialPopup();
+    const modal = document.getElementById('visionModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function setVisionSpectacles(val) {
+    _visionHasSpectacles = val;
+    setVisionSpectaclesUI(val);
+}
+
+function setVisionSpectaclesUI(val) {
+    document.querySelectorAll('.vision-spec-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.val === val);
+    });
+}
+
+function switchVisionTab(tab) {
+    _visionActiveTab = tab;
+    document.querySelectorAll('.vision-ucva-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+}
+
+function switchVisionCVATab(tab) {
+    _visionActiveCVATab = tab;
+    document.querySelectorAll('.vision-cva-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Partial (P) floating popup
+// ---------------------------------------------------------------------------
+
+function openVisionPartialPopup(eyeKey) {
+    _visionLastFocused = eyeKey;
+    const popup = document.getElementById('visionPartialPopup');
+    if (!popup) return;
+
+    // Label the popup with which eye is active
+    const eyeLabel = document.getElementById('visionPartialPopupEye');
+    if (eyeLabel) {
+        const labels = { re: 'Right Eye (RE)', le: 'Left Eye (LE)', cva_re: 'Right Eye (RE) — CVA', cva_le: 'Left Eye (LE) — CVA' };
+        eyeLabel.textContent = labels[eyeKey] || eyeKey;
+    }
+
+    // Position the popup below the focused input
+    const inputIdMap = { re: 'visionInputRE', le: 'visionInputLE', cva_re: 'visionCVAInputRE', cva_le: 'visionCVAInputLE' };
+    const inputId = inputIdMap[eyeKey];
+    const inputEl = document.getElementById(inputId);
+    const modalCard = document.querySelector('.vision-modal-card');
+
+    if (inputEl && modalCard) {
+        const inputRect = inputEl.getBoundingClientRect();
+        const cardRect  = modalCard.getBoundingClientRect();
+        // Position relative to the modal card (which has position:relative)
+        const top  = inputRect.bottom - cardRect.top + 6;
+        let left = inputRect.left - cardRect.left;
+        const popupWidth = 360;
+        if (left + popupWidth > cardRect.width - 16) {
+            left = Math.max(16, cardRect.width - popupWidth - 16);
+        }
+        popup.style.top  = top  + 'px';
+        popup.style.left = left + 'px';
+    }
+
+    popup.style.display = 'block';
+}
+
+function closeVisionPartialPopup() {
+    const popup = document.getElementById('visionPartialPopup');
+    if (popup) popup.style.display = 'none';
+}
+
+/** Called by every pill button — inserts value into the active eye input */
+function setVisionQuick(value) {
+    const targetIdMap = { re: 'visionInputRE', le: 'visionInputLE', cva_re: 'visionCVAInputRE', cva_le: 'visionCVAInputLE' };
+    const targetId = targetIdMap[_visionLastFocused] || 'visionInputRE';
+    const el = document.getElementById(targetId);
+    if (el) {
+        el.value = value;
+        el.focus();           // keep the popup open so the user can keep picking
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Entry management
+// ---------------------------------------------------------------------------
+
+function addVisionEntry() {
+    const re = (document.getElementById('visionInputRE')?.value || '').trim();
+    const le = (document.getElementById('visionInputLE')?.value || '').trim();
+    const chartType = document.getElementById('visionChartType')?.value || 'Snellen-3Meter';
+    const cvaRe = (document.getElementById('visionCVAInputRE')?.value || '').trim();
+    const cvaLe = (document.getElementById('visionCVAInputLE')?.value || '').trim();
+    const cvaChartType = document.getElementById('visionCVAChartType')?.value || 'Snellen-3Meter';
+    const remarks   = (document.getElementById('visionRemarks')?.value  || '').trim();
+
+    if (!re && !le && !cvaRe && !cvaLe) {
+        ['visionInputRE', 'visionInputLE', 'visionCVAInputRE', 'visionCVAInputLE'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.style.borderColor = '#ef4444'; setTimeout(() => el.style.borderColor = '', 1000); }
+        });
+        return;
+    }
+
+    _visionEntries.push({
+        tab: _visionActiveTab, re: re || '—', le: le || '—', chartType,
+        cvaTab: _visionActiveCVATab, cvaRe: cvaRe || '—', cvaLe: cvaLe || '—', cvaChartType,
+        remarks
+    });
+
+    ['visionInputRE', 'visionInputLE', 'visionCVAInputRE', 'visionCVAInputLE', 'visionRemarks'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    closeVisionPartialPopup();
+    _visionLastFocused = null;
+    renderVisionSummary();
+}
+
+function removeVisionEntry(index) {
+    _visionEntries.splice(index, 1);
+    renderVisionSummary();
+}
+
+function renderVisionSummary() {
+    const body = document.getElementById('visionSummaryBody');
+    if (!body) return;
+
+    if (!_visionEntries.length) {
+        body.innerHTML = '<div class="vision-summary-empty">No vision entries added yet.</div>';
+        return;
+    }
+
+    const ucvaLabels = { ucva: 'UCVA', ucva_with_ph: 'UCVA With PH', ucva_with_mph: 'UCVA with MPH' };
+    const cvaLabels  = { bcva: 'BCVA', bcva_with_ph: 'BCVA With PH' };
+
+    body.innerHTML = _visionEntries.map((e, i) => {
+        const hasUCVA = (e.re && e.re !== '—') || (e.le && e.le !== '—');
+        const hasCVA  = (e.cvaRe && e.cvaRe !== '—') || (e.cvaLe && e.cvaLe !== '—');
+        const parts = [];
+        if (hasUCVA) {
+            parts.push(`<strong>${ucvaLabels[e.tab] || e.tab}:</strong> RE ${e.re} / LE ${e.le} <em style="color:#94a3b8;font-size:0.76rem;">[${e.chartType}]</em>`);
+        }
+        if (hasCVA) {
+            parts.push(`<strong>${cvaLabels[e.cvaTab] || e.cvaTab}:</strong> RE ${e.cvaRe} / LE ${e.cvaLe} <em style="color:#94a3b8;font-size:0.76rem;">[${e.cvaChartType}]</em>`);
+        }
+        const mainText = parts.length ? parts.join('<span style="color:#cbd5e1;margin:0 6px;">|</span>') : '—';
+        return `
+        <div class="vision-summary-entry">
+            <span>
+                ${mainText}
+                ${e.remarks ? `<span style="color:#64748b;"> — ${e.remarks}</span>` : ''}
+            </span>
+            <button class="vision-summary-remove" onclick="removeVisionEntry(${i})" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `}).join('');
+}
+
+function saveVisionModal() {
+    const ucvaEntries = _visionEntries.filter(e => e.tab === 'ucva');
+    if (ucvaEntries.length) {
+        const last = ucvaEntries[ucvaEntries.length - 1];
+        const odEl = document.getElementById('emr_ucva_od');
+        const osEl = document.getElementById('emr_ucva_os');
+        if (odEl) odEl.value = last.re !== '—' ? last.re : '-';
+        if (osEl) osEl.value = last.le !== '—' ? last.le : '-';
+    }
+
+    // Populate BCVA quick-glance boxes from last BCVA corrected entry
+    const bcvaEntries = _visionEntries.filter(e => (e.cvaTab === 'bcva' || e.cvaTab === 'bcva_with_ph') && (e.cvaRe !== '—' || e.cvaLe !== '—'));
+    if (bcvaEntries.length) {
+        const last = bcvaEntries[bcvaEntries.length - 1];
+        const odEl = document.getElementById('emr_bcva_od');
+        const osEl = document.getElementById('emr_bcva_os');
+        if (odEl && last.cvaRe !== '—') odEl.value = last.cvaRe;
+        if (osEl && last.cvaLe !== '—') osEl.value = last.cvaLe;
+    }
+
+    const specVal = document.getElementById('emr_spectacles_val');
+    if (specVal) specVal.textContent = _visionHasSpectacles;
+
+    const displayEl = document.getElementById('emr_vision_summary_display');
+    if (displayEl) {
+        if (_visionEntries.length) {
+            const ucvaLabels = { ucva: 'UCVA', ucva_with_ph: 'UCVA+PH', ucva_with_mph: 'UCVA+MPH' };
+            const cvaLabels  = { bcva: 'BCVA', bcva_with_ph: 'BCVA+PH' };
+            displayEl.innerHTML = _visionEntries.map(e => {
+                const hasUCVA = (e.re && e.re !== '—') || (e.le && e.le !== '—');
+                const hasCVA  = (e.cvaRe && e.cvaRe !== '—') || (e.cvaLe && e.cvaLe !== '—');
+                const parts = [];
+                if (hasUCVA) parts.push(`${ucvaLabels[e.tab] || e.tab}: RE <strong>${e.re}</strong> / LE <strong>${e.le}</strong>`);
+                if (hasCVA)  parts.push(`${cvaLabels[e.cvaTab] || e.cvaTab}: RE <strong>${e.cvaRe}</strong> / LE <strong>${e.cvaLe}</strong>`);
+                return `<div class="emr-indented-line">${parts.join(' | ') || '—'}</div>`;
+            }).join('');
+        } else {
+            displayEl.innerHTML = '';
+        }
+    }
+
+    closeVisionModal();
+}
+
+function orderVisionReworkup() {
+    alert('Re-workup order placed.');
+}
+
+function resetVisionState() {
+    _visionEntries = [];
+    _visionActiveTab = 'ucva';
+    _visionActiveCVATab = 'bcva';
+    _visionHasSpectacles = 'No';
+    _visionLastFocused = null;
+}
+
+// ---------------------------------------------------------------------------
+// DOMContentLoaded — wire up eye input focus/blur for the partial popup
+// ---------------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+
+    // RE / LE focus → open partial popup; blur → close if focus left both inputs
+    const eyeConfigs = [
+        { id: 'visionInputRE', key: 're' },
+        { id: 'visionInputLE', key: 'le' },
+        { id: 'visionCVAInputRE', key: 'cva_re' },
+        { id: 'visionCVAInputLE', key: 'cva_le' }
+    ];
+
+    const allEyeIds = eyeConfigs.map(c => c.id);
+
+    eyeConfigs.forEach(({ id, key }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.addEventListener('focus', () => {
+            openVisionPartialPopup(key);
+        });
+
+        el.addEventListener('blur', (e) => {
+            // relatedTarget = element that is receiving focus next
+            const next = e.relatedTarget;
+            const popup = document.getElementById('visionPartialPopup');
+            // Keep popup open if focus moves to a pill inside the popup
+            if (popup && next && popup.contains(next)) return;
+            // Keep popup open if focus moves to any other eye input
+            const otherInputs = allEyeIds.filter(eid => eid !== id).map(eid => document.getElementById(eid));
+            if (next && otherInputs.includes(next)) return;
+            // Otherwise close
+            closeVisionPartialPopup();
+        });
+    });
+
+    // Close vision modal on backdrop click
+    document.getElementById('visionModal')?.addEventListener('click', function (e) {
+        if (e.target === this) closeVisionModal();
+    });
+
+    // ESC: close partial popup first, then modal
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        const popup = document.getElementById('visionPartialPopup');
+        if (popup && popup.style.display !== 'none') {
+            closeVisionPartialPopup();
+            return;
+        }
+        const modal = document.getElementById('visionModal');
+        if (modal && modal.style.display === 'flex') closeVisionModal();
+    });
+});
+
+window.openVisionModal        = openVisionModal;
+window.closeVisionModal       = closeVisionModal;
+window.setVisionSpectacles    = setVisionSpectacles;
+window.switchVisionTab        = switchVisionTab;
+window.switchVisionCVATab     = switchVisionCVATab;
+window.openVisionPartialPopup = openVisionPartialPopup;
+window.closeVisionPartialPopup= closeVisionPartialPopup;
+window.setVisionQuick         = setVisionQuick;
+window.addVisionEntry         = addVisionEntry;
+window.removeVisionEntry      = removeVisionEntry;
+window.saveVisionModal        = saveVisionModal;
+window.orderVisionReworkup    = orderVisionReworkup;
+window.resetVisionState       = resetVisionState;
