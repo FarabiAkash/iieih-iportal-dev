@@ -623,18 +623,16 @@ def profile_view(request):
         notes = request.POST.get('notes', '').strip()
         prescribing_doctor = request.POST.get('prescribing_doctor', '').strip() or profile.get_surgeon_display_name()
         medications_json_raw = request.POST.get('medications_json', '[]').strip()
+        complaints_json_raw = request.POST.get('complaints_json', '[]').strip()
+        complaint_meta_json_raw = request.POST.get('complaint_meta_json', '{}').strip()
 
-        # Validation
-        if not patient_name:
-            return JsonResponse({'success': False, 'error': 'Patient name is required.'}, status=400)
-        if not diagnosis:
-            return JsonResponse({'success': False, 'error': 'Diagnosis is required.'}, status=400)
+        # All fields are optional — just ensure medications_json is valid JSON
         try:
             meds_list = json.loads(medications_json_raw)
-            if not isinstance(meds_list, list) or len(meds_list) < 1:
-                raise ValueError("Must be a non-empty JSON array.")
-        except (json.JSONDecodeError, ValueError) as e:
-            return JsonResponse({'success': False, 'error': f'Medications must be a valid JSON array with at least 1 item. ({e})'}, status=400)
+            if not isinstance(meds_list, list):
+                raise ValueError("Must be a JSON array.")
+        except (json.JSONDecodeError, ValueError):
+            medications_json_raw = '[]'
 
         prescription_id = request.POST.get('prescription_id', '').strip()
         if prescription_id:
@@ -660,6 +658,10 @@ def profile_view(request):
             rx.notes = notes
             rx.prescribing_doctor = prescribing_doctor
             rx.medications_json = medications_json_raw
+            if complaints_json_raw and complaints_json_raw != '[]':
+                rx.complaints_json = complaints_json_raw
+            if complaint_meta_json_raw and complaint_meta_json_raw != '{}':
+                rx.complaint_meta_json = complaint_meta_json_raw
             rx.save()
             return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} updated successfully.', 'prescription_id': rx.id})
         else:
@@ -674,8 +676,111 @@ def profile_view(request):
                 notes=notes,
                 prescribing_doctor=prescribing_doctor,
                 medications_json=medications_json_raw,
+                complaints_json=complaints_json_raw or '[]',
+                complaint_meta_json=complaint_meta_json_raw or '{}',
             )
             return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} saved successfully.', 'prescription_id': rx.id})
+
+    # ── POST: Save Complaints (Quick Action from Modal) ──────────────────────
+    elif request.method == 'POST' and 'save_complaints' in request.POST:
+        if not profile.is_doctor_role:
+            return JsonResponse({'success': False, 'error': 'Access denied. Only doctors can save complaints.'}, status=403)
+
+        prescription_id = request.POST.get('prescription_id', '').strip()
+        patient_mrn = request.POST.get('patient_mrn', '').strip()
+        patient_name = request.POST.get('patient_name', '').strip()
+        patient_age = request.POST.get('patient_age', 0)
+        patient_gender = request.POST.get('patient_gender', 'Male')
+        eye = request.POST.get('eye', 'BE').strip()
+        complaints_json_raw = request.POST.get('complaints_json', '[]').strip()
+        complaint_meta_json_raw = request.POST.get('complaint_meta_json', '{}').strip()
+        complaints_summary = request.POST.get('complaints_summary', '').strip()
+        doctor_name = profile.get_surgeon_display_name()
+
+        rx = None
+        if prescription_id and prescription_id.isdigit():
+            rx_qs = Prescription.objects.filter(id=int(prescription_id))
+            if not (request.user.is_superuser or profile.is_admin_role):
+                rx_qs = rx_qs.filter(
+                    Q(prescribing_doctor__icontains=doctor_name) |
+                    Q(prescribing_doctor__icontains=request.user.username)
+                )
+            rx = rx_qs.first()
+
+        if rx:
+            rx.complaints_json = complaints_json_raw or '[]'
+            rx.complaint_meta_json = complaint_meta_json_raw or '{}'
+            new_lines = []
+            replaced = False
+            for line in (rx.notes or '').splitlines():
+                if line.strip().startswith('Complaints:'):
+                    if complaints_summary:
+                        new_lines.append(f"Complaints: {complaints_summary}")
+                    replaced = True
+                else:
+                    new_lines.append(line)
+            if not replaced and complaints_summary:
+                new_lines.insert(0, f"Complaints: {complaints_summary}")
+            rx.notes = '\n'.join(new_lines).strip()
+            rx.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Complaints saved to prescription.',
+                'prescription_id': rx.id,
+                'complaints': rx.complaints,
+                'complaint_meta': rx.complaint_meta,
+            })
+        elif patient_mrn or patient_name:
+            today = date.today()
+            recent_rx = Prescription.objects.filter(
+                patient_mrn=patient_mrn,
+                date_created__date=today
+            ).filter(
+                Q(prescribing_doctor__icontains=doctor_name) |
+                Q(prescribing_doctor__icontains=request.user.username)
+            ).order_by('-date_created').first() if patient_mrn else None
+
+            if recent_rx:
+                rx = recent_rx
+                rx.complaints_json = complaints_json_raw or '[]'
+                rx.complaint_meta_json = complaint_meta_json_raw or '{}'
+                new_lines = []
+                replaced = False
+                for line in (rx.notes or '').splitlines():
+                    if line.strip().startswith('Complaints:'):
+                        if complaints_summary:
+                            new_lines.append(f"Complaints: {complaints_summary}")
+                        replaced = True
+                    else:
+                        new_lines.append(line)
+                if not replaced and complaints_summary:
+                    new_lines.insert(0, f"Complaints: {complaints_summary}")
+                rx.notes = '\n'.join(new_lines).strip()
+                rx.save()
+            else:
+                initial_notes = f"Complaints: {complaints_summary}" if complaints_summary else ""
+                rx = Prescription.objects.create(
+                    patient_mrn=patient_mrn,
+                    patient_name=patient_name or f"Patient {patient_mrn}",
+                    patient_age=int(patient_age) if str(patient_age).isdigit() else 0,
+                    patient_gender=patient_gender,
+                    eye=eye,
+                    diagnosis="Clinical Evaluation (OPD)",
+                    notes=initial_notes,
+                    complaints_json=complaints_json_raw or '[]',
+                    complaint_meta_json=complaint_meta_json_raw or '{}',
+                    prescribing_doctor=doctor_name,
+                    medications_json="[]",
+                )
+            return JsonResponse({
+                'success': True,
+                'message': 'Complaints saved successfully.',
+                'prescription_id': rx.id,
+                'complaints': rx.complaints,
+                'complaint_meta': rx.complaint_meta,
+            })
+
+        return JsonResponse({'success': True, 'message': 'Complaints recorded.'})
 
     # ── POST: Apply for Surgery ──────────────────────────────────────────────
     elif request.method == 'POST' and 'apply_surgery' in request.POST:
@@ -830,6 +935,35 @@ def profile_view(request):
         surgery_id = request.POST.get('surgery_id')
         try:
             surg = SurgeryRecord.objects.get(id=surgery_id)
+
+            # ── Ownership check: only the assigned doctor (or admin/superuser) can edit ──
+            if not (request.user.is_superuser or profile.is_admin_role):
+                _canon = profile.get_surgeon_display_name().lower()
+                _surg_lower = (surg.surgeon_name or '').lower()
+                _user_kws = [_canon]
+                import re as _re2
+                _bare = _re2.sub(r'^(dr\.|prof\.)\s*', '', _canon, flags=_re2.IGNORECASE).strip()
+                if _bare and _bare != _canon:
+                    _user_kws.append(_bare)
+                if request.user.first_name.strip():
+                    _user_kws.append(request.user.first_name.strip().lower())
+                if request.user.last_name.strip() and len(request.user.last_name.strip()) >= 3:
+                    _user_kws.append(request.user.last_name.strip().lower())
+                _full = request.user.get_full_name().strip().lower()
+                if _full:
+                    _user_kws.append(_full)
+                if request.user.username.strip():
+                    _user_kws.append(request.user.username.strip().lower())
+                _is_own = any(kw and kw in _surg_lower for kw in _user_kws)
+                if not _is_own:
+                    messages.error(
+                        request,
+                        f"⛔ Access Denied: You can only edit your own patients. "
+                        f"Record #{surg.id} is assigned to {surg.surgeon_name}."
+                    )
+                    redirect_tab = request.POST.get('active_tab', 'surgery-history')
+                    return redirect(f"{request.path}?tab={redirect_tab}")
+
             new_ot_room = request.POST.get('ot_room', surg.ot_room)
             new_ot_slot = request.POST.get('ot_slot', surg.ot_slot)
 
@@ -1288,6 +1422,8 @@ def prescription_api(request):
             'diagnosis': rx.diagnosis,
             'medications': rx.medications,
             'notes': rx.notes,
+            'complaints': rx.complaints,
+            'complaint_meta': rx.complaint_meta,
             'prescribing_doctor': rx.prescribing_doctor,
             'date_created': rx.date_created.strftime('%Y-%m-%d %H:%M:%S'),
             'date_updated': rx.date_updated.strftime('%Y-%m-%d %H:%M:%S'),

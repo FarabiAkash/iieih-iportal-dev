@@ -526,18 +526,28 @@ class Prescription(models.Model):
     ]
 
     patient_mrn = models.CharField(max_length=12, blank=True)
-    patient_name = models.CharField(max_length=100)
-    patient_age = models.PositiveIntegerField()
-    patient_gender = models.CharField(max_length=10, choices=Gender_Choices)
+    patient_name = models.CharField(max_length=100, blank=True, default='')
+    patient_age = models.PositiveIntegerField(blank=True, null=True)
+    patient_gender = models.CharField(max_length=10, choices=Gender_Choices, blank=True, default='')
     eye = models.CharField(max_length=2, choices=Eye_Choices, blank=True)
-    diagnosis = models.TextField(help_text="Primary diagnosis / impression")
+    diagnosis = models.TextField(blank=True, default='', help_text="Primary diagnosis / impression")
     medications_json = models.TextField(
         blank=True,
         default='[]',
         help_text="JSON array of medication objects"
     )
+    complaints_json = models.TextField(
+        blank=True,
+        default='[]',
+        help_text="JSON array of structured complaint objects"
+    )
+    complaint_meta_json = models.TextField(
+        blank=True,
+        default='{}',
+        help_text="JSON metadata for complaints (purpose, informant, remarks)"
+    )
     notes = models.TextField(blank=True)
-    prescribing_doctor = models.CharField(max_length=100)
+    prescribing_doctor = models.CharField(max_length=100, blank=True, default='')
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
@@ -549,6 +559,96 @@ class Prescription(models.Model):
     def save_medications(self, meds_list):
         import json
         self.medications_json = json.dumps(meds_list)
+
+    @property
+    def complaints(self):
+        import json
+        if self.complaints_json:
+            try:
+                parsed = json.loads(self.complaints_json)
+                if isinstance(parsed, list) and len(parsed) > 0:
+                    return parsed
+            except Exception:
+                pass
+        return self._parse_complaints_from_notes()
+
+    @property
+    def complaint_meta(self):
+        import json
+        if self.complaint_meta_json:
+            try:
+                parsed = json.loads(self.complaint_meta_json)
+                if isinstance(parsed, dict) and any(parsed.values()):
+                    return parsed
+            except Exception:
+                pass
+        return self._parse_meta_from_notes()
+
+    def _parse_complaints_from_notes(self):
+        import re
+        if not self.notes:
+            return []
+        for line in self.notes.splitlines():
+            line = line.strip()
+            if line.startswith('Complaints:'):
+                complaint_str = line[len('Complaints:'):].strip()
+                parts = complaint_str.split('|')
+                items_part = parts[0].strip()
+                if not items_part:
+                    continue
+                complaints_list = []
+                for item in items_part.split(';'):
+                    item = item.strip()
+                    if not item:
+                        continue
+                    m = re.match(r'^([^(]+?)(?:\s*\(([^)]+)\))?$', item)
+                    if m:
+                        name = m.group(1).strip()
+                        details = m.group(2) or ''
+                        eye = 'BE'
+                        dur = ''
+                        if details:
+                            subparts = [p.strip() for p in details.split(',')]
+                            for sp in subparts:
+                                if sp in ('RE', 'LE', 'BE'):
+                                    eye = sp
+                                else:
+                                    dur = sp
+                        eye_label = 'Right Eye (OD)' if eye == 'RE' else ('Left Eye (OS)' if eye == 'LE' else 'Both Eyes (OU)')
+                        complaints_list.append({
+                            'name': name,
+                            'eye': eye,
+                            'eye_label': eye_label,
+                            'duration': dur
+                        })
+                if complaints_list:
+                    return complaints_list
+        return []
+
+    def _parse_meta_from_notes(self):
+        meta = {'purpose': '', 'remarks': '', 'informant': 'Patient', 'specify_informant': ''}
+        if not self.notes:
+            return meta
+        for line in self.notes.splitlines():
+            line = line.strip()
+            if line.startswith('Complaints:'):
+                complaint_str = line[len('Complaints:'):].strip()
+                parts = complaint_str.split('|')
+                for p in parts[1:]:
+                    p = p.strip()
+                    if p.startswith('Purpose:'):
+                        meta['purpose'] = p[len('Purpose:'):].strip()
+                    elif p.startswith('Informant:'):
+                        inf_str = p[len('Informant:'):].strip()
+                        if ' - ' in inf_str:
+                            inf_parts = inf_str.split(' - ', 1)
+                            meta['informant'] = inf_parts[0].strip()
+                            meta['specify_informant'] = inf_parts[1].strip()
+                        else:
+                            meta['informant'] = inf_str
+                    elif p.startswith('Remarks:'):
+                        meta['remarks'] = p[len('Remarks:'):].strip()
+        return meta
 
     def __str__(self):
         return f"Prescription for {self.patient_name} ({self.patient_mrn}) by {self.prescribing_doctor}"
