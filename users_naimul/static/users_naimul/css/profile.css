@@ -6223,3 +6223,616 @@ body.prescription-mode .emr-prescription-workspace {
 .btn-vision-save:hover {
     background: #194b8c;
 }
+
+/* ==========================================================================
+   OCULAR HISTORY POPUP MODAL
+   ========================================================================== */
+
+#ocularHistoryModal.oh-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.oh-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    max-width: 1020px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: ohModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ohModalFadeIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Header */
+.oh-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+}
+
+.oh-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.oh-modal-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1;
+}
+
+.btn-oh-reworkup {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-oh-reworkup:hover {
+    background: #edf2f7;
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+.oh-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+}
+
+.oh-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+/* Body */
+.oh-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: calc(85vh - 130px);
+    background: #fafbfc;
+}
+
+.oh-body-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Left column sections */
+.oh-sections-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.oh-section-block {
+    background: #ffffff;
+    border: 1px solid #e8edf3;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.oh-section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.oh-section-icon-x {
+    color: #ef4444;
+    font-size: 0.8rem;
+}
+
+.oh-section-title-medicine {
+    color: #d97706;
+}
+
+.oh-section-icon-med {
+    color: #d97706;
+    font-size: 0.85rem;
+}
+
+.oh-section-icon-other {
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
+/* Input row */
+.oh-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Surgery search */
+.oh-search-wrap {
+    flex: 1.6;
+    min-width: 150px;
+}
+
+.oh-search-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.oh-search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Eye toggle segment */
+.oh-eye-segment {
+    display: inline-flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 36px;
+    background: #f8fafc;
+    flex-shrink: 0;
+}
+
+.oh-eye-btn {
+    border: none;
+    background: transparent;
+    padding: 0 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+}
+
+.oh-eye-btn:hover:not(.active) {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.oh-eye-btn.active {
+    background: #e2e8f0;
+    color: #0f172a;
+    font-weight: 700;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* Duration */
+.oh-duration-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.oh-field-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    line-height: 1;
+}
+
+.oh-duration-box {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    height: 36px;
+    background: #ffffff;
+    overflow: hidden;
+    padding: 0 8px;
+    gap: 4px;
+    min-width: 120px;
+}
+
+.oh-duration-box:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.oh-duration-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 0.82rem;
+    color: #1e293b;
+    background: transparent;
+    min-width: 0;
+}
+
+.oh-dur-cal {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+/* Remarks */
+.oh-remarks-wrap {
+    flex: 1;
+    min-width: 100px;
+}
+
+.oh-remarks-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.oh-remarks-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Add button */
+.btn-oh-add {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    border: none;
+    background: #0f2c59;
+    color: #ffffff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btn-oh-add:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.btn-oh-add:not(:disabled):hover {
+    background: #194b8c;
+}
+
+/* Medicine tab bar */
+.oh-med-tab-bar {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    width: fit-content;
+}
+
+.oh-med-tab {
+    border: none;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.oh-med-tab.active {
+    background: #0f2c59;
+    color: #ffffff;
+}
+
+.oh-med-tab:not(.active):hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* Medicine search */
+.oh-med-search-wrap {
+    flex: 1.8;
+    min-width: 160px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    height: 36px;
+    background: #ffffff;
+    padding: 0 8px 0 10px;
+    gap: 6px;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.oh-med-search-wrap:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.oh-med-search-icon {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.oh-med-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.84rem;
+    color: #1e293b;
+    background: transparent;
+    min-width: 0;
+}
+
+.oh-med-search-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.oh-med-action-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.oh-med-action-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Others row */
+.oh-others-row {
+    align-items: center;
+}
+
+.oh-others-remarks {
+    flex: 1;
+}
+
+/* Right Summary Panel */
+.oh-summary-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 180px;
+}
+
+.oh-summary-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.oh-summary-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.oh-summary-empty {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 8px 0;
+}
+
+/* Summary entries */
+.oh-summary-entry {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.oh-summary-entry-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.oh-summary-entry-name {
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.oh-summary-entry-meta {
+    color: #64748b;
+    font-size: 0.74rem;
+}
+
+.oh-summary-entry-type {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.oh-entry-type-sxp {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.oh-entry-type-med {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.oh-entry-type-other {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-oh-remove-entry {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 2px;
+    transition: color 0.12s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.btn-oh-remove-entry:hover {
+    color: #ef4444;
+}
+
+/* Footer */
+.oh-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 14px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #ffffff;
+}
+
+.btn-oh-done {
+    height: 36px;
+    padding: 0 28px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border: none;
+    background: #0f2c59;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(15, 44, 89, 0.2);
+}
+
+.btn-oh-done:hover {
+    background: #194b8c;
+    box-shadow: 0 4px 8px rgba(15, 44, 89, 0.28);
+}
+
+/* EMR inline display for Ocular History */
+.oh-emr-entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.76rem;
+    margin-bottom: 3px;
+}
+
+.oh-emr-entry-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.oh-emr-type-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.oh-emr-sxp-tag { background: #fee2e2; color: #b91c1c; }
+.oh-emr-med-tag { background: #fef3c7; color: #92400e; }
+.oh-emr-other-tag { background: #f1f5f9; color: #475569; }
+
+.oh-emr-name-tag { font-weight: 600; color: #1e293b; }
+.oh-emr-meta-tag { color: #64748b; font-size: 0.7rem; }
+
