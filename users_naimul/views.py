@@ -1161,7 +1161,7 @@ def profile_view(request):
         if _kw:
             my_surgeries_q |= Q(surgeon_name__icontains=_kw)
     if my_surgeries_q:
-        my_surgeries = SurgeryRecord.objects.filter(my_surgeries_q).order_by('-date', '-id')
+        my_surgeries = SurgeryRecord.objects.filter(my_surgeries_q, date=date.today()).order_by('-date', '-id')
     else:
         my_surgeries = SurgeryRecord.objects.none()
 
