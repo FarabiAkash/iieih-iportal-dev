@@ -24,6 +24,9 @@
     <link rel="stylesheet" href="{% static 'users_naimul/css/profile.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/history_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/anterior_segment_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/fundus_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/diagnosis_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/rx_modal.css' %}">
 </head>
 
 <body>
@@ -1208,24 +1211,36 @@
                                 </div>
 
                                 <!-- 7. Fundus -->
-                                <div class="emr-sec-row" id="row_fundus">
-                                    <div class="emr-sec-header" onclick="toggleSection('fundus')">
+                                <div class="emr-sec-row open" id="row_fundus">
+                                    <div class="emr-sec-header" onclick="openFundusModal()" title="Click to record Fundus findings">
                                         <span class="emr-sec-label">Fundus:</span>
-                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Fundus Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_fundus" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_fundus" rows="2" placeholder="Optic disc, CDR, Macula, Vessels..."></textarea>
+                                    <div class="emr-sec-body" id="body_fundus">
+                                        <div id="emr_fundus_display" class="emr-complaints-display" onclick="openFundusModal()" title="Click to manage Fundus findings">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-regular fa-eye"></i>
+                                                <span>Click to record Fundus exam...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_fundus" rows="2" style="display: none;" placeholder="Media, Disc, Vessels, Retina, Macula..."></textarea>
                                     </div>
                                 </div>
 
                                 <!-- 8. Diagnosis -->
-                                <div class="emr-sec-row" id="row_diagnosis">
-                                    <div class="emr-sec-header" onclick="toggleSection('diagnosis')">
+                                <div class="emr-sec-row open" id="row_diagnosis">
+                                    <div class="emr-sec-header" onclick="openDiagnosisModal()" title="Click to record diagnosis">
                                         <span class="emr-sec-label">Diagnosis:</span>
-                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Diagnosis Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_diagnosis" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_diagnosis" rows="2" placeholder="Clinical Diagnosis / Impression..."></textarea>
+                                    <div class="emr-sec-body" id="body_diagnosis">
+                                        <div id="emr_diagnosis_display" class="emr-complaints-display" onclick="openDiagnosisModal()" title="Click to manage diagnosis">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-solid fa-stethoscope"></i>
+                                                <span>Click to record diagnosis...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_diagnosis" rows="2" style="display: none;" placeholder="Clinical Diagnosis / Impression..."></textarea>
                                     </div>
                                 </div>
 
@@ -1265,7 +1280,7 @@
                                 <div class="emr-rx-top-banner">
                                     <div class="emr-rx-symbol-wrap">
                                         <span class="emr-calligraphic-rx">℞</span>
-                                        <button type="button" class="emr-btn-add-rx" onclick="toggleInlineMedAdder()" title="Add Medication">
+                                        <button type="button" class="emr-btn-add-rx" onclick="openRxModal()" title="Open Rx Medicine Picker">
                                             <i class="fa-solid fa-plus"></i>
                                         </button>
                                     </div>
@@ -1276,8 +1291,8 @@
 
                                 <!-- Medications display area -->
                                 <div class="emr-rx-meds-area">
-                                    <div class="emr-bengali-empty-notice" id="emrEmptyMedsMsg">
-                                        এখনো কোনো ঔষধ যোগ করা হয়নি।
+                                    <div class="emr-bengali-empty-notice" id="emrEmptyMedsMsg" onclick="openRxModal()" style="cursor: pointer;" title="Click to open Rx Medicine Picker">
+                                        এখনো কোনো ঔষধ যোগ করা হয়নি। <span style="font-size: 0.82em; opacity: 0.85; margin-left: 6px;">(ঔষধ যোগ করতে এখানে ক্লিক করুন)</span>
                                     </div>
                                     <div id="medicationRowsContainer" class="emr-med-active-container" style="display: none;">
                                         <!-- Medication rows rendered here -->
@@ -3218,6 +3233,506 @@
                 </div>
                 <!-- END ANTERIOR SEGMENT EXAM MODAL -->
 
+                <!-- =========================================================== -->
+                <!-- FUNDUS EXAM POPUP MODAL                                     -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay fundus-modal-overlay" id="fundusModal" style="display: none;">
+                    <div class="modal-card fundus-modal-card" role="dialog" aria-modal="true" aria-labelledby="fundusModalTitle">
+
+                        <!-- Modal Header -->
+                        <div class="fundus-modal-header">
+                            <div class="fundus-header-left">
+                                <h2 class="fundus-modal-title" id="fundusModalTitle">Fundus</h2>
+                                <span class="fundus-header-meta">
+                                    <span id="fundusHeaderUser">{{ profile.get_surgeon_display_name|default:"Beauty Akter" }}</span>
+                                    <span id="fundusHeaderTime">Nov 18, 2026 11:52:35 AM</span>
+                                </span>
+                            </div>
+                            <button type="button" class="fundus-modal-close" onclick="closeFundusModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="fundus-modal-body">
+                            <!-- Dilated pupil row -->
+                            <div class="fundus-dilated-row">
+                                <span class="fundus-dilated-label">Dilated pupil?</span>
+                                <div class="fundus-dilated-pills">
+                                    <button type="button" class="fundus-pill-btn" id="fundus_dilated_yes" onclick="setFundusDilated('yes')">Yes</button>
+                                    <button type="button" class="fundus-pill-btn" id="fundus_dilated_no" onclick="setFundusDilated('no')">No</button>
+                                </div>
+                            </div>
+
+                            <!-- Table Column Header (RE | [ Normal ] | LE) -->
+                            <div class="fundus-grid-header">
+                                <div class="fundus-col-header-eye">RE</div>
+                                <div class="fundus-col-header-center">
+                                    <button type="button" class="btn-fundus-normal-all" onclick="setAllFundusNormal()" title="Set all findings in both eyes to Normal">
+                                        Normal
+                                    </button>
+                                </div>
+                                <div class="fundus-col-header-eye">LE</div>
+                            </div>
+
+                            <!-- 5 Examination Rows -->
+                            <div class="fundus-rows-container">
+                                <!-- Row 1: Media -->
+                                <div class="fundus-grid-row" data-key="media">
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_re_media" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_re_media" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_re_media"></div>
+                                    </div>
+                                    <div class="fundus-row-center">
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('le_to_re', 'media')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="fundus-structure-label" onclick="setFundusRowNormal('media')" title="Click to toggle Normal for Media">Media</span>
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('re_to_le', 'media')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_le_media" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_le_media" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_le_media"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Disc -->
+                                <div class="fundus-grid-row" data-key="disc">
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_re_disc" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_re_disc" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_re_disc"></div>
+                                    </div>
+                                    <div class="fundus-row-center">
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('le_to_re', 'disc')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="fundus-structure-label" onclick="setFundusRowNormal('disc')" title="Click to toggle Normal for Disc">Disc</span>
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('re_to_le', 'disc')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_le_disc" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_le_disc" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_le_disc"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3: Vessels -->
+                                <div class="fundus-grid-row" data-key="vessels">
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_re_vessels" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_re_vessels" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_re_vessels"></div>
+                                    </div>
+                                    <div class="fundus-row-center">
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('le_to_re', 'vessels')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="fundus-structure-label" onclick="setFundusRowNormal('vessels')" title="Click to toggle Normal for Vessels">Vessels</span>
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('re_to_le', 'vessels')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_le_vessels" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_le_vessels" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_le_vessels"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 4: Background retina -->
+                                <div class="fundus-grid-row" data-key="background_retina">
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_re_background_retina" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_re_background_retina" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_re_background_retina"></div>
+                                    </div>
+                                    <div class="fundus-row-center">
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('le_to_re', 'background_retina')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="fundus-structure-label" onclick="setFundusRowNormal('background_retina')" title="Click to toggle Normal for Background retina">Background retina</span>
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('re_to_le', 'background_retina')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_le_background_retina" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_le_background_retina" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_le_background_retina"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 5: Macula/Foveal Reflex -->
+                                <div class="fundus-grid-row" data-key="macula_foveal_reflex">
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_re_macula_foveal_reflex" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_re_macula_foveal_reflex" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_re_macula_foveal_reflex"></div>
+                                    </div>
+                                    <div class="fundus-row-center">
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('le_to_re', 'macula_foveal_reflex')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="fundus-structure-label" onclick="setFundusRowNormal('macula_foveal_reflex')" title="Click to toggle Normal for Macula/Foveal Reflex">Macula/Foveal Reflex</span>
+                                        <button type="button" class="fundus-arrow-btn" onclick="copyFundusRow('re_to_le', 'macula_foveal_reflex')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="fundus-combo-wrap">
+                                        <div class="fundus-combo-input-wrap">
+                                            <input type="text" class="fundus-combo-input" id="fundus_input_le_macula_foveal_reflex" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="fundus-combo-toggle" id="fundus_toggle_le_macula_foveal_reflex" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="fundus-combo-menu" id="fundus_menu_le_macula_foveal_reflex"></div>
+                                    </div>
+                                </div>
+                            </div><!-- /.fundus-rows-container -->
+
+                            <!-- Remarks Section -->
+                            <div class="fundus-remarks-wrap">
+                                <textarea class="fundus-remarks-input" id="fundusRemarks" rows="2" placeholder="Remarks"></textarea>
+                            </div>
+                        </div><!-- /.fundus-modal-body -->
+
+                        <!-- Modal Footer -->
+                        <div class="fundus-modal-footer">
+                            <button type="button" class="btn-fundus-save" onclick="saveFundusModal()">Save Fundus</button>
+                        </div>
+                    </div><!-- /.fundus-modal-card -->
+                </div>
+                <!-- END FUNDUS EXAM MODAL -->
+
+                <!-- =========================================================== -->
+                <!-- DIAGNOSIS POPUP MODAL (Hospital EMR Standard)               -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay diagnosis-modal-overlay" id="diagnosisModal" style="display: none;">
+                    <div class="modal-card diag-modal-card" role="dialog" aria-modal="true" aria-labelledby="diagModalTitle">
+
+                        <!-- Modal Header -->
+                        <div class="diag-modal-header">
+                            <div class="diag-header-left">
+                                <h2 class="diag-modal-title" id="diagModalTitle">Diagnosis</h2>
+                                <button type="button" class="btn-diag-pull" id="btnDiagPull" onclick="pullLastDiagnosis()" title="Pull last diagnosis for this patient">
+                                    <span>Last Diagnosis found (today) - Pull</span>
+                                    <i class="fa-solid fa-arrow-down-to-bracket"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="diag-modal-close" onclick="closeDiagnosisModal()" aria-label="Close diagnosis modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body (Two-Column Layout) -->
+                        <div class="diag-modal-body">
+                            <!-- Left: Search, Templates & Favorites Grid -->
+                            <div class="diag-left-col">
+                                <div class="diag-search-template-row">
+                                    <div class="diag-search-wrap">
+                                        <i class="fa-solid fa-magnifying-glass diag-search-icon"></i>
+                                        <input type="text" id="diagSearchInput" class="diag-search-input"
+                                               placeholder="Search diagnosis" autocomplete="off"
+                                               oninput="onDiagSearchInput(this.value)" onkeydown="onDiagSearchKeydown(event)">
+                                        <div class="diag-search-dropdown" id="diagSearchDropdown" style="display: none;"></div>
+                                    </div>
+                                    <div class="diag-template-wrap">
+                                        <button type="button" class="btn-diag-template" id="btnDiagTemplate" onclick="toggleDiagTemplateDropdown(event)">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                            <span>Load Template</span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </button>
+                                        <div class="diag-template-dropdown" id="diagTemplateDropdown" style="display: none;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="diag-favorites-section">
+                                    <div class="diag-favorites-heading">Favorite / Common Diagnosis</div>
+                                    <div class="diag-favorites-grid" id="diagFavoritesGrid">
+                                        <!-- Rendered dynamically by diagnosis_modal.js -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Diagnosis Summary Side Panel -->
+                            <div class="diag-right-col">
+                                <div class="diag-summary-header">
+                                    <h3 class="diag-summary-title">Diagnosis Summary</h3>
+                                    <div class="diag-summary-actions">
+                                        <button type="button" class="btn-diag-apply-all" onclick="applyEyeToAll()" title="Apply selected eye to all diagnoses in summary">Apply to all</button>
+                                        <div class="diag-apply-eye-box">
+                                            <span class="diag-apply-eye-label">Eye</span>
+                                            <div class="diag-eye-pill-group" id="diagApplyEyeGroup">
+                                                <button type="button" class="diag-eye-pill-btn" data-eye="RE" onclick="setApplyAllEye('RE')">RE</button>
+                                                <button type="button" class="diag-eye-pill-btn" data-eye="LE" onclick="setApplyAllEye('LE')">LE</button>
+                                                <button type="button" class="diag-eye-pill-btn active" data-eye="BE" onclick="setApplyAllEye('BE')">BE</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="diag-summary-box" id="diagSummaryBox">
+                                    <div class="diag-summary-empty" id="diagSummaryEmpty">
+                                        No diagnoses added yet. Select from favorites, patient history, or search.
+                                    </div>
+                                    <div class="diag-summary-list" id="diagSummaryList" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="diag-modal-footer">
+                            <button type="button" class="btn-diag-cancel" onclick="closeDiagnosisModal()">Cancel</button>
+                            <button type="button" class="btn-diag-save" onclick="saveDiagnosisModal()">Save Diagnosis</button>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- END DIAGNOSIS MODAL -->
+
+                <!-- RX MEDICINE PICKER POPUP MODAL (Hospital EMR Standard) -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay rx-modal-overlay" id="rxMedicinePickerModal" style="display: none;">
+                    <div class="modal-card rx-modal-card" role="dialog" aria-modal="true" aria-labelledby="rxModalTitle">
+
+                        <!-- Modal Header -->
+                        <div class="rx-modal-header">
+                            <h2 class="rx-modal-title" id="rxModalTitle">Rx Medicine Picker</h2>
+                            <button type="button" class="rx-modal-close" onclick="closeRxModal()" title="Close">&times;</button>
+                        </div>
+
+                        <!-- Top Action Bar (Apply Eye to All & Presets) -->
+                        <div class="rx-top-action-bar">
+                            <!-- Left: Apply Eye to All -->
+                            <div class="rx-apply-eye-section">
+                                <span class="rx-apply-eye-label">
+                                    <i class="fa-regular fa-eye"></i> Apply Eye to All:
+                                </span>
+                                <div class="rx-eye-pills-group" id="rxApplyEyePills">
+                                    <button type="button" class="rx-pill-btn" data-eye="RE" onclick="setRxApplyAllEye('RE')">RE</button>
+                                    <button type="button" class="rx-pill-btn" data-eye="LE" onclick="setRxApplyAllEye('LE')">LE</button>
+                                    <button type="button" class="rx-pill-btn active" data-eye="BE" onclick="setRxApplyAllEye('BE')">BE</button>
+                                </div>
+                            </div>
+
+                            <!-- Right: Load a Preset & Save Preset -->
+                            <div class="rx-presets-section">
+                                <div class="rx-preset-select-wrap">
+                                    <select id="rxPresetSelect" class="rx-preset-select" onchange="onRxPresetSelected(this.value)">
+                                        <option value="">Load a Preset</option>
+                                        <option value="cataract_postop">Post-op Cataract Care</option>
+                                        <option value="conjunctivitis">Acute Conjunctivitis</option>
+                                        <option value="glaucoma_standard">Glaucoma Standard (POAG)</option>
+                                        <option value="dry_eye">Dry Eye Syndrome (KCS)</option>
+                                        <option value="corneal_trauma">Corneal Trauma / Abrasion</option>
+                                        <option value="allergic_eye">Allergic Eye Disease</option>
+                                        <option value="uveitis_acute">Anterior Uveitis</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down rx-select-chevron"></i>
+                                </div>
+                                <button type="button" class="rx-btn-save-preset" onclick="promptSaveRxPreset()" title="Save current medicines as custom preset">
+                                    <i class="fa-regular fa-bookmark"></i>
+                                    <span>Save Preset</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Main Modal Body -->
+                        <div class="rx-modal-body">
+                            <!-- Table Header & Inline Adder Row Container -->
+                            <div class="rx-form-table-container">
+
+                                <!-- Column Headers Row -->
+                                <div class="rx-cols-header-row">
+                                    <div class="rx-col-th col-medicine">MEDICINE</div>
+                                    <div class="rx-col-th col-eye">EYE</div>
+                                    <div class="rx-col-th col-dosage">DOSAGE</div>
+                                    <div class="rx-col-th col-freq">FREQUENCY &amp; PATTERN</div>
+                                    <div class="rx-col-th col-duration">DURATION</div>
+                                    <div class="rx-col-th col-time">TIME</div>
+                                    <div class="rx-col-th col-meal">MEAL</div>
+                                    <div class="rx-col-th col-notes">NOTES</div>
+                                    <div class="rx-col-th col-actions">ACTIONS</div>
+                                </div>
+
+                                <!-- Input / Entry Row -->
+                                <div class="rx-entry-input-row" id="rxEntryInputRow">
+                                    <!-- Medicine Search & Brand/Generic Switch -->
+                                    <div class="rx-col-cell col-medicine">
+                                        <div class="rx-med-search-wrap">
+                                            <i class="fa-solid fa-magnifying-glass rx-search-icon"></i>
+                                            <input type="text" id="rxInputMedicine" class="rx-cell-input rx-med-input"
+                                                   placeholder="Search brand na..." autocomplete="off"
+                                                   oninput="onRxMedicineInput(this.value)"
+                                                   onkeydown="onRxMedicineKeydown(event)"
+                                                   onfocus="onRxMedicineFocus()">
+
+                                            <!-- Brand / Generic Toggle Buttons -->
+                                            <div class="rx-brand-generic-toggle">
+                                                <button type="button" class="rx-toggle-btn active" id="rxBtnBrand" onclick="setRxSearchMode('brand')">BRAND</button>
+                                                <button type="button" class="rx-toggle-btn" id="rxBtnGeneric" onclick="setRxSearchMode('generic')">GENERIC</button>
+                                            </div>
+
+                                            <!-- Autocomplete Dropdown List -->
+                                            <div class="rx-med-dropdown" id="rxMedDropdown" style="display: none;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Eye Select -->
+                                    <div class="rx-col-cell col-eye">
+                                        <select id="rxInputEye" class="rx-cell-input rx-cell-select">
+                                            <option value="RE">RE</option>
+                                            <option value="LE">LE</option>
+                                            <option value="BE" selected>BE</option>
+                                            <option value="Oral">Oral</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Dosage Input -->
+                                    <div class="rx-col-cell col-dosage">
+                                        <input type="text" id="rxInputDosage" class="rx-cell-input" placeholder="Dosage" list="rxDosagePresets" autocomplete="off">
+                                        <datalist id="rxDosagePresets">
+                                            <option value="1 drop">
+                                            <option value="2 drops">
+                                            <option value="1 tab">
+                                            <option value="1 cap">
+                                            <option value="1 applic.">
+                                            <option value="0.5 ml">
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Frequency & Pattern Input -->
+                                    <div class="rx-col-cell col-freq">
+                                        <input type="text" id="rxInputFrequency" class="rx-cell-input" placeholder="Frequency" list="rxFreqPresets" autocomplete="off">
+                                        <datalist id="rxFreqPresets">
+                                            <option value="4 times daily">
+                                            <option value="3 times daily">
+                                            <option value="2 times daily">
+                                            <option value="1 time daily">
+                                            <option value="1-0-1">
+                                            <option value="1-1-1">
+                                            <option value="1-0-0">
+                                            <option value="0-0-1">
+                                            <option value="Every 2 hours">
+                                            <option value="Every 1 hour">
+                                            <option value="6 times daily (Taper weekly)">
+                                            <option value="At bedtime">
+                                            <option value="SOS (As needed)">
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Duration Input -->
+                                    <div class="rx-col-cell col-duration">
+                                        <input type="text" id="rxInputDuration" class="rx-cell-input" placeholder="Duration" list="rxDurationPresets" autocomplete="off">
+                                        <datalist id="rxDurationPresets">
+                                            <option value="7 days">
+                                            <option value="14 days">
+                                            <option value="21 days">
+                                            <option value="1 month">
+                                            <option value="2 months">
+                                            <option value="3 months">
+                                            <option value="3 days">
+                                            <option value="5 days">
+                                            <option value="Continue">
+                                            <option value="SOS">
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Time Day/Night Toggle Buttons -->
+                                    <div class="rx-col-cell col-time">
+                                        <div class="rx-time-pill-wrap">
+                                            <button type="button" class="rx-time-btn active" id="rxTimeDayBtn" onclick="toggleRxTimeBtn('day')" title="Day">
+                                                <i class="fa-regular fa-sun"></i> Day
+                                            </button>
+                                            <button type="button" class="rx-time-btn" id="rxTimeNightBtn" onclick="toggleRxTimeBtn('night')" title="Night">
+                                                <i class="fa-regular fa-moon"></i> Night
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Meal Select -->
+                                    <div class="rx-col-cell col-meal">
+                                        <select id="rxInputMeal" class="rx-cell-input rx-cell-select">
+                                            <option value="">Meal</option>
+                                            <option value="After meal">After</option>
+                                            <option value="Before meal">Before</option>
+                                            <option value="With meal">With</option>
+                                            <option value="Empty stomach">Empty</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Notes Input -->
+                                    <div class="rx-col-cell col-notes">
+                                        <input type="text" id="rxInputNotes" class="rx-cell-input" placeholder="Notes" autocomplete="off">
+                                    </div>
+
+                                    <!-- Add Button -->
+                                    <div class="rx-col-cell col-actions">
+                                        <button type="button" class="rx-btn-add" id="rxBtnAddMed" onclick="addRxMedicineFromRow()">
+                                            + Add
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Added Medicines Table Body / Empty State Container -->
+                                <div class="rx-added-table-body" id="rxAddedTableBody">
+                                    <!-- Empty State (Shown when no medicines added) -->
+                                    <div class="rx-empty-meds-card" id="rxEmptyMedsCard">
+                                        <div class="rx-empty-icon-wrap">
+                                            <i class="fa-regular fa-square-plus"></i>
+                                        </div>
+                                        <h4 class="rx-empty-title">No medicines added yet</h4>
+                                        <p class="rx-empty-subtitle">Select a medicine from the top row, adjust dosage &amp; frequency, then click "+ Add"</p>
+                                    </div>
+
+                                    <!-- Populated List of Medication Rows -->
+                                    <div class="rx-meds-rows-list" id="rxMedsRowsList" style="display: none;">
+                                        <!-- Rendered dynamically by rx_modal.js -->
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Medicine Advice Section -->
+                            <div class="rx-advice-panel">
+                                <div class="rx-advice-title-bar">
+                                    <i class="fa-solid fa-circle-info rx-advice-icon"></i>
+                                    <span class="rx-advice-title-text">Medicine Advice</span>
+                                </div>
+                                <div class="rx-advice-content-row">
+                                    <div class="rx-advice-input-wrap">
+                                        <input type="text" id="rxAdviceInput" class="rx-advice-input"
+                                               placeholder="Select from catalog or type new medicine advice..." autocomplete="off"
+                                               oninput="onRxAdviceInput(this.value)"
+                                               onkeydown="onRxAdviceKeydown(event)"
+                                               onfocus="onRxAdviceFocus()">
+                                        <div class="rx-advice-dropdown" id="rxAdviceDropdown" style="display: none;"></div>
+                                    </div>
+                                    <div class="rx-advice-tags-container" id="rxAdviceTagsContainer">
+                                        <span class="rx-advice-empty-msg" id="rxAdviceEmptyMsg">No medicine advice added yet.</span>
+                                        <div class="rx-advice-chips-list" id="rxAdviceChipsList"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="rx-modal-footer">
+                            <button type="button" class="btn-rx-cancel" onclick="closeRxModal()">Cancel</button>
+                            <button type="button" class="btn-rx-save" onclick="saveRxModal()">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Save Rx</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- END RX MEDICINE PICKER MODAL -->
+
                 <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
                 <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">
                     <div class="modal-card pinfo-modal-card">
@@ -4930,6 +5445,9 @@
                 <script src="{% static 'users_naimul/js/ocular_history_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/history_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/anterior_segment_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/fundus_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/diagnosis_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/rx_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
