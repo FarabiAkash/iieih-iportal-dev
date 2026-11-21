@@ -23,6 +23,7 @@
     <!-- External Stylesheet -->
     <link rel="stylesheet" href="{% static 'users_naimul/css/profile.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/history_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/anterior_segment_modal.css' %}">
 </head>
 
 <body>
@@ -1190,13 +1191,19 @@
                                 </div>
 
                                 <!-- 6. Anterior Segment -->
-                                <div class="emr-sec-row" id="row_ant_seg">
-                                    <div class="emr-sec-header" onclick="toggleSection('ant_seg')">
+                                <div class="emr-sec-row open" id="row_ant_seg">
+                                    <div class="emr-sec-header" onclick="openAntSegModal()" title="Click to record Anterior Segment findings">
                                         <span class="emr-sec-label">Anterior Segment:</span>
-                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Anterior Segment Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_ant_seg" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_ant_seg" rows="2" placeholder="Cornea, AC, Iris, Pupil, Lens..."></textarea>
+                                    <div class="emr-sec-body" id="body_ant_seg">
+                                        <div id="emr_ant_seg_display" class="emr-complaints-display" onclick="openAntSegModal()" title="Click to manage Anterior Segment findings">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-regular fa-eye"></i>
+                                                <span>Click to record Anterior Segment exam...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_ant_seg" rows="2" style="display: none;" placeholder="Cornea, AC, Iris, Pupil, Lens..."></textarea>
                                     </div>
                                 </div>
 
@@ -2903,6 +2910,313 @@
                     </div>
                 </div>
                 <!-- END SYSTEMIC HISTORY MODAL -->
+
+                <!-- =========================================================== -->
+                <!-- ANTERIOR SEGMENT EXAM POPUP MODAL                           -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay as-modal-overlay" id="anteriorSegmentModal" style="display: none;">
+                    <div class="modal-card as-modal-card" role="dialog" aria-modal="true" aria-labelledby="asModalTitle">
+
+                        <!-- Modal Header -->
+                        <div class="as-modal-header">
+                            <div class="as-header-left">
+                                <h2 class="as-modal-title" id="asModalTitle">Anterior Segment Exam</h2>
+                                <button type="button" class="btn-as-reworkup" onclick="orderAntSegReworkup()" title="Order Re-workup">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Order Re-workup</span>
+                                </button>
+                                <span class="as-header-meta">
+                                    <span id="asHeaderUser">{{ profile.get_surgeon_display_name|default:"Beauty Akter" }}</span>,
+                                    <span id="asHeaderTime">Nov 18, 2026 10:33:56 AM</span>
+                                </span>
+                            </div>
+                            <button type="button" class="as-modal-close" onclick="closeAntSegModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Body: Table Grid -->
+                        <div class="as-modal-body">
+                            <!-- Table Column Header (RE | [ Normal ] | LE) -->
+                            <div class="as-grid-header">
+                                <div class="as-col-header-eye">RE</div>
+                                <div class="as-col-header-center">
+                                    <button type="button" class="btn-as-normal-all" onclick="setAllAntSegNormal()" title="Set all findings in both eyes to Normal">
+                                        Normal
+                                    </button>
+                                </div>
+                                <div class="as-col-header-eye">LE</div>
+                            </div>
+
+                            <!-- 11 Examination Rows -->
+                            <div class="as-rows-container">
+                                <!-- Row 1: Lids -->
+                                <div class="as-grid-row" data-key="lids">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_lids" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_lids" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_lids"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'lids')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('lids')" title="Click to toggle Normal for Lids">Lids</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'lids')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_lids" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_lids" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_lids"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Conjunctiva -->
+                                <div class="as-grid-row" data-key="conjunctiva">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_conjunctiva" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_conjunctiva" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_conjunctiva"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'conjunctiva')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('conjunctiva')" title="Click to toggle Normal for Conjunctiva">Conjunctiva</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'conjunctiva')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_conjunctiva" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_conjunctiva" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_conjunctiva"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3: Cornea -->
+                                <div class="as-grid-row" data-key="cornea">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_cornea" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_cornea" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_cornea"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'cornea')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('cornea')" title="Click to toggle Normal for Cornea">Cornea</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'cornea')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_cornea" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_cornea" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_cornea"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 4: Anterior Chamber -->
+                                <div class="as-grid-row" data-key="anterior_chamber">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_anterior_chamber" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_anterior_chamber" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_anterior_chamber"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'anterior_chamber')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('anterior_chamber')" title="Click to toggle Normal for Anterior Chamber">Anterior Chamber</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'anterior_chamber')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_anterior_chamber" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_anterior_chamber" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_anterior_chamber"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 5: Iris -->
+                                <div class="as-grid-row" data-key="iris">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_iris" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_iris" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_iris"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'iris')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('iris')" title="Click to toggle Normal for Iris">Iris</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'iris')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_iris" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_iris" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_iris"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 6: Pupil -->
+                                <div class="as-grid-row" data-key="pupil">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_pupil" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_pupil" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_pupil"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'pupil')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('pupil')" title="Click to toggle Normal for Pupil">Pupil</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'pupil')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_pupil" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_pupil" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_pupil"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 7: Lens -->
+                                <div class="as-grid-row" data-key="lens">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_lens" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_lens" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_lens"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'lens')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('lens')" title="Click to toggle Normal for Lens">Lens</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'lens')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_lens" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_lens" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_lens"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 8: Ocular Movements -->
+                                <div class="as-grid-row" data-key="ocular_movements">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_ocular_movements" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_ocular_movements" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_ocular_movements"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'ocular_movements')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('ocular_movements')" title="Click to toggle Normal for Ocular Movements">Ocular Movements</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'ocular_movements')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_ocular_movements" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_ocular_movements" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_ocular_movements"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 9: Corneal Reflex -->
+                                <div class="as-grid-row" data-key="corneal_reflex">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_corneal_reflex" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_corneal_reflex" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_corneal_reflex"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'corneal_reflex')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('corneal_reflex')" title="Click to toggle Normal for Corneal Reflex">Corneal Reflex</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'corneal_reflex')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_corneal_reflex" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_corneal_reflex" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_corneal_reflex"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 10: Globe -->
+                                <div class="as-grid-row" data-key="globe">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_globe" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_globe" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_globe"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'globe')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('globe')" title="Click to toggle Normal for Globe">Globe</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'globe')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_globe" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_globe" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_globe"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Row 11: Undilated Fundus -->
+                                <div class="as-grid-row" data-key="undilated_fundus">
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_re_undilated_fundus" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_re_undilated_fundus" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_re_undilated_fundus"></div>
+                                    </div>
+                                    <div class="as-row-center">
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('le_to_re', 'undilated_fundus')" title="Copy from LE to RE">&larr;</button>
+                                        <span class="as-structure-label" onclick="setAntSegRowNormal('undilated_fundus')" title="Click to toggle Normal for Undilated Fundus">Undilated Fundus</span>
+                                        <button type="button" class="as-arrow-btn" onclick="copyAntSegRow('re_to_le', 'undilated_fundus')" title="Copy from RE to LE">&rarr;</button>
+                                    </div>
+                                    <div class="as-combo-wrap">
+                                        <div class="as-combo-input-wrap">
+                                            <input type="text" class="as-combo-input" id="as_input_le_undilated_fundus" placeholder="Search or select..." autocomplete="off">
+                                            <button type="button" class="as-combo-toggle" id="as_toggle_le_undilated_fundus" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button>
+                                        </div>
+                                        <div class="as-combo-menu" id="as_menu_le_undilated_fundus"></div>
+                                    </div>
+                                </div>
+                            </div><!-- /.as-rows-container -->
+
+                            <!-- Remarks Section -->
+                            <div class="as-remarks-wrap">
+                                <textarea class="as-remarks-input" id="asRemarks" rows="2" placeholder="Remarks"></textarea>
+                            </div>
+                        </div><!-- /.as-modal-body -->
+
+                        <!-- Modal Footer -->
+                        <div class="as-modal-footer">
+                            <button type="button" class="btn-as-save" onclick="saveAntSegModal()">Save Anterior Segment</button>
+                        </div>
+                    </div><!-- /.as-modal-card -->
+                </div>
+                <!-- END ANTERIOR SEGMENT EXAM MODAL -->
 
                 <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
                 <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">
@@ -4615,6 +4929,7 @@
                 <script src="{% static 'users_naimul/js/profile.js' %}"></script>
                 <script src="{% static 'users_naimul/js/ocular_history_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/history_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/anterior_segment_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->

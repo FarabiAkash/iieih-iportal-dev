@@ -1068,6 +1068,11 @@ function resetPrescriptionForm() {
     if (typeof resetHistoryState === 'function') {
         resetHistoryState();
     }
+
+    // Reset anterior segment
+    if (typeof resetAntSegState === 'function') {
+        resetAntSegState();
+    }
 }
 
 // Medication management
@@ -1338,6 +1343,8 @@ async function savePrescription(event) {
     const adviceList = [];
     const complaints = document.getElementById('rx_complaints')?.value.trim();
     if (complaints) adviceList.push(`Complaints: ${complaints}`);
+    const antSeg = document.getElementById('rx_ant_seg')?.value.trim();
+    if (antSeg) adviceList.push(`Anterior Segment: ${antSeg}`);
     const glassOD = document.getElementById('rx_glass_od')?.value.trim();
     const glassOS = document.getElementById('rx_glass_os')?.value.trim();
     if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
