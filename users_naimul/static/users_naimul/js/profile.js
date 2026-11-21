@@ -196,12 +196,14 @@ window.onclick = function (e) {
     const searchModal = document.getElementById('searchErrorModal');
     const scheduleModal = document.getElementById('schedulePatientModal');
     const editDoctorModal = document.getElementById('editDoctorModal');
+    const historyModal = document.getElementById('historyModal');
     if (e.target === dossier) closePatientDossier();
     if (e.target === ocular) closeOcularReport();
     if (e.target === editModal) closeEditSurgeryModal();
     if (e.target === searchModal) closeSearchErrorModal();
     if (e.target === scheduleModal && typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
     if (e.target === editDoctorModal && typeof closeEditDoctorModal === 'function') closeEditDoctorModal();
+    if (e.target === historyModal && typeof closeHistoryModal === 'function') closeHistoryModal();
 };
 
 // Close modals on Escape key
@@ -213,6 +215,7 @@ document.addEventListener('keydown', function (e) {
         closeEditSurgeryModal();
         if (typeof closeSchedulePatientModal === 'function') closeSchedulePatientModal();
         if (typeof closeEditDoctorModal === 'function') closeEditDoctorModal();
+        if (typeof closeHistoryModal === 'function') closeHistoryModal();
     }
 });
 
@@ -1059,6 +1062,11 @@ function resetPrescriptionForm() {
     // Reset complaints
     if (typeof resetComplaintsState === 'function') {
         resetComplaintsState();
+    }
+
+    // Reset systemic history
+    if (typeof resetHistoryState === 'function') {
+        resetHistoryState();
     }
 }
 
