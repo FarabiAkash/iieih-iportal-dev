@@ -782,6 +782,58 @@ def profile_view(request):
 
         return JsonResponse({'success': True, 'message': 'Complaints recorded.'})
 
+    # ── POST: Save Diagnosis Directly (Doctors Only) ──────────────────────────
+    elif request.method == 'POST' and 'save_diagnosis' in request.POST:
+        if not profile.is_doctor_role:
+            return JsonResponse({'success': False, 'error': 'Access denied. Only doctors can record diagnosis.'}, status=403)
+
+        prescription_id = request.POST.get('prescription_id', '').strip()
+        patient_mrn = request.POST.get('patient_mrn', '').strip()
+        patient_name = request.POST.get('patient_name', '').strip()
+        diagnosis_summary = request.POST.get('diagnosis_summary', '').strip()
+        doctor_name = profile.get_surgeon_display_name()
+
+        rx = None
+        if prescription_id and prescription_id.isdigit():
+            rx_qs = Prescription.objects.filter(id=int(prescription_id))
+            if not (request.user.is_superuser or profile.is_admin_role):
+                rx_qs = rx_qs.filter(
+                    Q(prescribing_doctor__icontains=doctor_name) |
+                    Q(prescribing_doctor__icontains=request.user.username)
+                )
+            rx = rx_qs.first()
+
+        if rx:
+            rx.diagnosis = diagnosis_summary
+            rx.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Diagnosis saved to prescription.',
+                'prescription_id': rx.id,
+                'diagnosis': rx.diagnosis,
+            })
+        elif patient_mrn:
+            today = date.today()
+            recent_rx = Prescription.objects.filter(
+                patient_mrn=patient_mrn,
+                date_created__date=today
+            ).filter(
+                Q(prescribing_doctor__icontains=doctor_name) |
+                Q(prescribing_doctor__icontains=request.user.username)
+            ).order_by('-date_created').first()
+
+            if recent_rx:
+                recent_rx.diagnosis = diagnosis_summary
+                recent_rx.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Diagnosis updated on today\'s prescription.',
+                    'prescription_id': recent_rx.id,
+                    'diagnosis': recent_rx.diagnosis,
+                })
+
+        return JsonResponse({'success': True, 'message': 'Diagnosis recorded.'})
+
     # ── POST: Apply for Surgery ──────────────────────────────────────────────
     elif request.method == 'POST' and 'apply_surgery' in request.POST:
         name = request.POST.get('patient_name', '').strip()
@@ -1654,6 +1706,7 @@ def patient_lookup_api(request):
             'ot_room': ot_room,
             'ot_slot': ot_slot,
             'outcome': outcome,
+            'diagnosis': (rx_record.diagnosis if rx_record and rx_record.diagnosis else (record.surgery_type if record else '')),
             'medical_history': medical_history,
             'notes': notes,
             'date': active_date_str,

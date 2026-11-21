@@ -1,0 +1,976 @@
+/* =============================================================================
+   RX MEDICINE PICKER MODAL STYLES
+   Hospital EMR Standard — Ispahani Islamia Eye Institute & Hospital
+   Pixel-accurate to clinical reference screenshot:
+   - Header: Rx Medicine Picker | Close
+   - Subheader: Apply Eye to All: [RE] [LE] [BE] | Load a Preset [v] [Save Preset]
+   - Table Grid:
+     MEDICINE (Search + BRAND/GENERIC toggle) | EYE | DOSAGE | FREQUENCY & PATTERN |
+     DURATION | TIME (Day/Night) | MEAL | NOTES | ACTIONS (+ Add)
+   - Empty State / Populated Added Medicines Table
+   - Medicine Advice Card (Catalog search + Tags display)
+   - Footer: Cancel | Save Rx
+   ============================================================================= */
+
+/* ── Modal Overlay ────────────────────────────────────────────────────────── */
+.rx-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(4px);
+    z-index: 1260;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: rxFadeIn 0.18s ease-out;
+}
+
+@keyframes rxFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal Card ───────────────────────────────────────────────────────────── */
+.rx-modal-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 1040px;
+    max-width: 96vw;
+    max-height: 92vh;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: rxScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rxScaleIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Modal Header ─────────────────────────────────────────────────────────── */
+.rx-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.rx-modal-title {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.rx-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.rx-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+/* ── Top Subheader Action Bar ─────────────────────────────────────────────── */
+.rx-top-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafbfc;
+    flex-shrink: 0;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.rx-apply-eye-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rx-apply-eye-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.rx-apply-eye-label i {
+    color: #2563eb;
+    font-size: 0.85rem;
+}
+
+.rx-eye-pills-group {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.rx-pill-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.rx-pill-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.rx-pill-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.rx-presets-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rx-preset-select-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.rx-preset-select {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 32px;
+    padding: 0 28px 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #334155;
+    outline: none;
+    cursor: pointer;
+    min-width: 170px;
+    transition: all 0.15s ease;
+}
+
+.rx-preset-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.rx-select-chevron {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.72rem;
+    pointer-events: none;
+}
+
+.rx-btn-save-preset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.rx-btn-save-preset:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.rx-btn-save-preset i {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+/* ── Modal Body Scroll Area ───────────────────────────────────────────────── */
+.rx-modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #ffffff;
+}
+
+/* ── Table Grid Layout ────────────────────────────────────────────────────── */
+.rx-form-table-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: visible;
+    background: #ffffff;
+}
+
+/* Column Header Row */
+.rx-cols-header-row {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    gap: 8px;
+}
+
+.rx-col-th {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+/* Column Width Alignments */
+.col-medicine { flex: 3.2; min-width: 250px; }
+.col-eye      { width: 72px; flex-shrink: 0; }
+.col-dosage   { width: 88px; flex-shrink: 0; }
+.col-freq     { flex: 1.8; min-width: 140px; }
+.col-duration { width: 88px; flex-shrink: 0; }
+.col-time     { width: 104px; flex-shrink: 0; }
+.col-meal     { width: 80px; flex-shrink: 0; }
+.col-notes    { flex: 1.6; min-width: 110px; }
+.col-actions  { width: 68px; flex-shrink: 0; text-align: center; }
+
+/* ── Entry Input Row ──────────────────────────────────────────────────────── */
+.rx-entry-input-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+    z-index: 20;
+}
+
+.rx-col-cell {
+    display: flex;
+    align-items: center;
+}
+
+.rx-cell-input {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.rx-cell-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.rx-cell-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px;
+    padding-right: 20px;
+}
+
+/* Medicine Search Input with Brand/Generic Pill Switch */
+.rx-med-search-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.rx-search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.76rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.rx-med-input {
+    padding-left: 28px !important;
+    padding-right: 128px !important;
+}
+
+.rx-brand-generic-toggle {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px;
+    z-index: 2;
+}
+
+.rx-toggle-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.rx-toggle-btn:hover {
+    color: #1e293b;
+}
+
+.rx-toggle-btn.active {
+    background: #1e3a8a;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(30, 58, 138, 0.25);
+}
+
+/* Autocomplete Dropdown */
+.rx-med-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.rx-med-item {
+    display: flex;
+    flex-direction: column;
+    padding: 7px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.12s ease;
+}
+
+.rx-med-item:last-child {
+    border-bottom: none;
+}
+
+.rx-med-item:hover,
+.rx-med-item.selected {
+    background: #eff6ff;
+}
+
+.rx-med-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rx-med-item-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.rx-med-item-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.badge-brand {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-generic {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.rx-med-item-sub {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* Time Day/Night Toggle Pill */
+.rx-time-pill-wrap {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px;
+    background: #ffffff;
+    width: 100%;
+    gap: 2px;
+}
+
+.rx-time-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: all 0.15s ease;
+}
+
+.rx-time-btn:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.rx-time-btn.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+.rx-time-btn.active i {
+    color: #2563eb;
+}
+
+/* + Add Button */
+.rx-btn-add {
+    width: 100%;
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #2563eb;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.rx-btn-add:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* ── Added Medicines Table Body / Empty State ─────────────────────────────── */
+.rx-added-table-body {
+    min-height: 180px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+/* Empty State Card */
+.rx-empty-meds-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 42px 16px;
+    text-align: center;
+}
+
+.rx-empty-icon-wrap {
+    font-size: 2.2rem;
+    color: #3b82f6;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.rx-empty-title {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.rx-empty-subtitle {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 0;
+    max-width: 420px;
+}
+
+/* Populated List of Added Medication Rows */
+.rx-meds-rows-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.rx-added-row {
+    display: flex;
+    align-items: center;
+    padding: 9px 12px;
+    gap: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.78rem;
+    color: #334155;
+    transition: background 0.12s ease;
+}
+
+.rx-added-row:last-child {
+    border-bottom: none;
+}
+
+.rx-added-row:hover {
+    background: #f8fafc;
+}
+
+.rx-row-drug-name {
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+}
+
+.rx-row-drug-sub {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 400;
+}
+
+.rx-eye-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.rx-eye-badge.re {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.rx-eye-badge.le {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.rx-eye-badge.be {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.rx-eye-badge.oral {
+    background: #f3e8ff;
+    color: #6b21a8;
+    border: 1px solid #e9d5ff;
+}
+
+.rx-time-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.rx-time-tag i {
+    font-size: 0.65rem;
+}
+
+.rx-row-del-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+}
+
+.rx-row-del-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ── Medicine Advice Section ──────────────────────────────────────────────── */
+.rx-advice-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    overflow: visible;
+}
+
+.rx-advice-title-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #fafbfc;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.rx-advice-icon {
+    color: #2563eb;
+    font-size: 0.85rem;
+}
+
+.rx-advice-title-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.rx-advice-content-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.rx-advice-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+}
+
+.rx-advice-input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.rx-advice-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.rx-advice-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.rx-advice-drop-item {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: #334155;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.12s ease;
+}
+
+.rx-advice-drop-item:last-child {
+    border-bottom: none;
+}
+
+.rx-advice-drop-item:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.rx-advice-tags-container {
+    flex: 1.2;
+    min-width: 240px;
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+}
+
+.rx-advice-empty-msg {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.rx-advice-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+
+.rx-advice-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #1e40af;
+}
+
+.rx-advice-chip-remove {
+    border: none;
+    background: transparent;
+    color: #93c5fd;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.15s ease;
+}
+
+.rx-advice-chip-remove:hover {
+    color: #dc2626;
+}
+
+/* ── Modal Footer ─────────────────────────────────────────────────────────── */
+.rx-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 22px;
+    border-top: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.btn-rx-cancel {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-rx-cancel:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.btn-rx-save {
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 7px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+    transition: all 0.15s ease;
+}
+
+.btn-rx-save:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.35);
+}
+
+.btn-rx-save i {
+    font-size: 0.85rem;
+}
+
+/* ── Dark Theme Support ───────────────────────────────────────────────────── */
+[data-theme="dark"] .rx-modal-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .rx-modal-header,
+[data-theme="dark"] .rx-modal-footer,
+[data-theme="dark"] .rx-top-action-bar,
+[data-theme="dark"] .rx-modal-body,
+[data-theme="dark"] .rx-form-table-container,
+[data-theme="dark"] .rx-advice-panel {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .rx-modal-title,
+[data-theme="dark"] .rx-empty-title,
+[data-theme="dark"] .rx-advice-title-text,
+[data-theme="dark"] .rx-row-drug-name {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .rx-modal-close,
+[data-theme="dark"] .rx-btn-save-preset,
+[data-theme="dark"] .rx-preset-select,
+[data-theme="dark"] .btn-rx-cancel {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .rx-cols-header-row,
+[data-theme="dark"] .rx-advice-title-bar {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .rx-col-th {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .rx-cell-input,
+[data-theme="dark"] .rx-advice-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .rx-entry-input-row,
+[data-theme="dark"] .rx-added-table-body {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .rx-added-row {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .rx-added-row:hover {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .rx-med-dropdown,
+[data-theme="dark"] .rx-advice-dropdown {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .rx-med-item,
+[data-theme="dark"] .rx-advice-drop-item {
+    border-color: #1e293b;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .rx-med-item:hover,
+[data-theme="dark"] .rx-advice-drop-item:hover {
+    background: #1e293b;
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .rx-btn-add {
+    background: #0f172a;
+    border-color: #334155;
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .rx-btn-add:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .rx-eye-pills-group,
+[data-theme="dark"] .rx-time-pill-wrap {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .rx-pill-btn,
+[data-theme="dark"] .rx-time-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .rx-pill-btn.active,
+[data-theme="dark"] .rx-time-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+}

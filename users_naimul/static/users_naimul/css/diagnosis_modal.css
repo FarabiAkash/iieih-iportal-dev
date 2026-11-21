@@ -1,0 +1,761 @@
+/* =============================================================================
+   DIAGNOSIS POPUP MODAL STYLES
+   Hospital EMR Standard — Ispahani Islamia Eye Institute & Hospital
+   Pixel-accurate to clinical reference screenshot:
+   - Header: Diagnosis | Last Diagnosis found (today) - Pull | Close
+   - Left: Search diagnosis, Load Template dropdown, 3-column Favorite / Common Diagnosis
+   - Right: Diagnosis Summary with [Apply to all] [Eye: RE | LE | BE] & Empty/Populated States
+   - Footer: Cancel | Save Diagnosis
+   ============================================================================= */
+
+/* ── Modal Overlay ────────────────────────────────────────────────────────── */
+.diagnosis-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: diagFadeIn 0.18s ease-out;
+}
+
+@keyframes diagFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal Card ───────────────────────────────────────────────────────────── */
+.diag-modal-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 930px;
+    max-width: 95vw;
+    max-height: 90vh;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: diagScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes diagScaleIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Modal Header ─────────────────────────────────────────────────────────── */
+.diag-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.diag-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.diag-modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1;
+}
+
+.btn-diag-pull {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.btn-diag-pull:hover {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.btn-diag-pull i {
+    font-size: 0.85rem;
+}
+
+.diag-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+}
+
+.diag-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+/* ── Modal Body Grid (Left Controls + Right Summary) ──────────────────────── */
+.diag-modal-body {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    padding: 18px 22px;
+    overflow-y: auto;
+    background: #ffffff;
+    min-height: 400px;
+}
+
+/* ── Left Column ──────────────────────────────────────────────────────────── */
+.diag-left-col {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Search & Template Row */
+.diag-search-template-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    position: relative;
+}
+
+.diag-search-wrap {
+    position: relative;
+    flex: 1;
+}
+
+.diag-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.diag-search-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 34px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.diag-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.diag-search-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.diag-search-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #334155;
+    transition: background 0.12s ease;
+}
+
+.diag-search-item:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.diag-search-item-badge {
+    font-size: 0.72rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Template Button & Dropdown */
+.diag-template-wrap {
+    position: relative;
+}
+
+.btn-diag-template {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.btn-diag-template:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.btn-diag-template i.fa-wand-magic-sparkles {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.btn-diag-template i.fa-chevron-down {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.diag-template-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    width: 250px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.14);
+    z-index: 50;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+.diag-template-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    font-size: 0.8rem;
+    color: #334155;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.diag-template-item:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.diag-template-item-title {
+    font-weight: 600;
+}
+
+.diag-template-item-desc {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+/* Favorite / Common Diagnosis Section */
+.diag-favorites-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.diag-favorites-heading {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.diag-favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.diag-fav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    padding: 9px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.79rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    line-height: 1.25;
+    min-height: 38px;
+}
+
+.diag-fav-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.diag-fav-btn.active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.diag-fav-btn .diag-fav-check {
+    font-size: 0.75rem;
+    color: #2563eb;
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.diag-fav-btn.active .diag-fav-check {
+    opacity: 1;
+}
+
+/* ── Right Column: Diagnosis Summary ──────────────────────────────────────── */
+.diag-right-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.diag-summary-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    min-height: 38px;
+}
+
+.diag-summary-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.diag-summary-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.btn-diag-apply-all {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #2563eb;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 2px;
+    transition: color 0.12s ease;
+}
+
+.btn-diag-apply-all:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.diag-apply-eye-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.diag-apply-eye-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    line-height: 1;
+}
+
+.diag-eye-pill-group {
+    display: inline-flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.diag-eye-pill-btn {
+    border: none;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    border-right: 1px solid #e2e8f0;
+}
+
+.diag-eye-pill-btn:last-child {
+    border-right: none;
+}
+
+.diag-eye-pill-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.diag-eye-pill-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Summary Box */
+.diag-summary-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    flex: 1;
+    min-height: 280px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.diag-summary-empty {
+    margin: auto 0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    padding: 24px 14px;
+}
+
+.diag-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.diag-summary-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    animation: diagItemFadeIn 0.15s ease-out;
+}
+
+@keyframes diagItemFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.diag-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.diag-item-eye-segment {
+    display: inline-flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.diag-mini-eye-btn {
+    border: none;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 5px;
+    cursor: pointer;
+    border-right: 1px solid #e2e8f0;
+    transition: all 0.12s ease;
+}
+
+.diag-mini-eye-btn:last-child {
+    border-right: none;
+}
+
+.diag-mini-eye-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.diag-mini-eye-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.diag-item-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.diag-item-remove-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    flex-shrink: 0;
+}
+
+.diag-item-remove-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ── Modal Footer ─────────────────────────────────────────────────────────── */
+.diag-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 22px;
+    border-top: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.btn-diag-cancel {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-diag-cancel:hover {
+    color: #1e293b;
+    background: #f1f5f9;
+}
+
+.btn-diag-save {
+    border: none;
+    background: #1976d2;
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.25);
+    transition: all 0.15s ease;
+}
+
+.btn-diag-save:hover {
+    background: #1565c0;
+    box-shadow: 0 4px 8px rgba(21, 101, 192, 0.3);
+}
+
+.btn-diag-save:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ── EMR Left Column Row Diagnosis Display ────────────────────────────────── */
+.emr-diagnosis-pill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.emr-diagnosis-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.76rem;
+    transition: all 0.12s ease;
+}
+
+.emr-diagnosis-badge-row:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.emr-diag-badge-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.emr-diag-name-tag {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.emr-diag-eye-tag {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #bfdbfe;
+}
+
+/* ── Dark Mode Overrides ─────────────────────────────────────────────────── */
+[data-theme="dark"] .diag-modal-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .diag-modal-header,
+[data-theme="dark"] .diag-modal-body,
+[data-theme="dark"] .diag-modal-footer {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .diag-modal-title,
+[data-theme="dark"] .diag-summary-title,
+[data-theme="dark"] .diag-item-name {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .diag-search-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .btn-diag-template {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .diag-fav-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .diag-fav-btn:hover {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .diag-fav-btn.active {
+    background: #1e3a5f;
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .diag-summary-box {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .diag-summary-item {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .diag-eye-pill-group,
+[data-theme="dark"] .diag-item-eye-segment {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .diag-eye-pill-btn,
+[data-theme="dark"] .diag-mini-eye-btn {
+    background: #0f172a;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .emr-diagnosis-badge-row {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .emr-diag-name-tag {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .emr-diag-eye-tag {
+    background: #1e3a5f;
+    color: #93c5fd;
+    border-color: #2563eb;
+}

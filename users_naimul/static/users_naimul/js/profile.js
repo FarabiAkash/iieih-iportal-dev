@@ -897,6 +897,18 @@ async function confirmAndOpenPatientPrescription() {
     // Check if there is an uncommitted complaints draft in sessionStorage
     if (pat && pat.mrn) {
         restoreComplaintsDraft(pat.mrn);
+        try {
+            const draftDiag = sessionStorage.getItem('rx_draft_diagnosis_' + pat.mrn);
+            if (draftDiag && typeof window.addDiagnosisEntry === 'function') {
+                const parsed = JSON.parse(draftDiag);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    parsed.forEach(p => window.addDiagnosisEntry(p.name, p.eye));
+                }
+            }
+        } catch (e) {}
+    }
+    if (typeof updateEMRDiagnosisDisplay === 'function') {
+        updateEMRDiagnosisDisplay();
     }
 
     // Load prescriptions for this patient
@@ -1073,6 +1085,16 @@ function resetPrescriptionForm() {
     if (typeof resetAntSegState === 'function') {
         resetAntSegState();
     }
+
+    // Reset fundus
+    if (typeof resetFundusState === 'function') {
+        resetFundusState();
+    }
+
+    // Reset diagnosis
+    if (typeof resetDiagnosisState === 'function') {
+        resetDiagnosisState();
+    }
 }
 
 // Medication management
@@ -1138,16 +1160,21 @@ function renderAllMedications() {
             const row = document.createElement('div');
             row.className = 'emr-med-active-row';
             row.innerHTML = `
-                <div class="emr-med-row-info">
+                <div class="emr-med-row-info" onclick="if(typeof openRxModal === 'function') openRxModal();" style="cursor: pointer;" title="Click to edit in Rx Medicine Picker">
                     <span class="emr-med-row-drug">${escHtml(med.drug)}</span>
                     <span class="emr-med-row-chip"><i class="fa-solid fa-eye" style="font-size:0.65rem;"></i> ${escHtml(med.eye || 'Both Eyes')}</span>
                     <span class="emr-med-row-chip">${escHtml(med.dosage || '1 drop')} &bull; ${escHtml(med.frequency || '4x daily')}</span>
                     <span class="emr-med-row-chip" style="background:#fef3c7; color:#92400e;">${escHtml(med.duration || '7 days')}</span>
                     ${med.instructions ? `<div class="emr-med-row-instructions"><i class="fa-solid fa-info-circle" style="margin-right:3px;"></i>${escHtml(med.instructions)}</div>` : ''}
                 </div>
-                <button type="button" class="emr-med-row-delete" onclick="removeEMRMedication(${idx})" title="Remove Medication">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button type="button" class="emr-med-row-edit" onclick="if(typeof openRxModal === 'function') openRxModal();" title="Edit in Rx Medicine Picker" style="border: none; background: transparent; color: #2563eb; cursor: pointer; padding: 4px 6px;">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button type="button" class="emr-med-row-delete" onclick="removeEMRMedication(${idx})" title="Remove Medication">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             `;
             container.appendChild(row);
         });
@@ -1345,6 +1372,8 @@ async function savePrescription(event) {
     if (complaints) adviceList.push(`Complaints: ${complaints}`);
     const antSeg = document.getElementById('rx_ant_seg')?.value.trim();
     if (antSeg) adviceList.push(`Anterior Segment: ${antSeg}`);
+    const fundus = document.getElementById('rx_fundus')?.value.trim();
+    if (fundus) adviceList.push(`Fundus: ${fundus}`);
     const glassOD = document.getElementById('rx_glass_od')?.value.trim();
     const glassOS = document.getElementById('rx_glass_os')?.value.trim();
     if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
@@ -1393,6 +1422,7 @@ async function savePrescription(event) {
             _rxPrescriptionId = data.prescription_id;
             if (_rxPatient && _rxPatient.mrn) {
                 try { sessionStorage.removeItem('rx_draft_complaints_' + _rxPatient.mrn); } catch(e){}
+                try { sessionStorage.removeItem('rx_draft_diagnosis_' + _rxPatient.mrn); } catch(e){}
             }
             showRxFeedback(data.message || 'Prescription saved successfully.', 'success');
             if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save &amp; Exit Patient';
@@ -1478,6 +1508,9 @@ async function loadPrescriptionForEdit(rxId) {
 
         _rxPrescriptionId = rx.id;
         document.getElementById('rx_diagnosis').value = rx.diagnosis || '';
+        if (typeof updateEMRDiagnosisDisplay === 'function') {
+            updateEMRDiagnosisDisplay();
+        }
 
         // Restore structured complaints
         if (rx.complaints && Array.isArray(rx.complaints) && rx.complaints.length > 0) {
@@ -1533,6 +1566,15 @@ async function loadPrescriptionForEdit(rxId) {
             if (trimmed.startsWith('Complaints:')) {
                 // Handled in complaints section
                 return;
+            } else if (trimmed.startsWith('Anterior Segment:')) {
+                const asText = trimmed.substring('Anterior Segment:'.length).trim();
+                const asField = document.getElementById('rx_ant_seg');
+                if (asField) asField.value = asText;
+            } else if (trimmed.startsWith('Fundus:')) {
+                const fText = trimmed.substring('Fundus:'.length).trim();
+                const fField = document.getElementById('rx_fundus');
+                if (fField) fField.value = fText;
+                if (typeof restoreFundusFromText === 'function') restoreFundusFromText(fText);
             } else if (trimmed.startsWith('Glass:')) {
                 const m = trimmed.match(/OD\s*\[(.*?)\]\s*\|\s*OS\s*\[(.*?)\]/i);
                 if (m) {
@@ -2628,3 +2670,16 @@ window.removeVisionEntry      = removeVisionEntry;
 window.saveVisionModal        = saveVisionModal;
 window.orderVisionReworkup    = orderVisionReworkup;
 window.resetVisionState       = resetVisionState;
+window.renderAllMedications   = renderAllMedications;
+
+Object.defineProperty(window, '_currentMedications', {
+    get: function () { return _currentMedications; },
+    set: function (v) { _currentMedications = Array.isArray(v) ? v : []; },
+    configurable: true
+});
+
+Object.defineProperty(window, '_rxPatient', {
+    get: function () { return _rxPatient; },
+    set: function (v) { _rxPatient = v; },
+    configurable: true
+});
