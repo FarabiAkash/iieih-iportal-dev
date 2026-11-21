@@ -22,6 +22,7 @@
 
     <!-- External Stylesheet -->
     <link rel="stylesheet" href="{% static 'users_naimul/css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/history_modal.css' %}">
 </head>
 
 <body>
@@ -1084,7 +1085,7 @@
                                     <span class="emr-ysum-title">Sys. History:</span>
                                     <span class="emr-badge-capsule" id="emr_sys_history_badge">Systemic History: Nil</span>
                                 </div>
-                                <button type="button" class="emr-alert-circle-btn" title="Comorbidities &amp; Allergies Information" onclick="toggleSection('history')">
+                                <button type="button" class="emr-alert-circle-btn" title="Comorbidities &amp; Allergies Information" onclick="openHistoryModal()">
                                     <i class="fa-solid fa-circle-exclamation"></i>
                                 </button>
                             </div>
@@ -1159,9 +1160,9 @@
 
                                 <!-- 4. History -->
                                 <div class="emr-sec-row open" id="row_history">
-                                    <div class="emr-sec-header" onclick="toggleSection('history')">
+                                    <div class="emr-sec-header" onclick="openHistoryModal()" title="Click to record systemic history">
                                         <span class="emr-sec-label">History:</span>
-                                        <span class="emr-sec-icon-action"><i class="fa-regular fa-eye"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Systemic History Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
                                     <div class="emr-sec-body" id="body_history">
                                         <div class="emr-nested-accordion">
@@ -1169,7 +1170,7 @@
                                                 <span>Systemic History</span>
                                                 <i class="fa-solid fa-chevron-up" id="nested_hist_icon"></i>
                                             </div>
-                                            <div class="emr-nested-list" id="nested_hist_list">
+                                            <div class="emr-nested-list" id="nested_hist_list" onclick="openHistoryModal()" style="cursor: pointer;" title="Click to edit Systemic History">
                                                 <div class="emr-bullet-point">&bull; Systemic History: <span id="emr_sys_hist_val">Nil</span></div>
                                                 <div class="emr-bullet-point">&bull; Allergies: <span id="emr_allergies_val">Nil</span></div>
                                             </div>
@@ -2762,6 +2763,146 @@
                     </div>
                 </div>
                 <!-- END OCULAR HISTORY MODAL -->
+
+                <!-- SYSTEMIC HISTORY POPUP MODAL -->
+                <div class="modal-overlay history-modal-overlay" id="historyModal" style="display: none;">
+                    <div class="modal-card history-modal-card">
+                        <!-- Modal Header: "History" title + "Order Re-workup" btn + Close 'x' -->
+                        <div class="history-modal-header">
+                            <div class="history-header-left">
+                                <h2 class="history-modal-title">History</h2>
+                                <button type="button" class="btn-history-reworkup">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>Order Re-workup</span>
+                                </button>
+                            </div>
+                            <button type="button" class="history-modal-close" onclick="closeHistoryModal()" aria-label="Close modal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Tab Bar: Systemic | Social & Family | Birth | Immunization | Myopia -->
+                        <div class="history-modal-tabs">
+                            <button type="button" class="history-tab-btn active" data-tab="systemic" onclick="setHistoryTab('systemic')">
+                                <i class="fa-solid fa-notes-medical"></i> Systemic History
+                            </button>
+                            <button type="button" class="history-tab-btn" data-tab="social" onclick="setHistoryTab('social')">
+                                <i class="fa-solid fa-people-roof"></i> Social and Family History
+                            </button>
+                            <button type="button" class="history-tab-btn" data-tab="birth" onclick="setHistoryTab('birth')">
+                                <i class="fa-solid fa-baby"></i> Birth History
+                            </button>
+                            <button type="button" class="history-tab-btn" data-tab="immunization" onclick="setHistoryTab('immunization')">
+                                <i class="fa-solid fa-syringe"></i> Immunization History
+                            </button>
+                            <button type="button" class="history-tab-btn" data-tab="myopia" onclick="setHistoryTab('myopia')">
+                                <i class="fa-solid fa-glasses"></i> Myopia History
+                            </button>
+                        </div>
+
+                        <!-- Modal Body (Two-column layout: Left = Form, Right = Summary) -->
+                        <div class="history-modal-body">
+                            <!-- Left: Form Controls & Conditions -->
+                            <div class="history-modal-left">
+                                <!-- Controls row: Clinic dropdown + No Systemic History + Save button -->
+                                <div class="history-controls-row">
+                                    <div class="history-clinic-wrap">
+                                        <span class="history-clinic-label">Clinic:</span>
+                                        <select id="historyClinicSelect" class="history-clinic-select">
+                                            <option value="General" selected>General</option>
+                                            <option value="Cornea">Cornea</option>
+                                            <option value="Retina">Retina</option>
+                                            <option value="Glaucoma">Glaucoma</option>
+                                            <option value="Pediatric">Pediatric</option>
+                                            <option value="Oculoplasty">Oculoplasty</option>
+                                        </select>
+                                    </div>
+                                    <div class="history-no-sys-wrap" id="historyNoSysWrap">
+                                        <label class="history-no-systemic-label">
+                                            <input type="checkbox" id="historyNoSystemicCheckbox" onchange="toggleNoSystemicHistory(this.checked)">
+                                            <span>No Systemic History</span>
+                                        </label>
+                                    </div>
+                                    <button type="button" class="btn-history-save-tab" onclick="saveHistoryTab()" title="Save current tab observations">
+                                        <i class="fa-solid fa-check"></i> Save
+                                    </button>
+                                </div>
+
+                                <!-- Tab Pane 1: Systemic History -->
+                                <div id="historyTabPane_systemic" class="history-tab-pane">
+                                    <div class="history-conditions-list" id="historyConditionsList">
+                                        <!-- Dynamically generated list of conditions with No/Yes toggle buttons -->
+                                    </div>
+                                    <div class="history-remarks-row">
+                                        <div class="history-remarks-header">
+                                            <label for="historySystemicRemarks">Remarks:</label>
+                                            <span class="history-remarks-hint">General systemic clinical observations</span>
+                                        </div>
+                                        <textarea id="historySystemicRemarks" class="form-control history-remarks-textarea"
+                                            rows="2" placeholder="Enter clinical remarks or additional observations..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Pane 2: Social and Family History -->
+                                <div id="historyTabPane_social" class="history-tab-pane" style="display: none;">
+                                    <div class="history-tab-pane-placeholder">
+                                        <i class="fa-solid fa-people-roof" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.5;"></i>
+                                        <div>Social and Family History parameters are configured under general hospital records.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Pane 3: Birth History -->
+                                <div id="historyTabPane_birth" class="history-tab-pane" style="display: none;">
+                                    <div class="history-tab-pane-placeholder">
+                                        <i class="fa-solid fa-baby" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.5;"></i>
+                                        <div>Birth History parameters (gestational age, birth weight, NICU admission) applicable for pediatric records.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Pane 4: Immunization History -->
+                                <div id="historyTabPane_immunization" class="history-tab-pane" style="display: none;">
+                                    <div class="history-tab-pane-placeholder">
+                                        <i class="fa-solid fa-syringe" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.5;"></i>
+                                        <div>EPI / Routine Immunization schedule verification.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab Pane 5: Myopia History -->
+                                <div id="historyTabPane_myopia" class="history-tab-pane" style="display: none;">
+                                    <div class="history-tab-pane-placeholder">
+                                        <i class="fa-solid fa-glasses" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.5;"></i>
+                                        <div>Progressive myopia history, outdoor time, screen exposure, and refractive tracking.</div>
+                                    </div>
+                                </div>
+                            </div><!-- /.history-modal-left -->
+
+                            <!-- Right: Summary Panel -->
+                            <aside class="history-summary-panel">
+                                <div class="history-summary-title">SUMMARY</div>
+                                <div class="history-summary-section-label">
+                                    <input type="checkbox" checked disabled>
+                                    <span>Systemic History</span>
+                                </div>
+                                <ul class="history-summary-list" id="historySummaryList">
+                                    <li>
+                                        <strong>Systemic History</strong>
+                                        <span id="historySummary_systemic">Nil</span>
+                                    </li>
+                                    <li>
+                                        <strong>Allergies</strong>
+                                        <span id="historySummary_allergies">Nil</span>
+                                    </li>
+                                </ul>
+                            </aside>
+                        </div><!-- /.history-modal-body -->
+
+                        <!-- Modal Footer -->
+                        <div class="history-modal-footer">
+                            <button type="button" class="btn-history-cancel" onclick="closeHistoryModal()">Cancel</button>
+                            <button type="button" class="btn-history-done" onclick="saveAndCloseHistoryModal()">Done</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- END SYSTEMIC HISTORY MODAL -->
 
                 <!-- Patient Info Popup Modal (Patient Load MRN Search) -->
                 <div class="modal-overlay pinfo-modal-overlay" id="patientInfoModal" style="display: none;">
@@ -4473,6 +4614,7 @@
                 <!-- External JavaScript -->
                 <script src="{% static 'users_naimul/js/profile.js' %}"></script>
                 <script src="{% static 'users_naimul/js/ocular_history_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/history_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
