@@ -1,0 +1,546 @@
+/* =============================================================================
+   ANTERIOR SEGMENT EXAM MODAL STYLES
+   Pixel-accurate to IIEI&H Clinical Portal specification
+   ============================================================================= */
+
+/* ── Modal Overlay ────────────────────────────────────────────────────────── */
+.as-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: asFadeIn 0.18s ease-out;
+}
+
+@keyframes asFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal Card ───────────────────────────────────────────────────────────── */
+.as-modal-card {
+    background: var(--modal-bg, #ffffff);
+    border-radius: 14px;
+    border: 1px solid var(--border-glass, #e2e8f0);
+    width: 900px;
+    max-width: 96vw;
+    max-height: 94vh;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: asScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes asScaleIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Modal Header ─────────────────────────────────────────────────────────── */
+.as-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px 12px;
+    border-bottom: 1px solid var(--border-glass, #f1f5f9);
+    background: var(--modal-bg, #ffffff);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.as-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.as-modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.btn-as-reworkup {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-as-reworkup:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.as-header-meta {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #be185d; /* Pink/rose accent seen in IIEIH clinical UI */
+    white-space: nowrap;
+}
+
+.as-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.as-modal-close:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* ── Modal Body ───────────────────────────────────────────────────────────── */
+.as-modal-body {
+    padding: 14px 22px 16px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ── Table Header Row (RE | [ Normal ] | LE) ─────────────────────────────── */
+.as-grid-header {
+    display: grid;
+    grid-template-columns: 1fr 180px 1fr;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+}
+
+.as-col-header-eye {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0284c7;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.as-col-header-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-as-normal-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 3px 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(29, 78, 216, 0.1);
+}
+
+.btn-as-normal-all:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+/* ── Table Rows ───────────────────────────────────────────────────────────── */
+.as-rows-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.as-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ── Center Column: Organ Label & Directional Copy Arrows ─────────────────── */
+.as-row-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.as-arrow-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.as-arrow-btn:hover {
+    background: #e2e8f0;
+    color: #0284c7;
+}
+
+.as-structure-label {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--text-main, #334155);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    text-align: center;
+    min-width: 100px;
+}
+
+.as-structure-label:hover {
+    color: #0284c7;
+    text-decoration: underline dotted;
+}
+
+/* ── Combobox Input Wrap (Search or Select) ────────────────────────────────── */
+.as-combo-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.as-combo-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.as-combo-input {
+    width: 100%;
+    height: 33px;
+    padding: 4px 28px 4px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.81rem;
+    color: #1e293b;
+    background: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.as-combo-input:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.as-combo-input::placeholder {
+    color: #94a3b8;
+    font-style: normal;
+}
+
+.as-combo-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 26px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+
+.as-combo-toggle:hover {
+    color: #0284c7;
+}
+
+/* ── Combobox Dropdown Menu ───────────────────────────────────────────────── */
+.as-combo-menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1300;
+    display: none;
+    padding: 4px 0;
+}
+
+.as-combo-menu.open {
+    display: block;
+}
+
+.as-combo-item {
+    padding: 6px 12px;
+    font-size: 0.79rem;
+    color: #334155;
+    cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.as-combo-item:hover,
+.as-combo-item.highlighted {
+    background: #f0f9ff;
+    color: #0284c7;
+    font-weight: 600;
+}
+
+.as-combo-item.is-normal {
+    color: #059669;
+    font-weight: 600;
+}
+
+.as-combo-empty {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
+}
+
+/* ── Remarks Wrap ─────────────────────────────────────────────────────────── */
+.as-remarks-wrap {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.as-remarks-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #1e293b;
+    background: #ffffff;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.as-remarks-input:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.as-remarks-input::placeholder {
+    color: #94a3b8;
+}
+
+/* ── Modal Footer ─────────────────────────────────────────────────────────── */
+.as-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 22px;
+    border-top: 1px solid var(--border-glass, #f1f5f9);
+    background: var(--modal-bg, #ffffff);
+    flex-shrink: 0;
+}
+
+.btn-as-save {
+    background: #0f2c59;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(15, 44, 89, 0.25);
+}
+
+.btn-as-save:hover {
+    background: #194b8c;
+    box-shadow: 0 4px 12px rgba(15, 44, 89, 0.35);
+}
+
+/* ── Inline EMR Left Column Display ───────────────────────────────────────── */
+.as-emr-summary-wrap {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.as-emr-summary-wrap:hover {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.as-emr-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.as-emr-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 0.74rem;
+}
+
+.as-emr-eye-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.as-emr-eye-title {
+    font-weight: 700;
+    color: #475569;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+
+.as-emr-item-line {
+    color: #1e293b;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.as-emr-item-name {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.as-emr-item-val {
+    font-weight: 500;
+}
+
+.as-emr-item-val.is-normal {
+    color: #059669;
+}
+
+.as-emr-item-val.is-abnormal {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.as-emr-remarks-line {
+    margin-top: 5px;
+    padding-top: 4px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.73rem;
+    color: #475569;
+    font-style: italic;
+}
+
+.as-emr-normal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+/* ── Dark Mode Support ────────────────────────────────────────────────────── */
+[data-theme="dark"] .as-modal-card,
+[data-theme="dark"] .as-modal-header,
+[data-theme="dark"] .as-modal-footer {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .as-modal-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .btn-as-reworkup {
+    background: #334155;
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .as-structure-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .as-combo-input,
+[data-theme="dark"] .as-remarks-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .as-combo-menu {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .as-combo-item {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .as-combo-item:hover,
+[data-theme="dark"] .as-combo-item.highlighted {
+    background: #334155;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .as-emr-summary-wrap {
+    background: #0f172a;
+    border-color: #334155;
+}
