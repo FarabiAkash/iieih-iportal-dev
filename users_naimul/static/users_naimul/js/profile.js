@@ -1100,6 +1100,11 @@ function resetPrescriptionForm() {
     if (typeof resetGonioscopyState === 'function') {
         resetGonioscopyState();
     }
+
+    // Reset glass prescription
+    if (typeof resetGlassPrescriptionState === 'function') {
+        resetGlassPrescriptionState();
+    }
 }
 
 // Medication management
@@ -1595,6 +1600,10 @@ async function loadPrescriptionForEdit(rxId) {
                     const os = m[2].trim();
                     if (od && od !== '-') setVal('rx_glass_od', od);
                     if (os && os !== '-') setVal('rx_glass_os', os);
+                    // Sync the glass prescription modal state
+                    if (typeof restoreGlassPrescriptionFromText === 'function') {
+                        restoreGlassPrescriptionFromText(od !== '-' ? od : '', os !== '-' ? os : '');
+                    }
                 }
             } else if (trimmed.startsWith('Opinion/Refer:')) {
                 setVal('rx_opinion', trimmed.substring('Opinion/Refer:'.length).trim());

@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="{% static 'users_naimul/css/diagnosis_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/rx_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/gonioscopy_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/glass_prescription_modal.css' %}">
 </head>
 
 <body>
@@ -63,7 +64,7 @@
                 </button>
             </div>
 
-            <a href="/surgeries/" class="nav-btn nav-btn-primary" style="display: none;">
+            <a href="/surgeries/" class="nav-btn nav-btn-primary" style=""> {% comment style="display: none;" %} {% endcomment %}
                 <i class="fa-solid fa-chart-line"></i> <span>Full OT Surgery Log</span>
             </a>
             <a href="{% url 'users_naimul:logout' %}" class="nav-btn nav-btn-danger">
@@ -1366,9 +1367,12 @@
                                 <div class="emr-advice-stack">
                                     <!-- 1. Glass Prescription -->
                                     <div class="emr-adv-row" id="adv_sec_glass">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('glass')">
-                                            <span class="emr-adv-title">Glass Prescription:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                        <div class="emr-adv-header" onclick="openGlassPrescriptionModal()" style="cursor: pointer;" title="Click to open Glass Prescription">
+                                            <span class="emr-adv-title">
+                                                <i class="fa-solid fa-glasses" style="margin-right:5px; color:#2563eb;"></i>Glass Prescription:
+                                            </span>
+                                            <span id="gp_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openGlassPrescriptionModal();" title="Open Glass Prescription"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_glass" style="display: none;">
                                             <div class="emr-glass-inputs-grid">
@@ -2636,6 +2640,233 @@
                     </div>
                 </div>
                 <!-- END VISION MODAL -->
+
+                <!-- =========================================================== -->
+                <!-- GLASS PRESCRIPTION POPUP MODAL                                -->
+                <!-- =========================================================== -->
+                <div class="gp-overlay" id="glassPrescriptionModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="gpModalTitle">
+                    <div class="gp-card">
+
+                        <!-- ── Header ──────────────────────────────────────── -->
+                        <div class="gp-header">
+                            <div class="gp-header-left">
+                                <div class="gp-header-icon">
+                                    <i class="fa-solid fa-glasses"></i>
+                                </div>
+                                <div>
+                                    <h2 class="gp-title" id="gpModalTitle">Glass Prescription</h2>
+                                    <p class="gp-subtitle">Refraction &amp; Spectacle Prescription — IIEIH EMR</p>
+                                </div>
+                            </div>
+                            <div class="gp-header-right">
+                                <button type="button" class="gp-btn-reworkup" onclick="clearGlassPrescriptionModal()" title="Clear all fields">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Reset</span>
+                                </button>
+                                <button type="button" class="gp-close-btn" onclick="closeGlassPrescriptionModal()" aria-label="Close Glass Prescription Modal">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ── Prescription Type Tabs ─────────────────────── -->
+                        <div class="gp-type-tabs" role="tablist">
+                            <button type="button" class="gp-type-tab active" data-tab="distance"
+                                    onclick="switchGPTab('distance')" role="tab" aria-selected="true">
+                                <i class="fa-solid fa-eye"></i> Distance
+                            </button>
+                            <button type="button" class="gp-type-tab" data-tab="near"
+                                    onclick="switchGPTab('near')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-magnifying-glass"></i> Near / Reading
+                            </button>
+                            <button type="button" class="gp-type-tab" data-tab="bifocal"
+                                    onclick="switchGPTab('bifocal')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-layer-group"></i> Bifocal
+                            </button>
+                            <button type="button" class="gp-type-tab" data-tab="progressive"
+                                    onclick="switchGPTab('progressive')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-chart-line"></i> Progressive
+                            </button>
+                        </div>
+
+                        <!-- ── Body ───────────────────────────────────────── -->
+                        <div class="gp-body">
+
+                            <!-- Refraction Table -->
+                            <div>
+                                <p class="gp-section-label">Refraction Values</p>
+                                <div class="gp-rx-table-wrap">
+                                    <!-- Column headers -->
+                                    <div class="gp-rx-thead">
+                                        <div class="gp-rx-th">Eye</div>
+                                        <div class="gp-rx-th">Sph (DS)</div>
+                                        <div class="gp-rx-th">Cyl (DC)</div>
+                                        <div class="gp-rx-th">Axis (°)</div>
+                                        <div class="gp-rx-th">Add (DS)</div>
+                                        <div class="gp-rx-th">Prism</div>
+                                    </div>
+                                    <!-- Right Eye (OD) -->
+                                    <div class="gp-rx-tbody">
+                                        <div class="gp-rx-row">
+                                            <div class="gp-eye-cell">
+                                                <span class="gp-eye-badge od">OD</span>
+                                                <span class="gp-eye-label">Right</span>
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_od_sph" class="gp-cell-input"
+                                                       placeholder="+0.00" inputmode="decimal"
+                                                       title="OD Sphere (e.g. -1.50, +2.00, Plano)">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_od_cyl" class="gp-cell-input"
+                                                       placeholder="−0.00" inputmode="decimal"
+                                                       title="OD Cylinder (e.g. -0.75)">
+                                            </div>
+                                            <div>
+                                                <input type="number" id="gp_od_axis" class="gp-cell-input"
+                                                       placeholder="90" min="0" max="180"
+                                                       title="OD Axis (1–180°)">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_od_add" class="gp-cell-input"
+                                                       placeholder="+1.00" inputmode="decimal"
+                                                       title="OD Add (near addition)">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_od_prism" class="gp-cell-input"
+                                                       placeholder="—" title="OD Prism">
+                                            </div>
+                                        </div>
+                                        <!-- Left Eye (OS) -->
+                                        <div class="gp-rx-row">
+                                            <div class="gp-eye-cell">
+                                                <span class="gp-eye-badge os">OS</span>
+                                                <span class="gp-eye-label">Left</span>
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_os_sph" class="gp-cell-input"
+                                                       placeholder="+0.00" inputmode="decimal"
+                                                       title="OS Sphere">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_os_cyl" class="gp-cell-input"
+                                                       placeholder="−0.00" inputmode="decimal"
+                                                       title="OS Cylinder">
+                                            </div>
+                                            <div>
+                                                <input type="number" id="gp_os_axis" class="gp-cell-input"
+                                                       placeholder="90" min="0" max="180"
+                                                       title="OS Axis (1–180°)">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_os_add" class="gp-cell-input"
+                                                       placeholder="+1.00" inputmode="decimal"
+                                                       title="OS Add (near addition)">
+                                            </div>
+                                            <div>
+                                                <input type="text" id="gp_os_prism" class="gp-cell-input"
+                                                       placeholder="—" title="OS Prism">
+                                            </div>
+                                        </div>
+                                    </div><!-- /.gp-rx-tbody -->
+                                </div><!-- /.gp-rx-table-wrap -->
+                            </div>
+
+                            <!-- Near Add panel (Bifocal / Progressive / Near tab) -->
+                            <div id="gpNearAddPanel" style="display: none;">
+                                <p class="gp-section-label">Near Addition</p>
+                                <div class="gp-add-section">
+                                    <div class="gp-add-header-row">
+                                        <span class="gp-add-label">Near (Add)</span>
+                                        <div class="gp-add-inputs-row">
+                                            <div class="gp-add-field">
+                                                <span class="gp-add-field-label">OD Add</span>
+                                                <input type="text" id="gp_od_near_add" class="gp-add-input"
+                                                       placeholder="+2.00" inputmode="decimal" title="OD Near Add">
+                                            </div>
+                                            <div class="gp-add-field">
+                                                <span class="gp-add-field-label">OS Add</span>
+                                                <input type="text" id="gp_os_near_add" class="gp-add-input"
+                                                       placeholder="+2.00" inputmode="decimal" title="OS Near Add">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Purpose / Frame type -->
+                            <div>
+                                <p class="gp-section-label">Purpose / Frame Type</p>
+                                <div class="gp-purpose-row">
+                                    <span class="gp-purpose-label">Advised for:</span>
+                                    <div class="gp-purpose-pills">
+                                        <button type="button" class="gp-purpose-pill" data-val="Full-time Wear"
+                                                onclick="toggleGPPurpose('Full-time Wear', this)">
+                                            <i class="fa-solid fa-clock"></i> Full-time Wear
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Distance Only"
+                                                onclick="toggleGPPurpose('Distance Only', this)">
+                                            <i class="fa-solid fa-road"></i> Distance Only
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Reading Only"
+                                                onclick="toggleGPPurpose('Reading Only', this)">
+                                            <i class="fa-solid fa-book-open"></i> Reading Only
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Computer Use"
+                                                onclick="toggleGPPurpose('Computer Use', this)">
+                                            <i class="fa-solid fa-desktop"></i> Computer Use
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Driving"
+                                                onclick="toggleGPPurpose('Driving', this)">
+                                            <i class="fa-solid fa-car"></i> Driving
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Anti-Reflective"
+                                                onclick="toggleGPPurpose('Anti-Reflective', this)">
+                                            <i class="fa-solid fa-shield"></i> Anti-Reflective
+                                        </button>
+                                        <button type="button" class="gp-purpose-pill" data-val="Photochromic"
+                                                onclick="toggleGPPurpose('Photochromic', this)">
+                                            <i class="fa-solid fa-sun"></i> Photochromic
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Summary -->
+                            <div class="gp-summary-panel">
+                                <div class="gp-summary-label"><i class="fa-solid fa-file-prescription"></i>&nbsp; Prescription Summary</div>
+                                <div class="gp-summary-body" id="gpSummaryBody">
+                                    <div class="gp-summary-empty">Enter refraction values above to see summary.</div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks -->
+                            <div class="gp-remarks-row">
+                                <label class="gp-remarks-label" for="gp_remarks">Remarks:</label>
+                                <input type="text" id="gp_remarks" class="gp-remarks-input"
+                                       placeholder="Additional notes, lens material advice, follow-up instructions…">
+                            </div>
+
+                        </div><!-- /.gp-body -->
+
+                        <!-- ── Footer ─────────────────────────────────────── -->
+                        <div class="gp-footer">
+                            <div class="gp-footer-left">
+                                <button type="button" class="gp-btn-clear" onclick="clearGlassPrescriptionModal()">
+                                    <i class="fa-solid fa-trash-can"></i> Clear All
+                                </button>
+                            </div>
+                            <div class="gp-footer-right">
+                                <button type="button" class="gp-btn-cancel" onclick="closeGlassPrescriptionModal()">Cancel</button>
+                                <button type="button" class="gp-btn-save" onclick="saveGlassPrescriptionModal()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Prescription
+                                </button>
+                            </div>
+                        </div>
+
+                    </div><!-- /.gp-card -->
+                </div><!-- /#glassPrescriptionModal -->
+                <!-- END GLASS PRESCRIPTION MODAL -->
 
                 <!-- =========================================================== -->
                 <!-- OCULAR HISTORY POPUP MODAL                                   -->
@@ -5939,6 +6170,7 @@
                 <script src="{% static 'users_naimul/js/diagnosis_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/rx_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/gonioscopy_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/glass_prescription_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
