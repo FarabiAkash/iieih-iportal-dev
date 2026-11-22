@@ -1,0 +1,1040 @@
+/* =============================================================================
+   GONIOSCOPY / SPECIALITY WORKUP MODAL STYLES
+   IIEI&H Clinical Portal — Ispahani Islamia Eye Institute & Hospital
+   Speciality Workup: Comprehensive Angle Examination (Shaffer Classification)
+   Includes: Dual Eye (RE / LE) 4-Quadrant Angle Grading, Structures, Pigmentation,
+             Iris Morphology, Dynamic/Indentation, Gonioscopy Input & Result,
+             Overall Diagnosis, Plan, and EMR Summary Card.
+   ============================================================================= */
+
+/* ── Modal Overlay ────────────────────────────────────────────────────────── */
+.gonio-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(4px);
+    z-index: 1250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: gonioFadeIn 0.18s ease-out;
+}
+
+@keyframes gonioFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal Card ───────────────────────────────────────────────────────────── */
+.gonio-modal-card {
+    background: var(--modal-bg, #ffffff);
+    border-radius: 14px;
+    border: 1px solid var(--border-glass, #e2e8f0);
+    width: 960px;
+    max-width: 96vw;
+    max-height: 94vh;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: gonioScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gonioScaleIn {
+    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Modal Header ─────────────────────────────────────────────────────────── */
+.gonio-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 22px;
+    border-bottom: 1px solid var(--border-glass, #f1f5f9);
+    background: var(--modal-bg, #ffffff);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.gonio-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gonio-modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+    margin: 0;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gonio-modal-title i {
+    color: #0284c7;
+}
+
+.gonio-header-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.gonio-header-presets {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.gonio-preset-btn {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gonio-preset-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.gonio-preset-btn.preset-normal {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.gonio-preset-btn.preset-normal:hover {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+.gonio-preset-btn.preset-narrow {
+    background: #fffbeb;
+    color: #92400e;
+    border-color: #fde68a;
+}
+
+.gonio-preset-btn.preset-narrow:hover {
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+.gonio-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.gonio-modal-close:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* ── Modal Body ───────────────────────────────────────────────────────────── */
+.gonio-modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: #f8fafc;
+}
+
+/* ── Technique / Exam Settings Bar ────────────────────────────────────────── */
+.gonio-technique-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    flex-wrap: wrap;
+}
+
+.gonio-tech-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.gonio-tech-label {
+    font-weight: 600;
+    color: #334155;
+}
+
+.gonio-pill-group {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 2px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    gap: 2px;
+}
+
+.gonio-tech-pill {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.73rem;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gonio-tech-pill:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.gonio-tech-pill.active {
+    background: #ffffff;
+    color: #0284c7;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Main Dual-Eye Grid ───────────────────────────────────────────────────── */
+.gonio-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 48px 1fr;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.gonio-eye-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.gonio-eye-card.eye-re {
+    border-top: 3px solid #0284c7;
+}
+
+.gonio-eye-card.eye-le {
+    border-top: 3px solid #0ea5e9;
+}
+
+.gonio-eye-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 8px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.gonio-eye-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gonio-eye-badge {
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.eye-re .gonio-eye-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.eye-le .gonio-eye-badge {
+    background: #e0f7fa;
+    color: #00796b;
+}
+
+.gonio-eye-quick-grades {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gonio-qgrade-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.69rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.gonio-qgrade-btn:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+}
+
+/* ── Central Transfer Column ──────────────────────────────────────────────── */
+.gonio-center-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.gonio-arrow-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0284c7;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
+}
+
+.gonio-arrow-btn:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+    transform: scale(1.06);
+}
+
+.gonio-center-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── 4-Quadrant Angle Section ─────────────────────────────────────────────── */
+.gonio-quadrants-wrap {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gonio-quad-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Visual Cross Diagram */
+.gonio-cross-diagram {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.gonio-quad-cell {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gonio-quad-cell:focus-within {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.gonio-quad-cell-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.gonio-quad-name {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gonio-quad-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.gonio-quad-badge.grade-iv,
+.gonio-quad-badge.grade-iii {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.gonio-quad-badge.grade-ii {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.gonio-quad-badge.grade-i,
+.gonio-quad-badge.grade-0 {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.gonio-quad-select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    padding: 4px 6px;
+    color: #1e293b;
+    background: #ffffff;
+    cursor: pointer;
+    font-weight: 500;
+    outline: none;
+}
+
+.gonio-quad-select:focus {
+    border-color: #0284c7;
+}
+
+/* ── Secondary Findings Rows ──────────────────────────────────────────────── */
+.gonio-finding-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gonio-finding-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gonio-select-sm,
+.gonio-input-sm {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    padding: 6px 9px;
+    color: #1e293b;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.gonio-select-sm:focus,
+.gonio-input-sm:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.12);
+}
+
+.gonio-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.gonio-choice-pill {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.gonio-choice-pill:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.gonio-choice-pill.active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* ── GONIOSCOPY RESULT & IMPRESSION (Core UI Requirement) ─────────────────── */
+.gonio-result-box {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    transition: all 0.2s ease;
+}
+
+.gonio-result-box.is-narrow {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.gonio-result-box.is-closed {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.gonio-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #166534;
+}
+
+.gonio-result-box.is-narrow .gonio-result-header {
+    color: #92400e;
+}
+
+.gonio-result-box.is-closed .gonio-result-header {
+    color: #991b1b;
+}
+
+.gonio-result-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.gonio-result-input {
+    width: 100%;
+    border: 1px solid #86efac;
+    background: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #14532d;
+    padding: 6px 10px;
+    border-radius: 6px;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.gonio-result-box.is-narrow .gonio-result-input {
+    border-color: #fcd34d;
+    color: #78350f;
+}
+
+.gonio-result-box.is-closed .gonio-result-input {
+    border-color: #fca5a5;
+    color: #7f1d1d;
+}
+
+.gonio-result-input:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+/* Result Fast Selection Chips */
+.gonio-result-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.gonio-result-chip {
+    border: 1px solid #bbf7d0;
+    background: #ffffff;
+    color: #15803d;
+    font-size: 0.69rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.gonio-result-chip:hover {
+    background: #dcfce7;
+    border-color: #4ade80;
+}
+
+.gonio-result-chip.chip-narrow {
+    border-color: #fde68a;
+    color: #b45309;
+}
+
+.gonio-result-chip.chip-narrow:hover {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.gonio-result-chip.chip-closed {
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.gonio-result-chip.chip-closed:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+}
+
+.gonio-result-chip.active {
+    background: #15803d;
+    color: #ffffff;
+    border-color: #15803d;
+}
+
+.gonio-result-chip.chip-narrow.active {
+    background: #d97706;
+    color: #ffffff;
+    border-color: #d97706;
+}
+
+.gonio-result-chip.chip-closed.active {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+/* ── Overall Clinical Summary & Plan Section ──────────────────────────────── */
+.gonio-overall-summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.gonio-overall-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gonio-overall-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gonio-overall-title i {
+    color: #0284c7;
+}
+
+/* ── Remarks & Notes ──────────────────────────────────────────────────────── */
+.gonio-remarks-wrap {
+    width: 100%;
+}
+
+.gonio-remarks-textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #1e293b;
+    outline: none;
+    resize: vertical;
+    min-height: 54px;
+    box-sizing: border-box;
+}
+
+.gonio-remarks-textarea:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.12);
+}
+
+/* ── Modal Footer ─────────────────────────────────────────────────────────── */
+.gonio-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.gonio-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gonio-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-gonio-reset {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-gonio-reset:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+.btn-gonio-cancel {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-gonio-cancel:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.btn-gonio-save {
+    border: none;
+    background: #0284c7;
+    color: #ffffff;
+    padding: 7px 20px;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.28);
+    transition: all 0.15s ease;
+}
+
+.btn-gonio-save:hover {
+    background: #0369a1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(2, 132, 199, 0.35);
+}
+
+/* =============================================================================
+   INLINE EMR SUMMARY DISPLAY STYLES (Speciality Workup Left Column Card)
+   ============================================================================= */
+.gonio-emr-summary-wrap {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.gonio-emr-summary-wrap:hover {
+    border-color: #0284c7;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12);
+}
+
+.gonio-emr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 1px dashed #e2e8f0;
+    padding-bottom: 4px;
+}
+
+.gonio-emr-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.gonio-emr-badge.is-normal {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.gonio-emr-badge.is-narrow {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.gonio-emr-badge.is-closed {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.gonio-emr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.gonio-emr-eye-col {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.71rem;
+}
+
+.gonio-emr-eye-title {
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.gonio-emr-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    line-height: 1.25;
+}
+
+.gonio-emr-label {
+    color: #64748b;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.gonio-emr-val {
+    color: #1e293b;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.gonio-emr-result-tag {
+    font-weight: 700;
+    color: #047857;
+}
+
+.gonio-emr-result-tag.is-narrow {
+    color: #b45309;
+}
+
+.gonio-emr-result-tag.is-closed {
+    color: #b91c1c;
+}
+
+.gonio-emr-plan-line {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #0284c7;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* =============================================================================
+   DARK THEME COMPATIBILITY
+   ============================================================================= */
+[data-theme="dark"] .gonio-modal-card,
+[data-theme="dark"] .gonio-modal-header,
+[data-theme="dark"] .gonio-modal-footer,
+[data-theme="dark"] .gonio-technique-bar,
+[data-theme="dark"] .gonio-eye-card,
+[data-theme="dark"] .gonio-quad-cell,
+[data-theme="dark"] .gonio-overall-summary-card,
+[data-theme="dark"] .gonio-emr-summary-wrap {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .gonio-modal-body {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .gonio-modal-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .gonio-header-meta,
+[data-theme="dark"] .gonio-tech-item,
+[data-theme="dark"] .gonio-quad-cell-header,
+[data-theme="dark"] .gonio-emr-label {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .gonio-quad-title,
+[data-theme="dark"] .gonio-tech-label,
+[data-theme="dark"] .gonio-finding-label,
+[data-theme="dark"] .gonio-overall-title,
+[data-theme="dark"] .gonio-eye-title,
+[data-theme="dark"] .gonio-emr-val {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .gonio-quadrants-wrap,
+[data-theme="dark"] .gonio-emr-eye-col {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .gonio-quad-select,
+[data-theme="dark"] .gonio-select-sm,
+[data-theme="dark"] .gonio-input-sm,
+[data-theme="dark"] .gonio-remarks-textarea {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .gonio-choice-pill,
+[data-theme="dark"] .gonio-preset-btn,
+[data-theme="dark"] .gonio-qgrade-btn,
+[data-theme="dark"] .btn-gonio-reset,
+[data-theme="dark"] .btn-gonio-cancel {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .gonio-arrow-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .gonio-result-box {
+    background: rgba(6, 78, 59, 0.2);
+    border-color: #065f46;
+}
+
+[data-theme="dark"] .gonio-result-box.is-narrow {
+    background: rgba(120, 53, 15, 0.2);
+    border-color: #92400e;
+}
+
+[data-theme="dark"] .gonio-result-box.is-closed {
+    background: rgba(127, 29, 29, 0.2);
+    border-color: #991b1b;
+}
+
+[data-theme="dark"] .gonio-result-input {
+    background: #0f172a;
+    color: #6ee7b7;
+    border-color: #059669;
+}
+
+[data-theme="dark"] .gonio-result-box.is-narrow .gonio-result-input {
+    color: #fcd34d;
+    border-color: #d97706;
+}
+
+[data-theme="dark"] .gonio-result-box.is-closed .gonio-result-input {
+    color: #fca5a5;
+    border-color: #dc2626;
+}
+
+[data-theme="dark"] .gonio-result-chip {
+    background: #0f172a;
+    border-color: #059669;
+    color: #6ee7b7;
+}
+
+[data-theme="dark"] .gonio-result-chip.chip-narrow {
+    border-color: #d97706;
+    color: #fcd34d;
+}
+
+[data-theme="dark"] .gonio-result-chip.chip-closed {
+    border-color: #dc2626;
+    color: #fca5a5;
+}
