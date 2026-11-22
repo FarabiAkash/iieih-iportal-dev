@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="{% static 'users_naimul/css/rx_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/gonioscopy_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/glass_prescription_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/opinion_refer_modal.css' %}">
 </head>
 
 <body>
@@ -1020,9 +1021,9 @@
                                         <span class="emr-doc-role-subtitle">Doctor</span>
                                     </div>
                                 </div>
-                                <button type="button" class="emr-nav-logout-btn" onclick="backToPatientMRNSearch()" title="Exit Prescription Workspace">
+                                {% comment %} <button type="button" class="emr-nav-logout-btn" onclick="backToPatientMRNSearch()" title="Exit Prescription Workspace">
                                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                                </button>
+                                </button> {% endcomment %}
                             </div>
                         </header>
 
@@ -1369,7 +1370,8 @@
                                     <div class="emr-adv-row" id="adv_sec_glass">
                                         <div class="emr-adv-header" onclick="openGlassPrescriptionModal()" style="cursor: pointer;" title="Click to open Glass Prescription">
                                             <span class="emr-adv-title">
-                                                <i class="fa-solid fa-glasses" style="margin-right:5px; color:#2563eb;"></i>Glass Prescription:
+                                                {% comment %} <i class="fa-solid fa-glasses" style="margin-right:5px; color:#2563eb;"></i> {% endcomment %}
+                                                Glass Prescription:
                                             </span>
                                             <span id="gp_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; margin-left:auto; margin-right:8px;"></span>
                                             <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openGlassPrescriptionModal();" title="Open Glass Prescription"><i class="fa-solid fa-plus"></i></button>
@@ -1390,12 +1392,20 @@
 
                                     <!-- 2. Opinion / Refer -->
                                     <div class="emr-adv-row" id="adv_sec_opinion">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('opinion')">
+                                        <div class="emr-adv-header" onclick="openOpinionReferModal()" style="cursor: pointer;" title="Click to open Opinion / Refer">
                                             <span class="emr-adv-title">Opinion / Refer:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                            <span id="opinion_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openOpinionReferModal();" title="Open Opinion / Refer"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_opinion" style="display: none;">
-                                            <textarea class="form-control emr-adv-textarea" id="rx_opinion" rows="2" placeholder="Referral notes or specialist second opinion..."></textarea>
+                                            <div class="emr-opinion-preview-box" onclick="openOpinionReferModal()" style="cursor: pointer;" title="Click to edit Opinion / Refer in Popup">
+                                                <textarea class="form-control emr-adv-textarea" id="rx_opinion" rows="2" placeholder="Referral notes or specialist second opinion..." readonly style="cursor: pointer;"></textarea>
+                                                <div class="emr-opinion-box-action">
+                                                    <button type="button" class="btn-adv-edit-popup" onclick="event.stopPropagation(); openOpinionReferModal();" title="Open Opinion / Refer Popup">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Popup
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -2867,6 +2877,224 @@
                     </div><!-- /.gp-card -->
                 </div><!-- /#glassPrescriptionModal -->
                 <!-- END GLASS PRESCRIPTION MODAL -->
+
+                <!-- =========================================================== -->
+                <!-- OPINION / REFER POPUP MODAL                                  -->
+                <!-- =========================================================== -->
+                <div class="op-overlay" id="opinionReferModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="opModalTitle">
+                    <div class="op-card">
+
+                        <!-- ── Header ──────────────────────────────────────── -->
+                        <div class="op-header">
+                            <div class="op-header-left">
+                                <div class="op-header-icon">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                </div>
+                                <div>
+                                    <h2 class="op-title" id="opModalTitle">Opinion / Refer</h2>
+                                    <p class="op-subtitle">Specialist Opinion &amp; Clinical Referral Management &bull; IIEIH EMR</p>
+                                </div>
+                            </div>
+                            <div class="op-header-right">
+                                <button type="button" class="op-btn-reset-header" onclick="clearOpinionReferModal()" title="Reset all referral fields">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Reset</span>
+                                </button>
+                                <button type="button" class="op-close-btn" onclick="closeOpinionReferModal()" aria-label="Close Opinion / Refer Modal">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ── Referral Category Tabs ─────────────────────── -->
+                        <div class="op-type-tabs" role="tablist">
+                            <button type="button" class="op-type-tab active" data-category="internal"
+                                    onclick="switchOPCategory('internal')" role="tab" aria-selected="true">
+                                <i class="fa-solid fa-hospital"></i> Internal (IIEIH Subspecialty)
+                            </button>
+                            <button type="button" class="op-type-tab" data-category="external"
+                                    onclick="switchOPCategory('external')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-stethoscope"></i> External (Systemic Specialist)
+                            </button>
+                            <button type="button" class="op-type-tab" data-category="second_opinion"
+                                    onclick="switchOPCategory('second_opinion')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-clipboard-question"></i> Second Opinion
+                            </button>
+                            <button type="button" class="op-type-tab" data-category="pre_op"
+                                    onclick="switchOPCategory('pre_op')" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-heart-pulse"></i> Pre-Op Clearance
+                            </button>
+                        </div>
+
+                        <!-- ── Quick Presets Strip ───────────────────────── -->
+                        <div class="op-presets-strip">
+                            <span class="op-presets-label"><i class="fa-solid fa-bolt"></i> Quick Presets:</span>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('retina_dr')" title="Diabetic Retinopathy Evaluation">
+                                Retina (DR / Edema)
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('glaucoma_iop')" title="Elevated IOP / Glaucoma Evaluation">
+                                Glaucoma (High IOP)
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('retinal_tear')" title="Suspected Retinal Detachment / Tear">
+                                Retinal Tear / RD (STAT)
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('corneal_ulcer')" title="Corneal Ulcer / Microbial Keratitis">
+                                Corneal Ulcer / Keratitis
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('neuro_vision')" title="Unexplained Vision Loss / RAPD">
+                                Neuro-Ophthal (Vision Loss)
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('diabetic_control')" title="Pre-Op Glycemic Optimization">
+                                Glycemic Control (Pre-Op)
+                            </button>
+                            <button type="button" class="op-preset-pill" onclick="applyOPPreset('cardiac_clearance')" title="Cardiology Pre-Op Fitness">
+                                Cardiac Clearance
+                            </button>
+                        </div>
+
+                        <!-- ── Body ───────────────────────────────────────── -->
+                        <div class="op-body">
+
+                            <!-- Row 1: Subspecialty & Consultant -->
+                            <div class="op-grid-row-2">
+                                <div class="op-field-group">
+                                    <label class="op-field-label" for="op_subspecialty">Department / Specialty <span style="color:#ef4444;">*</span></label>
+                                    <select id="op_subspecialty" class="op-select">
+                                        <option value="Retina &amp; Vitreous">Retina &amp; Vitreous</option>
+                                        <option value="Glaucoma Services">Glaucoma Services</option>
+                                        <option value="Cornea &amp; External Disease">Cornea &amp; External Disease</option>
+                                        <option value="Oculoplastic, Orbit &amp; Reconstructive">Oculoplastic, Orbit &amp; Reconstructive</option>
+                                        <option value="Pediatric Ophthalmology &amp; Strabismus">Pediatric Ophthalmology &amp; Strabismus</option>
+                                        <option value="Neuro-Ophthalmology">Neuro-Ophthalmology</option>
+                                        <option value="Cataract &amp; Refractive Surgery">Cataract &amp; Refractive Surgery</option>
+                                        <option value="Uveitis &amp; Ocular Immunology">Uveitis &amp; Ocular Immunology</option>
+                                        <option value="Low Vision &amp; Visual Rehabilitation">Low Vision &amp; Visual Rehabilitation</option>
+                                        <option value="Other / Custom">Other / Custom Specialty...</option>
+                                    </select>
+                                    <div id="opCustomSpecialtyWrap" style="display:none; margin-top:4px;">
+                                        <input type="text" id="op_custom_specialty" class="op-input" placeholder="Enter department / specialty name...">
+                                    </div>
+                                </div>
+
+                                <div class="op-field-group">
+                                    <label class="op-field-label" for="op_consultant">Target Doctor / Consultant (Optional)</label>
+                                    <select id="op_consultant" class="op-select">
+                                        <option value="">-- Any Available Consultant / Specialist --</option>
+                                        {% for doc in available_doctors %}
+                                        <option value="{{ doc }}">{{ doc }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Priority & Involved Eye -->
+                            <div class="op-grid-row-2">
+                                <div class="op-field-group">
+                                    <label class="op-field-label">Referral Urgency</label>
+                                    <div class="op-button-group">
+                                        <button type="button" class="op-urgency-btn routine active" data-urgency="Routine" onclick="selectOPUrgency('Routine')">
+                                            <i class="fa-solid fa-calendar-check"></i> Routine
+                                        </button>
+                                        <button type="button" class="op-urgency-btn priority" data-urgency="Priority (24–48h)" onclick="selectOPUrgency('Priority (24–48h)')">
+                                            <i class="fa-solid fa-clock"></i> Priority (24–48h)
+                                        </button>
+                                        <button type="button" class="op-urgency-btn emergency" data-urgency="Emergency (STAT)" onclick="selectOPUrgency('Emergency (STAT)')">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Emergency (STAT)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="op-field-group">
+                                    <label class="op-field-label">Involved Eye / Side</label>
+                                    <div class="op-button-group">
+                                        <button type="button" class="op-eye-btn" data-eye="OD" onclick="selectOPEye('OD')">OD (Right Eye)</button>
+                                        <button type="button" class="op-eye-btn" data-eye="OS" onclick="selectOPEye('OS')">OS (Left Eye)</button>
+                                        <button type="button" class="op-eye-btn active" data-eye="OU" onclick="selectOPEye('OU')">OU (Both Eyes)</button>
+                                        <button type="button" class="op-eye-btn" data-eye="Systemic" onclick="selectOPEye('Systemic')">Systemic</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Indication / Reason for Referral -->
+                            <div class="op-field-group">
+                                <label class="op-field-label">Reason for Referral / Clinical Indication</label>
+                                <div class="op-chips-container">
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Diabetic Retinopathy Screening / Evaluation" onclick="toggleOPReasonChip('Diabetic Retinopathy Screening / Evaluation', this)">Diabetic Retinopathy</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Macular Edema / Anti-VEGF Review" onclick="toggleOPReasonChip('Macular Edema / Anti-VEGF Review', this)">Macular Edema</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Glaucoma / Elevated IOP Evaluation" onclick="toggleOPReasonChip('Glaucoma / Elevated IOP Evaluation', this)">High IOP / Glaucoma</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Suspected Retinal Detachment / Tear" onclick="toggleOPReasonChip('Suspected Retinal Detachment / Tear', this)">Retinal Detachment / Tear</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Corneal Ulcer / Microbial Keratitis" onclick="toggleOPReasonChip('Corneal Ulcer / Microbial Keratitis', this)">Corneal Ulcer / Keratitis</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Keratoconus / Corneal Ectasia" onclick="toggleOPReasonChip('Keratoconus / Corneal Ectasia', this)">Keratoconus</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Unexplained Sudden Visual Loss / RAPD" onclick="toggleOPReasonChip('Unexplained Sudden Visual Loss / RAPD', this)">Unexplained Vision Loss</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Strabismus / Squint / Amblyopia" onclick="toggleOPReasonChip('Strabismus / Squint / Amblyopia', this)">Strabismus / Amblyopia</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Ptosis / Lid Mass / Orbital Evaluation" onclick="toggleOPReasonChip('Ptosis / Lid Mass / Orbital Evaluation', this)">Ptosis / Lid Mass</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Strict Glycemic Control before Cataract / Ocular Surgery" onclick="toggleOPReasonChip('Strict Glycemic Control before Cataract / Ocular Surgery', this)">Glycemic Control</button>
+                                    <button type="button" class="op-chip op-reason-chip" data-val="Pre-Operative Cardiac Evaluation &amp; Surgical Fitness" onclick="toggleOPReasonChip('Pre-Operative Cardiac Evaluation &amp; Surgical Fitness', this)">Cardiac Pre-Op Fitness</button>
+                                </div>
+                                <input type="text" id="op_custom_reason" class="op-input" placeholder="Or enter specific referral indication / clinical reason...">
+                            </div>
+
+                            <!-- Row 4: Request / Action Sought -->
+                            <div class="op-field-group">
+                                <label class="op-field-label">Specific Request / Action Sought</label>
+                                <div class="op-chips-container">
+                                    <button type="button" class="op-chip op-request-chip" data-val="Kindly evaluate and manage" onclick="toggleOPRequestChip('Kindly evaluate and manage', this)">Kindly evaluate &amp; manage</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Evaluate for Laser / Anti-VEGF injection" onclick="toggleOPRequestChip('Evaluate for Laser / Anti-VEGF injection', this)">Evaluate for Laser / Anti-VEGF</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Opinion regarding surgical intervention" onclick="toggleOPRequestChip('Opinion regarding surgical intervention', this)">Opinion regarding surgery</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Kindly evaluate and advise medical management" onclick="toggleOPRequestChip('Kindly evaluate and advise medical management', this)">Advise medical management</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Detailed gonioscopy / VF / OCT review" onclick="toggleOPRequestChip('Detailed gonioscopy / VF / OCT review', this)">Detailed VF / OCT review</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Pre-operative fitness / clearance for ocular surgery" onclick="toggleOPRequestChip('Pre-operative fitness / clearance for ocular surgery', this)">Pre-op fitness clearance</button>
+                                    <button type="button" class="op-chip op-request-chip" data-val="Review and provide second opinion" onclick="toggleOPRequestChip('Review and provide second opinion', this)">Second opinion review</button>
+                                </div>
+                                <input type="text" id="op_custom_request" class="op-input" placeholder="Or enter specific advice or request sought...">
+                            </div>
+
+                            <!-- Row 5: Clinical Summary & Exam Findings -->
+                            <div class="op-field-group">
+                                <div class="op-field-label">
+                                    <span>Clinical Findings &amp; Examination Notes</span>
+                                    <button type="button" class="op-btn-autofill" onclick="autoFillPatientClinicalData()" title="Import Diagnosis, BCVA and IOP from workspace">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fill Patient Exam Data
+                                    </button>
+                                </div>
+                                <textarea id="op_clinical_summary" class="op-textarea" rows="2" placeholder="Brief clinical notes, slit lamp / fundus findings, or specific clinical question for the consultant..."></textarea>
+                            </div>
+
+                            <!-- Row 6: Live Generated Summary Card -->
+                            <div class="op-summary-panel">
+                                <div class="op-summary-header">
+                                    <span class="op-summary-label">
+                                        <i class="fa-solid fa-file-lines"></i> Generated Referral Note (Syncs with Prescription)
+                                    </span>
+                                    <button type="button" class="op-btn-edit-toggle" id="opBtnEditToggle" onclick="toggleOPDirectEdit()">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit Note Directly
+                                    </button>
+                                </div>
+                                <div id="opSummaryText" class="op-summary-empty">
+                                    Select department, reason, and request above to preview referral note.
+                                </div>
+                            </div>
+
+                        </div><!-- /.op-body -->
+
+                        <!-- ── Footer ─────────────────────────────────────── -->
+                        <div class="op-footer">
+                            <div class="op-footer-left">
+                                <button type="button" class="op-btn-clear" onclick="clearOpinionReferModal()">
+                                    <i class="fa-solid fa-trash-can"></i> Clear All
+                                </button>
+                            </div>
+                            <div class="op-footer-right">
+                                <button type="button" class="op-btn-cancel" onclick="closeOpinionReferModal()">Cancel</button>
+                                <button type="button" class="op-btn-save" onclick="saveOpinionReferModal()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply Referral
+                                </button>
+                            </div>
+                        </div>
+
+                    </div><!-- /.op-card -->
+                </div><!-- /#opinionReferModal -->
+                <!-- END OPINION / REFER POPUP MODAL -->
 
                 <!-- =========================================================== -->
                 <!-- OCULAR HISTORY POPUP MODAL                                   -->
@@ -6171,6 +6399,7 @@
                 <script src="{% static 'users_naimul/js/rx_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/gonioscopy_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/glass_prescription_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/opinion_refer_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
