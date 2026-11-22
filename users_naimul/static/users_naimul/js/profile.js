@@ -1095,6 +1095,11 @@ function resetPrescriptionForm() {
     if (typeof resetDiagnosisState === 'function') {
         resetDiagnosisState();
     }
+
+    // Reset speciality / gonioscopy
+    if (typeof resetGonioscopyState === 'function') {
+        resetGonioscopyState();
+    }
 }
 
 // Medication management
@@ -1374,6 +1379,8 @@ async function savePrescription(event) {
     if (antSeg) adviceList.push(`Anterior Segment: ${antSeg}`);
     const fundus = document.getElementById('rx_fundus')?.value.trim();
     if (fundus) adviceList.push(`Fundus: ${fundus}`);
+    const speciality = document.getElementById('rx_speciality')?.value.trim();
+    if (speciality) adviceList.push(`Speciality Workup: ${speciality}`);
     const glassOD = document.getElementById('rx_glass_od')?.value.trim();
     const glassOS = document.getElementById('rx_glass_os')?.value.trim();
     if (glassOD || glassOS) adviceList.push(`Glass: OD [${glassOD || '-'}] | OS [${glassOS || '-'}]`);
@@ -1575,6 +1582,12 @@ async function loadPrescriptionForEdit(rxId) {
                 const fField = document.getElementById('rx_fundus');
                 if (fField) fField.value = fText;
                 if (typeof restoreFundusFromText === 'function') restoreFundusFromText(fText);
+            } else if (trimmed.startsWith('Speciality Workup:') || trimmed.startsWith('Special Workup:') || trimmed.startsWith('Gonioscopy:')) {
+                const prefix = trimmed.startsWith('Speciality Workup:') ? 'Speciality Workup:' : (trimmed.startsWith('Special Workup:') ? 'Special Workup:' : 'Gonioscopy:');
+                const specText = trimmed.substring(prefix.length).trim();
+                const specField = document.getElementById('rx_speciality');
+                if (specField) specField.value = specText;
+                if (typeof restoreGonioscopyFromText === 'function') restoreGonioscopyFromText(specText);
             } else if (trimmed.startsWith('Glass:')) {
                 const m = trimmed.match(/OD\s*\[(.*?)\]\s*\|\s*OS\s*\[(.*?)\]/i);
                 if (m) {

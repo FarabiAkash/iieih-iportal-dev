@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="{% static 'users_naimul/css/fundus_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/diagnosis_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/rx_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/gonioscopy_modal.css' %}">
 </head>
 
 <body>
@@ -1255,14 +1256,20 @@
                                     </div>
                                 </div>
 
-                                <!-- 10. Speciality Workup -->
-                                <div class="emr-sec-row" id="row_speciality">
-                                    <div class="emr-sec-header" onclick="toggleSection('speciality')">
+                                <!-- 10. Speciality Workup (Gonioscopy) -->
+                                <div class="emr-sec-row open" id="row_speciality">
+                                    <div class="emr-sec-header" onclick="openGonioscopyModal()" title="Click to record Gonioscopy / Speciality Workup">
                                         <span class="emr-sec-label">Speciality Workup:</span>
-                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Gonioscopy / Speciality Workup Modal"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_speciality" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_speciality" rows="2" placeholder="Retina / Glaucoma workup..."></textarea>
+                                    <div class="emr-sec-body" id="body_speciality">
+                                        <div id="emr_speciality_display" class="emr-complaints-display" onclick="openGonioscopyModal()" title="Click to manage Gonioscopy findings">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-solid fa-compass"></i>
+                                                <span>Click to record Gonioscopy / Speciality Workup...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_speciality" rows="2" style="display: none;" placeholder="Gonioscopy / Speciality workup..."></textarea>
                                     </div>
                                 </div>
                             </aside>
@@ -3408,6 +3415,489 @@
                 <!-- END FUNDUS EXAM MODAL -->
 
                 <!-- =========================================================== -->
+                <!-- GONIOSCOPY / SPECIALITY WORKUP POPUP MODAL                  -->
+                <!-- =========================================================== -->
+                <div class="modal-overlay gonio-modal-overlay" id="gonioscopyModal" style="display: none;">
+                    <div class="modal-card gonio-modal-card" role="dialog" aria-modal="true" aria-labelledby="gonioscopyModalTitle">
+
+                        <!-- Modal Header -->
+                        <div class="gonio-modal-header">
+                            <div class="gonio-header-left">
+                                <h2 class="gonio-modal-title" id="gonioscopyModalTitle">
+                                    <i class="fa-solid fa-compass"></i>
+                                    <span>Speciality Workup &bull; Gonioscopy (Angle Exam)</span>
+                                </h2>
+                                <span class="gonio-header-meta">
+                                    <span id="gonioHeaderUser">{{ profile.get_surgeon_display_name|default:"Attending Specialist" }}</span>
+                                    <span style="opacity: 0.5;">&bull;</span>
+                                    <span id="gonioHeaderTime">Nov 22, 2026 02:47:00 PM</span>
+                                </span>
+                            </div>
+                            <div class="gonio-header-presets">
+                                <button type="button" class="gonio-preset-btn preset-normal" onclick="setGonioscopyPreset('normal_be')" title="Set Shaffer Grade IV Open Angle in both eyes">
+                                    <i class="fa-solid fa-circle-check"></i> Normal BE (Gr IV)
+                                </button>
+                                <button type="button" class="gonio-preset-btn" onclick="setGonioscopyPreset('grade3_be')" title="Set Shaffer Grade III in both eyes">
+                                    <i class="fa-solid fa-check"></i> Gr III BE
+                                </button>
+                                <button type="button" class="gonio-preset-btn preset-narrow" onclick="setGonioscopyPreset('narrow_be')" title="Set Narrow Angle / PACS in both eyes">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Narrow BE (PACS)
+                                </button>
+                                <button type="button" class="gonio-preset-btn" onclick="setGonioscopyPreset('closed_be')" title="Set Closed Angle / PACG in both eyes" style="color: #b91c1c;">
+                                    <i class="fa-solid fa-ban"></i> Closed BE
+                                </button>
+                                <button type="button" class="gonio-modal-close" onclick="closeGonioscopyModal()" aria-label="Close Gonioscopy Modal">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="gonio-modal-body">
+                            <!-- Technique & Examination Parameters -->
+                            <div class="gonio-technique-bar">
+                                <div class="gonio-tech-item">
+                                    <span class="gonio-tech-label"><i class="fa-solid fa-bullseye" style="color:#0284c7;"></i> Lens:</span>
+                                    <div class="gonio-pill-group">
+                                        <button type="button" class="gonio-tech-pill active" data-gonio-tech="method" data-val="Goldmann 3-Mirror" onclick="setGonioscopyTechnique('method', 'Goldmann 3-Mirror')">Goldmann 3-Mirror</button>
+                                        <button type="button" class="gonio-tech-pill" data-gonio-tech="method" data-val="Zeiss 4-Mirror" onclick="setGonioscopyTechnique('method', 'Zeiss 4-Mirror')">Zeiss 4-Mirror</button>
+                                        <button type="button" class="gonio-tech-pill" data-gonio-tech="method" data-val="Sussman 4-Mirror" onclick="setGonioscopyTechnique('method', 'Sussman 4-Mirror')">Sussman</button>
+                                        <button type="button" class="gonio-tech-pill" data-gonio-tech="method" data-val="Posner" onclick="setGonioscopyTechnique('method', 'Posner')">Posner</button>
+                                    </div>
+                                </div>
+                                <div class="gonio-tech-item">
+                                    <span class="gonio-tech-label"><i class="fa-regular fa-eye" style="color:#0284c7;"></i> Pupil:</span>
+                                    <div class="gonio-pill-group">
+                                        <button type="button" class="gonio-tech-pill active" data-gonio-tech="dilation" data-val="Undilated" onclick="setGonioscopyTechnique('dilation', 'Undilated')">Undilated (Standard)</button>
+                                        <button type="button" class="gonio-tech-pill" data-gonio-tech="dilation" data-val="Dilated" onclick="setGonioscopyTechnique('dilation', 'Dilated')">Dilated</button>
+                                    </div>
+                                </div>
+                                <div class="gonio-tech-item">
+                                    <span class="gonio-tech-label"><i class="fa-regular fa-lightbulb" style="color:#0284c7;"></i> Light:</span>
+                                    <div class="gonio-pill-group">
+                                        <button type="button" class="gonio-tech-pill active" data-gonio-tech="lighting" data-val="Dim Room" onclick="setGonioscopyTechnique('lighting', 'Dim Room')">Dim Room</button>
+                                        <button type="button" class="gonio-tech-pill" data-gonio-tech="lighting" data-val="Ambient" onclick="setGonioscopyTechnique('lighting', 'Ambient')">Ambient</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dual-Eye Examination Grid -->
+                            <div class="gonio-main-grid">
+
+                                <!-- RIGHT EYE (RE / OD) -->
+                                <div class="gonio-eye-card eye-re">
+                                    <div class="gonio-eye-header">
+                                        <div class="gonio-eye-title">
+                                            <span class="gonio-eye-badge">RE</span>
+                                            <span>Right Eye (OD)</span>
+                                        </div>
+                                        <div class="gonio-eye-quick-grades">
+                                            <span style="font-size: 0.69rem; color: #64748b; font-weight: 600;">All:</span>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('re', 'IV')" title="Set all quadrants to Grade IV">Gr IV</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('re', 'III')" title="Set all quadrants to Grade III">Gr III</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('re', 'II')" title="Set all quadrants to Grade II">Gr II</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('re', 'I')" title="Set all quadrants to Grade I">Gr I</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('re', '0')" title="Set all quadrants to Grade 0">Gr 0</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4-Quadrant Angle Section -->
+                                    <div class="gonio-quadrants-wrap">
+                                        <div class="gonio-quad-title">
+                                            <span><i class="fa-solid fa-crosshairs" style="color:#0284c7;"></i> Shaffer Angle Grading (4 Quadrants)</span>
+                                            <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">IV=Open, 0=Closed</span>
+                                        </div>
+                                        <div class="gonio-cross-diagram">
+                                            <!-- Superior -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-up" style="color:#0284c7;"></i> Superior (12h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_re_sup">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_re_sup" onchange="setEyeQuadrantGrade('re', 'sup', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Inferior -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-down" style="color:#0284c7;"></i> Inferior (6h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_re_inf">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_re_inf" onchange="setEyeQuadrantGrade('re', 'inf', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Nasal -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-left" style="color:#0284c7;"></i> Nasal (9h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_re_nas">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_re_nas" onchange="setEyeQuadrantGrade('re', 'nas', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Temporal -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-right" style="color:#0284c7;"></i> Temporal (3h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_re_temp">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_re_temp" onchange="setEyeQuadrantGrade('re', 'temp', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Angle Structures & Pigmentation -->
+                                    <div class="gonio-finding-row">
+                                        <label class="gonio-finding-label">
+                                            <span>Most Posterior Structure Visible</span>
+                                        </label>
+                                        <select class="gonio-select-sm" id="gonio_struct_re">
+                                            <option value="">Select structure...</option>
+                                            <option value="Ciliary Body Band (CBB) - All visible">Ciliary Body Band (CBB) - All structures visible</option>
+                                            <option value="Scleral Spur (SS visible)">Scleral Spur (SS visible)</option>
+                                            <option value="Pigmented TM (PTM visible)">Pigmented TM (PTM visible)</option>
+                                            <option value="Anterior TM only (ATM visible)">Anterior TM only (ATM visible)</option>
+                                            <option value="Schwalbe Line only (SL visible)">Schwalbe Line only (SL visible)</option>
+                                            <option value="None / Root of Iris contact (Closed)">None / Root of Iris contact (Closed)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="gonio-finding-row">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label class="gonio-finding-label"><span>TM Pigmentation</span></label>
+                                                <select class="gonio-select-sm" id="gonio_pigment_re">
+                                                    <option value="">Select...</option>
+                                                    <option value="Grade 0 (None / Trace)">Grade 0 (None / Trace)</option>
+                                                    <option value="1+ (Mild / Normal)">1+ (Mild / Normal)</option>
+                                                    <option value="2+ (Moderate)">2+ (Moderate)</option>
+                                                    <option value="3+ (Dense / Heavy)">3+ (Dense / Heavy)</option>
+                                                    <option value="4+ (Marked / Hyperpigmented)">4+ (Marked / Hyperpigmented)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="gonio-finding-label"><span>Iris Profile</span></label>
+                                                <select class="gonio-select-sm" id="gonio_iris_re">
+                                                    <option value="">Select...</option>
+                                                    <option value="Flat / Regular">Flat / Regular</option>
+                                                    <option value="Convex / Steep (Pupillary block)">Convex / Steep (Pupillary block)</option>
+                                                    <option value="Plateau Iris Configuration">Plateau Iris Configuration</option>
+                                                    <option value="Concave (Pigment dispersion)">Concave (Pigment dispersion)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PAS & Dynamic Gonioscopy -->
+                                    <div class="gonio-finding-row">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label class="gonio-finding-label"><span>PAS (Synechiae)</span></label>
+                                                <select class="gonio-select-sm" id="gonio_pas_re">
+                                                    <option value="None">None</option>
+                                                    <option value="Present (Mild / 1-2 quads)">Present (Mild / 1-2 quads)</option>
+                                                    <option value="Present (Extensive / >180°)">Present (Extensive / &gt;180°)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="gonio-finding-label"><span>Indentation / Dynamic</span></label>
+                                                <select class="gonio-select-sm" id="gonio_indent_re">
+                                                    <option value="Not tested">Not tested</option>
+                                                    <option value="Angle Opens (Appositional closure)">Angle Opens (Appositional)</option>
+                                                    <option value="Angle Remains Closed (Synechial)">Angle Remains Closed (Synechial)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GONIOSCOPY RESULT & IMPRESSION (RE) -->
+                                    <div class="gonio-result-box" id="gonio_result_box_re">
+                                        <div class="gonio-result-header">
+                                            <span><i class="fa-solid fa-stethoscope"></i> Gonioscopy Result &bull; RE (Right Eye)</span>
+                                            <span style="font-size:0.7rem; font-weight:500; opacity:0.85;">Input or pick preset</span>
+                                        </div>
+                                        <div class="gonio-result-input-wrap">
+                                            <input type="text" class="gonio-result-input" id="gonio_result_re" placeholder="e.g. Open Angle (Grade IV) - Normal" autocomplete="off">
+                                        </div>
+                                        <div class="gonio-result-chips">
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="re" data-val="Open Angle (Grade IV) - Normal" onclick="setEyeResult('re', 'Open Angle (Grade IV) - Normal')">Open Gr IV</button>
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="re" data-val="Open Angle (Grade III)" onclick="setEyeResult('re', 'Open Angle (Grade III)')">Open Gr III</button>
+                                            <button type="button" class="gonio-result-chip chip-narrow" data-gonio-result-eye="re" data-val="Narrow Angle / Occludable (PACS)" onclick="setEyeResult('re', 'Narrow Angle / Occludable (PACS)')">Narrow / PACS</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="re" data-val="Primary Angle Closure (PAC)" onclick="setEyeResult('re', 'Primary Angle Closure (PAC)')">PAC</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="re" data-val="Closed Angle / PACG" onclick="setEyeResult('re', 'Closed Angle / PACG')">PACG</button>
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="re" data-val="Primary Open Angle Glaucoma (POAG)" onclick="setEyeResult('re', 'Primary Open Angle Glaucoma (POAG)')">POAG</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="re" data-val="Secondary Angle Closure / PAS" onclick="setEyeResult('re', 'Secondary Angle Closure / PAS')">Secondary PAS</button>
+                                        </div>
+                                    </div>
+                                </div><!-- /.gonio-eye-card.eye-re -->
+
+                                <!-- CENTER COLUMN TRANSFER CONTROLS -->
+                                <div class="gonio-center-column">
+                                    <button type="button" class="gonio-arrow-btn" onclick="copyGonioscopySide('re_to_le')" title="Copy findings from Right Eye (RE) to Left Eye (LE)">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                    <span class="gonio-center-label">Sync</span>
+                                    <button type="button" class="gonio-arrow-btn" onclick="copyGonioscopySide('le_to_re')" title="Copy findings from Left Eye (LE) to Right Eye (RE)">
+                                        <i class="fa-solid fa-arrow-left"></i>
+                                    </button>
+                                </div>
+
+                                <!-- LEFT EYE (LE / OS) -->
+                                <div class="gonio-eye-card eye-le">
+                                    <div class="gonio-eye-header">
+                                        <div class="gonio-eye-title">
+                                            <span class="gonio-eye-badge">LE</span>
+                                            <span>Left Eye (OS)</span>
+                                        </div>
+                                        <div class="gonio-eye-quick-grades">
+                                            <span style="font-size: 0.69rem; color: #64748b; font-weight: 600;">All:</span>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('le', 'IV')" title="Set all quadrants to Grade IV">Gr IV</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('le', 'III')" title="Set all quadrants to Grade III">Gr III</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('le', 'II')" title="Set all quadrants to Grade II">Gr II</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('le', 'I')" title="Set all quadrants to Grade I">Gr I</button>
+                                            <button type="button" class="gonio-qgrade-btn" onclick="setEyeAllQuadrants('le', '0')" title="Set all quadrants to Grade 0">Gr 0</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 4-Quadrant Angle Section -->
+                                    <div class="gonio-quadrants-wrap">
+                                        <div class="gonio-quad-title">
+                                            <span><i class="fa-solid fa-crosshairs" style="color:#0284c7;"></i> Shaffer Angle Grading (4 Quadrants)</span>
+                                            <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">IV=Open, 0=Closed</span>
+                                        </div>
+                                        <div class="gonio-cross-diagram">
+                                            <!-- Superior -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-up" style="color:#0284c7;"></i> Superior (12h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_le_sup">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_le_sup" onchange="setEyeQuadrantGrade('le', 'sup', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Inferior -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-down" style="color:#0284c7;"></i> Inferior (6h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_le_inf">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_le_inf" onchange="setEyeQuadrantGrade('le', 'inf', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Nasal -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-right" style="color:#0284c7;"></i> Nasal (3h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_le_nas">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_le_nas" onchange="setEyeQuadrantGrade('le', 'nas', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                            <!-- Temporal -->
+                                            <div class="gonio-quad-cell">
+                                                <div class="gonio-quad-cell-header">
+                                                    <span class="gonio-quad-name"><i class="fa-solid fa-arrow-left" style="color:#0284c7;"></i> Temporal (9h)</span>
+                                                    <span class="gonio-quad-badge" id="gonio_badge_le_temp">Gr -</span>
+                                                </div>
+                                                <select class="gonio-quad-select" id="gonio_le_temp" onchange="setEyeQuadrantGrade('le', 'temp', this.value)">
+                                                    <option value="">Select Grade...</option>
+                                                    <option value="Grade IV (35°-45° Wide Open)">Grade IV (35°-45° Wide Open)</option>
+                                                    <option value="Grade III (20°-35° Open)">Grade III (20°-35° Open)</option>
+                                                    <option value="Grade II (20° Moderately Narrow)">Grade II (20° Moderately Narrow)</option>
+                                                    <option value="Grade I (10° Very Narrow)">Grade I (10° Very Narrow)</option>
+                                                    <option value="Grade 0 / Slit (0° Closed)">Grade 0 / Slit (0° Closed)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Angle Structures & Pigmentation -->
+                                    <div class="gonio-finding-row">
+                                        <label class="gonio-finding-label">
+                                            <span>Most Posterior Structure Visible</span>
+                                        </label>
+                                        <select class="gonio-select-sm" id="gonio_struct_le">
+                                            <option value="">Select structure...</option>
+                                            <option value="Ciliary Body Band (CBB) - All visible">Ciliary Body Band (CBB) - All structures visible</option>
+                                            <option value="Scleral Spur (SS visible)">Scleral Spur (SS visible)</option>
+                                            <option value="Pigmented TM (PTM visible)">Pigmented TM (PTM visible)</option>
+                                            <option value="Anterior TM only (ATM visible)">Anterior TM only (ATM visible)</option>
+                                            <option value="Schwalbe Line only (SL visible)">Schwalbe Line only (SL visible)</option>
+                                            <option value="None / Root of Iris contact (Closed)">None / Root of Iris contact (Closed)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="gonio-finding-row">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label class="gonio-finding-label"><span>TM Pigmentation</span></label>
+                                                <select class="gonio-select-sm" id="gonio_pigment_le">
+                                                    <option value="">Select...</option>
+                                                    <option value="Grade 0 (None / Trace)">Grade 0 (None / Trace)</option>
+                                                    <option value="1+ (Mild / Normal)">1+ (Mild / Normal)</option>
+                                                    <option value="2+ (Moderate)">2+ (Moderate)</option>
+                                                    <option value="3+ (Dense / Heavy)">3+ (Dense / Heavy)</option>
+                                                    <option value="4+ (Marked / Hyperpigmented)">4+ (Marked / Hyperpigmented)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="gonio-finding-label"><span>Iris Profile</span></label>
+                                                <select class="gonio-select-sm" id="gonio_iris_le">
+                                                    <option value="">Select...</option>
+                                                    <option value="Flat / Regular">Flat / Regular</option>
+                                                    <option value="Convex / Steep (Pupillary block)">Convex / Steep (Pupillary block)</option>
+                                                    <option value="Plateau Iris Configuration">Plateau Iris Configuration</option>
+                                                    <option value="Concave (Pigment dispersion)">Concave (Pigment dispersion)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PAS & Dynamic Gonioscopy -->
+                                    <div class="gonio-finding-row">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                            <div>
+                                                <label class="gonio-finding-label"><span>PAS (Synechiae)</span></label>
+                                                <select class="gonio-select-sm" id="gonio_pas_le">
+                                                    <option value="None">None</option>
+                                                    <option value="Present (Mild / 1-2 quads)">Present (Mild / 1-2 quads)</option>
+                                                    <option value="Present (Extensive / >180°)">Present (Extensive / &gt;180°)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="gonio-finding-label"><span>Indentation / Dynamic</span></label>
+                                                <select class="gonio-select-sm" id="gonio_indent_le">
+                                                    <option value="Not tested">Not tested</option>
+                                                    <option value="Angle Opens (Appositional closure)">Angle Opens (Appositional)</option>
+                                                    <option value="Angle Remains Closed (Synechial)">Angle Remains Closed (Synechial)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GONIOSCOPY RESULT & IMPRESSION (LE) -->
+                                    <div class="gonio-result-box" id="gonio_result_box_le">
+                                        <div class="gonio-result-header">
+                                            <span><i class="fa-solid fa-stethoscope"></i> Gonioscopy Result &bull; LE (Left Eye)</span>
+                                            <span style="font-size:0.7rem; font-weight:500; opacity:0.85;">Input or pick preset</span>
+                                        </div>
+                                        <div class="gonio-result-input-wrap">
+                                            <input type="text" class="gonio-result-input" id="gonio_result_le" placeholder="e.g. Open Angle (Grade IV) - Normal" autocomplete="off">
+                                        </div>
+                                        <div class="gonio-result-chips">
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="le" data-val="Open Angle (Grade IV) - Normal" onclick="setEyeResult('le', 'Open Angle (Grade IV) - Normal')">Open Gr IV</button>
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="le" data-val="Open Angle (Grade III)" onclick="setEyeResult('le', 'Open Angle (Grade III)')">Open Gr III</button>
+                                            <button type="button" class="gonio-result-chip chip-narrow" data-gonio-result-eye="le" data-val="Narrow Angle / Occludable (PACS)" onclick="setEyeResult('le', 'Narrow Angle / Occludable (PACS)')">Narrow / PACS</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="le" data-val="Primary Angle Closure (PAC)" onclick="setEyeResult('le', 'Primary Angle Closure (PAC)')">PAC</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="le" data-val="Closed Angle / PACG" onclick="setEyeResult('le', 'Closed Angle / PACG')">PACG</button>
+                                            <button type="button" class="gonio-result-chip" data-gonio-result-eye="le" data-val="Primary Open Angle Glaucoma (POAG)" onclick="setEyeResult('le', 'Primary Open Angle Glaucoma (POAG)')">POAG</button>
+                                            <button type="button" class="gonio-result-chip chip-closed" data-gonio-result-eye="le" data-val="Secondary Angle Closure / PAS" onclick="setEyeResult('le', 'Secondary Angle Closure / PAS')">Secondary PAS</button>
+                                        </div>
+                                    </div>
+                                </div><!-- /.gonio-eye-card.eye-le -->
+
+                            </div><!-- /.gonio-main-grid -->
+
+                            <!-- Overall Clinical Summary & Management Plan -->
+                            <div class="gonio-overall-summary-card">
+                                <div class="gonio-overall-block">
+                                    <div class="gonio-overall-title">
+                                        <i class="fa-solid fa-clipboard-check"></i>
+                                        <span>Overall Gonioscopy Impression / Result (BE)</span>
+                                    </div>
+                                    <input type="text" class="gonio-input-sm" id="gonio_overall_result" placeholder="Overall diagnosis / impression (e.g. Normal open angles BE)" autocomplete="off">
+                                    <div class="gonio-result-chips">
+                                        <button type="button" class="gonio-result-chip" data-gonio-overall-chip data-val="Normal open angles BE (Shaffer Grade IV)" onclick="setOverallResult('Normal open angles BE (Shaffer Grade IV)')">Normal Open BE</button>
+                                        <button type="button" class="gonio-result-chip chip-narrow" data-gonio-overall-chip data-val="Bilateral Primary Angle Closure Suspect (PACS)" onclick="setOverallResult('Bilateral Primary Angle Closure Suspect (PACS)')">Bilateral PACS</button>
+                                        <button type="button" class="gonio-result-chip chip-closed" data-gonio-overall-chip data-val="Primary Angle Closure Glaucoma (PACG)" onclick="setOverallResult('Primary Angle Closure Glaucoma (PACG)')">PACG</button>
+                                        <button type="button" class="gonio-result-chip" data-gonio-overall-chip data-val="Primary Open Angle Glaucoma (POAG) BE" onclick="setOverallResult('Primary Open Angle Glaucoma (POAG) BE')">POAG BE</button>
+                                    </div>
+                                </div>
+
+                                <div class="gonio-overall-block">
+                                    <div class="gonio-overall-title">
+                                        <i class="fa-solid fa-lightbulb"></i>
+                                        <span>Gonioscopy Action &amp; Management Plan</span>
+                                    </div>
+                                    <input type="text" class="gonio-input-sm" id="gonio_overall_plan" placeholder="Recommended management or intervention plan..." autocomplete="off">
+                                    <div class="gonio-result-chips">
+                                        <button type="button" class="gonio-result-chip" data-gonio-plan-chip data-val="Routine annual review / No intervention needed" onclick="setOverallPlan('Routine annual review / No intervention needed')">Routine Review</button>
+                                        <button type="button" class="gonio-result-chip chip-narrow" data-gonio-plan-chip data-val="Bilateral Nd:YAG Laser Peripheral Iridotomy (LPI) advised" onclick="setOverallPlan('Bilateral Nd:YAG Laser Peripheral Iridotomy (LPI) advised')">Bilateral LPI Advised</button>
+                                        <button type="button" class="gonio-result-chip chip-narrow" data-gonio-plan-chip data-val="Nd:YAG LPI (RE)" onclick="setOverallPlan('Nd:YAG LPI (RE)')">LPI (RE)</button>
+                                        <button type="button" class="gonio-result-chip chip-narrow" data-gonio-plan-chip data-val="Nd:YAG LPI (LE)" onclick="setOverallPlan('Nd:YAG LPI (LE)')">LPI (LE)</button>
+                                        <button type="button" class="gonio-result-chip chip-closed" data-gonio-plan-chip data-val="Avoid mydriatics / Anti-glaucoma medication" onclick="setOverallPlan('Avoid mydriatics / Anti-glaucoma medication')">Avoid Mydriatics</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Section -->
+                            <div class="gonio-remarks-wrap">
+                                <textarea class="gonio-remarks-textarea" id="gonio_remarks" rows="2" placeholder="Clinical remarks / Additional Gonioscopy observations (e.g. angle recession, Sampaolesi line, goniosynechialysis)..."></textarea>
+                            </div>
+                        </div><!-- /.gonio-modal-body -->
+
+                        <!-- Modal Footer -->
+                        <div class="gonio-modal-footer">
+                            <div class="gonio-footer-left">
+                                <button type="button" class="btn-gonio-reset" onclick="resetGonioscopyState()" title="Clear and reset Gonioscopy form">
+                                    <i class="fa-solid fa-rotate-left"></i> Clear Form
+                                </button>
+                            </div>
+                            <div class="gonio-footer-right">
+                                <button type="button" class="btn-gonio-cancel" onclick="closeGonioscopyModal()">Cancel</button>
+                                <button type="button" class="btn-gonio-save" onclick="saveGonioscopyModal()">
+                                    <i class="fa-solid fa-check"></i> Save Gonioscopy
+                                </button>
+                            </div>
+                        </div>
+                    </div><!-- /.gonio-modal-card -->
+                </div>
+                <!-- END GONIOSCOPY POPUP MODAL -->
+
+                <!-- =========================================================== -->
                 <!-- DIAGNOSIS POPUP MODAL (Hospital EMR Standard)               -->
                 <!-- =========================================================== -->
                 <div class="modal-overlay diagnosis-modal-overlay" id="diagnosisModal" style="display: none;">
@@ -5448,6 +5938,7 @@
                 <script src="{% static 'users_naimul/js/fundus_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/diagnosis_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/rx_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/gonioscopy_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
