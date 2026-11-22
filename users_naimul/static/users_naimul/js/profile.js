@@ -1105,6 +1105,11 @@ function resetPrescriptionForm() {
     if (typeof resetGlassPrescriptionState === 'function') {
         resetGlassPrescriptionState();
     }
+
+    // Reset opinion / refer
+    if (typeof resetOpinionReferState === 'function') {
+        resetOpinionReferState();
+    }
 }
 
 // Medication management
@@ -1606,7 +1611,11 @@ async function loadPrescriptionForEdit(rxId) {
                     }
                 }
             } else if (trimmed.startsWith('Opinion/Refer:')) {
-                setVal('rx_opinion', trimmed.substring('Opinion/Refer:'.length).trim());
+                const opText = trimmed.substring('Opinion/Refer:'.length).trim();
+                setVal('rx_opinion', opText);
+                if (typeof restoreOpinionReferFromText === 'function') {
+                    restoreOpinionReferFromText(opText);
+                }
             } else if (trimmed.startsWith('Surgical Advice:')) {
                 setVal('rx_surgical_advice', trimmed.substring('Surgical Advice:'.length).trim());
             } else if (trimmed.startsWith('Procedure Advice:')) {
