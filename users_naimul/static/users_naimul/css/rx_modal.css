@@ -27,8 +27,13 @@
 }
 
 @keyframes rxFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ── Modal Card ───────────────────────────────────────────────────────────── */
@@ -36,7 +41,7 @@
     background: #ffffff;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    width: 1040px;
+    width: 1200px;
     max-width: 96vw;
     max-height: 92vh;
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
@@ -47,8 +52,15 @@
 }
 
 @keyframes rxScaleIn {
-    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 /* ── Modal Header ─────────────────────────────────────────────────────────── */
@@ -268,15 +280,51 @@
 }
 
 /* Column Width Alignments */
-.col-medicine { flex: 3.2; min-width: 250px; }
-.col-eye      { width: 72px; flex-shrink: 0; }
-.col-dosage   { width: 88px; flex-shrink: 0; }
-.col-freq     { flex: 1.8; min-width: 140px; }
-.col-duration { width: 88px; flex-shrink: 0; }
-.col-time     { width: 104px; flex-shrink: 0; }
-.col-meal     { width: 80px; flex-shrink: 0; }
-.col-notes    { flex: 1.6; min-width: 110px; }
-.col-actions  { width: 68px; flex-shrink: 0; text-align: center; }
+.col-medicine {
+    flex: 3.2;
+    min-width: 250px;
+}
+
+.col-eye {
+    width: 72px;
+    flex-shrink: 0;
+}
+
+.col-dosage {
+    width: 88px;
+    flex-shrink: 0;
+}
+
+.col-freq {
+    flex: 1.8;
+    min-width: 140px;
+}
+
+.col-duration {
+    width: 88px;
+    flex-shrink: 0;
+}
+
+.col-time {
+    width: 104px;
+    flex-shrink: 0;
+}
+
+.col-meal {
+    width: 80px;
+    flex-shrink: 0;
+}
+
+.col-notes {
+    flex: 1.6;
+    min-width: 110px;
+}
+
+.col-actions {
+    width: 68px;
+    flex-shrink: 0;
+    text-align: center;
+}
 
 /* ── Entry Input Row ──────────────────────────────────────────────────────── */
 .rx-entry-input-row {
