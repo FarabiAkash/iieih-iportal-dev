@@ -1,0 +1,185 @@
+<!-- =============================================================================
+     INVESTIGATION POPUP MODAL (Hospital EMR Standard)
+     Template: investigation_modal.html
+     Ispahani Islamia Eye Institute & Hospital (IIEIH)
+     
+     Features:
+     - Exact fidelity to clinical workflow with modern aesthetic upgrades
+     - Quick-access investigation selector pills (IOP, DUCT, Blood Sugar, Colour Vision, BP, K Reading)
+     - Add investigation bar with per-row ocular eye toggles
+     - Interactive clinical table with real-time value validation & unit displays
+     - Expandable detail drawers for clinical notes, examiners, and history
+     - Automated clinical assistants:
+       * IOP abnormal pressure alerts (> 21 mmHg)
+       * Blood Pressure classification (AHA Guidelines)
+       * Keratometry corneal astigmatism calculator (ΔK & axis)
+     - Responsive desktop, tablet, and mobile layouts with Dark Mode support
+     ============================================================================= -->
+<div class="modal-overlay investigation-modal-overlay" id="investigationModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="invModalTitle"
+     data-current-user-name="{{ current_entered_by_name|default:doctor_display_name|default:request.user.get_full_name|default:request.user.username|default:'' }}"
+     data-current-username="{{ request.user.username|default:'' }}">
+    <div class="modal-card investigation-modal-card">
+
+        <!-- ── Modal Header ────────────────────────────────────────────────── -->
+        <header class="investigation-modal-header">
+            <div class="inv-header-left">
+                {% comment %} <div class="inv-title-badge">
+                    <i class="fa-solid fa-microscope"></i>
+                </div> {% endcomment %}
+                <div class="inv-header-titles">
+                    <div class="inv-title-row">
+                        <h2 class="inv-modal-title" id="invModalTitle">Investigation</h2>
+                        <span class="inv-count-pill" id="invTotalCountBadge">0 Items</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="inv-header-actions">
+                {% comment %} <span class="inv-current-timestamp" id="invHeaderTimestamp" title="Current session timestamp">
+                    <i class="fa-regular fa-clock"></i> 25 Nov 2026 12:17 PM
+                </span> {% endcomment %}
+                <button type="button" class="inv-modal-close" onclick="closeInvestigationModal()" aria-label="Close Investigation Modal" title="Close (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Modal Body ──────────────────────────────────────────────────── -->
+        <div class="investigation-modal-body">
+
+            <!-- 2. Controls Bar: Investigation Selector + Add Button -->
+            <section class="inv-controls-panel">
+                <div class="inv-controls-row">
+                    <!-- Dropdown: Select Investigation -->
+                    <div class="inv-control-group inv-select-group">
+                        <label for="invTypeSelect" class="inv-control-label">Investigation</label>
+                        <div class="inv-input-icon-wrap">
+                            <i class="fa-solid fa-magnifying-glass inv-input-icon"></i>
+                            <select id="invTypeSelect" class="inv-select inv-select-investigation" aria-label="Select Investigation to add" onchange="handleInvTypeChange()">
+                                <option value="" disabled selected>Select Investigation...</option>
+                                <optgroup label="Standard Ophthalmic Workups (Ocular)">
+                                    <option value="IOP" data-ocular="true">IOP (Intraocular Pressure)</option>
+                                    <option value="DUCT" data-ocular="true">DUCT (Syringing / Lacrimal Patency)</option>
+                                    <option value="Colour Vision" data-ocular="true">Colour Vision (Ishihara / Farnsworth)</option>
+                                    <option value="K Reading" data-ocular="true">K Reading (Keratometry)</option>
+                                    <option value="Pachymetry (CCT)" data-ocular="true">Pachymetry (Central Corneal Thickness)</option>
+                                    <option value="Gonioscopy" data-ocular="true">Gonioscopy (Angle Examination)</option>
+                                    <option value="OCT Macula / RNFL" data-ocular="true">OCT (Macula / RNFL / Optic Disc)</option>
+                                    <option value="Visual Field (HFA)" data-ocular="true">Visual Field / Perimetry (HFA 24-2 / 30-2)</option>
+                                    <option value="A-Scan Biometry" data-ocular="true">A-Scan / Optical Biometry (IOL Master)</option>
+                                    <option value="B-Scan USG" data-ocular="true">B-Scan Ultrasonography</option>
+                                    <option value="Corneal Topography" data-ocular="true">Corneal Topography / Pentacam</option>
+                                    <option value="FFA" data-ocular="true">Fundus Fluorescein Angiography (FFA)</option>
+                                    <option value="Schirmer Test" data-ocular="true">Schirmer's Test / TBUT (Dry Eye Workup)</option>
+                                    <option value="Specular Microscopy" data-ocular="true">Specular Microscopy (Endothelial Count)</option>
+                                </optgroup>
+                                <optgroup label="Systemic &amp; General Investigations (Non-Ocular)">
+                                    <option value="Blood Sugar" data-ocular="false">Blood Sugar (FBS / RBS / HbA1c)</option>
+                                    <option value="Blood Pressure" data-ocular="false">Blood Pressure (Vitals)</option>
+                                    <option value="CBC / ESR" data-ocular="false">Complete Blood Count (CBC) &amp; ESR</option>
+                                    <option value="Serum Creatinine" data-ocular="false">Serum Creatinine &amp; Electrolytes</option>
+                                    <option value="Coagulation (PT / INR)" data-ocular="false">Coagulation Profile (PT / INR / APTT)</option>
+                                    <option value="Serology (HBsAg, Anti-HCV, HIV)" data-ocular="false">Infectious Serology (HBsAg, HCV, HIV)</option>
+                                    <option value="ECG" data-ocular="false">ECG / Cardiac Clearance</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Add Button -->
+                    <div class="inv-control-group inv-btn-group">
+                        <label class="inv-control-label">&nbsp;</label>
+                        <button type="button" id="btnInvAdd" class="btn-inv-add" onclick="addNewInvestigationFromBar()" title="Add selected investigation to the grid">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remarks Input Field -->
+                {% comment %} <div class="inv-remarks-row">
+                    <div class="inv-remarks-wrap">
+                        <i class="fa-regular fa-comment-dots inv-remarks-icon"></i>
+                        <input type="text" id="invGlobalRemarks" class="inv-remarks-input" 
+                               placeholder="Enter general remarks, clinical indications, or laboratory instructions..." 
+                               autocomplete="off">
+                    </div>
+                </div> {% endcomment %}
+            </section>
+
+            <!-- 3. Main Investigation Table / Clinical Grid -->
+            <section class="inv-table-section">
+                <div class="inv-table-container">
+                    <table class="inv-grid-table" id="invGridTable" aria-label="Clinical Investigations Table">
+                        <thead>
+                            <tr>
+                                <th class="col-name" scope="col">Investigation Name</th>
+                                <th class="col-re" scope="col">
+                                    <div class="th-eye-label re-label">
+                                        <i class="fa-regular fa-eye"></i>
+                                        <span>RE Values (OD)</span>
+                                    </div>
+                                </th>
+                                <th class="col-le" scope="col">
+                                    <div class="th-eye-label le-label">
+                                        <i class="fa-regular fa-eye"></i>
+                                        <span>LE Values (OS)</span>
+                                    </div>
+                                </th>
+                                <th class="col-date" scope="col">
+                                    <div class="th-date-header">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <span>Date, Time &amp; By</span>
+                                    </div>
+                                </th>
+                                <th class="col-action" scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invTableBody">
+                            <tr class="inv-empty-state-row" id="invEmptyStateRow">
+                                <td colspan="5" class="inv-empty-state-cell">
+                                    <div class="inv-empty-state-content">
+                                        <i class="fa-solid fa-microscope" aria-hidden="true"></i>
+                                        <span>No investigations added yet. Select an investigation above and click <strong>Add</strong>.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div> <!-- /.investigation-modal-body -->
+
+        <!-- ── Modal Footer ────────────────────────────────────────────────── -->
+        <footer class="investigation-modal-footer">
+            <div class="inv-footer-status">
+                <span class="inv-status-icon"><i class="fa-solid fa-circle-check"></i></span>
+                <span id="invFooterStatusText">No investigations added • Select an investigation above to add</span>
+            </div>
+
+            <div class="inv-footer-actions">
+                {% comment %} <button type="button" class="btn-inv-secondary" onclick="resetInvestigationsToDefault()" title="Restore the 6 standard template investigations">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <span>Reset</span>
+                </button> {% endcomment %}
+                <button type="button" class="btn-inv-clear" onclick="clearAllInvestigationsPrompt()" title="Clear all investigation rows">
+                    <i class="fa-regular fa-trash-can"></i>
+                    <span>Clear All</span>
+                </button>
+                <button type="button" class="btn-inv-cancel" onclick="closeInvestigationModal()">
+                    Cancel
+                </button>
+                <button type="button" class="btn-inv-save-all" id="btnInvSaveAll" onclick="saveAllInvestigations()">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Save Investigations</span>
+                </button>
+            </div>
+        </footer>
+
+    </div> <!-- /.investigation-modal-card -->
+</div> <!-- /.investigation-modal-overlay -->
+
+<!-- Dynamic Toast Notification Container for Investigation Actions -->
+<div id="invToastContainer" class="inv-toast-container" aria-live="polite"></div>
