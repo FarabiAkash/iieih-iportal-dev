@@ -30,6 +30,10 @@
     <link rel="stylesheet" href="{% static 'users_naimul/css/gonioscopy_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/glass_prescription_modal.css' %}">
     <link rel="stylesheet" href="{% static 'users_naimul/css/opinion_refer_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/complaints_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/advice_popups_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/remarks_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'users_naimul/css/investigation_modal.css' %}">
 </head>
 
 <body>
@@ -1248,13 +1252,20 @@
                                 </div>
 
                                 <!-- 9. Investigation -->
-                                <div class="emr-sec-row" id="row_investigation">
-                                    <div class="emr-sec-header" onclick="toggleSection('investigation')">
+                                <div class="emr-sec-row open" id="row_investigation">
+                                    <div class="emr-sec-header" onclick="openInvestigationModal()" title="Click to record Investigation / Workup">
                                         <span class="emr-sec-label">Investigation:</span>
-                                        <span class="emr-sec-icon-action plus"><i class="fa-solid fa-plus"></i></span>
+                                        <span id="investigation_count_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; margin-left:auto; margin-right:8px;"></span>
+                                        <span class="emr-sec-icon-action plus" title="Open Investigation Popup"><i class="fa-solid fa-plus"></i></span>
                                     </div>
-                                    <div class="emr-sec-body" id="body_investigation" style="display: none;">
-                                        <textarea class="form-control emr-inline-input" id="rx_investigation" rows="2" placeholder="OCT, Visual Field, A/B-Scan..."></textarea>
+                                    <div class="emr-sec-body" id="body_investigation">
+                                        <div id="emr_investigation_display" class="emr-complaints-display" onclick="openInvestigationModal()" title="Click to manage Investigation findings">
+                                            <div class="emr-empty-complaints-hint">
+                                                <i class="fa-solid fa-microscope"></i>
+                                                <span>Click to record Tonometry, DUCT, BP, K Reading, Labs...</span>
+                                            </div>
+                                        </div>
+                                        <textarea class="form-control emr-inline-input" id="rx_investigation" rows="2" style="display: none;" placeholder="OCT, Visual Field, A/B-Scan, Tonometry..."></textarea>
                                     </div>
                                 </div>
 
@@ -1420,36 +1431,60 @@
                                         </div>
                                     </div>
 
-                                    <!-- 4. Procedure Advice -->
+                                    <!-- 4. Procedure Advice → Opens dedicated popup -->
                                     <div class="emr-adv-row" id="adv_sec_procedure">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('procedure')">
+                                        <div class="emr-adv-header" onclick="openProcedureAdviceModal()" style="cursor:pointer;" title="Click to open Procedure Advice">
                                             <span class="emr-adv-title">Procedure Advice:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                            <span id="proc_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openProcedureAdviceModal();" title="Open Procedure Advice"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_procedure" style="display: none;">
-                                            <textarea class="form-control emr-adv-textarea" id="rx_procedure_advice" rows="2" placeholder="Laser / minor procedure recommendation..."></textarea>
+                                            <div class="emr-opinion-preview-box" onclick="openProcedureAdviceModal()" style="cursor:pointer;" title="Click to edit in Popup">
+                                                <textarea class="form-control emr-adv-textarea" id="rx_procedure_advice" rows="2" placeholder="Laser / minor procedure recommendation..." readonly style="cursor:pointer;"></textarea>
+                                                <div class="emr-opinion-box-action">
+                                                    <button type="button" class="btn-adv-edit-popup" onclick="event.stopPropagation(); openProcedureAdviceModal();" title="Open Popup">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Popup
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- 5. Advice(পরামর্শ) -->
+                                    <!-- 5. Advice(পরামর্শ) → Opens dedicated popup -->
                                     <div class="emr-adv-row" id="adv_sec_advice">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('advice')">
+                                        <div class="emr-adv-header" onclick="openAdviceModal()" style="cursor:pointer;" title="Click to open Advice">
                                             <span class="emr-adv-title">Advice:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                            <span id="adv_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openAdviceModal();" title="Open Advice"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_advice" style="display: none;">
-                                            <textarea class="form-control emr-adv-textarea" id="rx_advice" rows="2" placeholder="Patient advice and post-care precautions..."></textarea>
+                                            <div class="emr-opinion-preview-box" onclick="openAdviceModal()" style="cursor:pointer;" title="Click to edit in Popup">
+                                                <textarea class="form-control emr-adv-textarea" id="rx_advice" rows="2" placeholder="Patient advice and post-care precautions..." readonly style="cursor:pointer;"></textarea>
+                                                <div class="emr-opinion-box-action">
+                                                    <button type="button" class="btn-adv-edit-popup" onclick="event.stopPropagation(); openAdviceModal();" title="Open Popup">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Popup
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- 6. Plan -->
+                                    <!-- 6. Plan → Opens dedicated popup -->
                                     <div class="emr-adv-row" id="adv_sec_plan">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('plan')">
+                                        <div class="emr-adv-header" onclick="openPlanModal()" style="cursor:pointer;" title="Click to open Plan">
                                             <span class="emr-adv-title">Plan:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                            <span id="plan_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#fefce8; color:#a16207; border:1px solid #fde68a; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openPlanModal();" title="Open Plan"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_plan" style="display: none;">
-                                            <textarea class="form-control emr-adv-textarea" id="rx_plan" rows="2" placeholder="Next clinical plan &amp; steps..."></textarea>
+                                            <div class="emr-opinion-preview-box" onclick="openPlanModal()" style="cursor:pointer;" title="Click to edit in Popup">
+                                                <textarea class="form-control emr-adv-textarea" id="rx_plan" rows="2" placeholder="Next clinical plan &amp; steps..." readonly style="cursor:pointer;"></textarea>
+                                                <div class="emr-opinion-box-action">
+                                                    <button type="button" class="btn-adv-edit-popup" onclick="event.stopPropagation(); openPlanModal();" title="Open Popup">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Popup
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1472,14 +1507,22 @@
                                         </div>
                                     </div>
 
-                                    <!-- 8. Remarks -->
+                                    <!-- 8. Remarks → Opens dedicated popup -->
                                     <div class="emr-adv-row" id="adv_sec_remarks">
-                                        <div class="emr-adv-header" onclick="toggleAdviceSection('remarks')">
+                                        <div class="emr-adv-header" onclick="openRemarksModal()" style="cursor: pointer;" title="Click to open Remarks">
                                             <span class="emr-adv-title">Remarks:</span>
-                                            <button type="button" class="emr-adv-plus"><i class="fa-solid fa-plus"></i></button>
+                                            <span id="remarks_advice_badge" style="display:none; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; margin-left:auto; margin-right:8px;"></span>
+                                            <button type="button" class="emr-adv-plus" onclick="event.stopPropagation(); openRemarksModal();" title="Open Remarks"><i class="fa-solid fa-plus"></i></button>
                                         </div>
                                         <div class="emr-adv-content" id="adv_content_remarks" style="display: none;">
-                                            <textarea class="form-control emr-adv-textarea" id="rx_notes" rows="2" placeholder="Additional doctor remarks or clinical comments..."></textarea>
+                                            <div class="emr-opinion-preview-box" onclick="openRemarksModal()" style="cursor: pointer;" title="Click to edit Remarks in Popup">
+                                                <textarea class="form-control emr-adv-textarea" id="rx_notes" rows="2" placeholder="Additional doctor remarks or clinical comments..." readonly style="cursor: pointer;"></textarea>
+                                                <div class="emr-opinion-box-action">
+                                                    <button type="button" class="btn-adv-edit-popup" onclick="event.stopPropagation(); openRemarksModal();" title="Open Remarks Popup">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Popup
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2313,168 +2356,16 @@
                 </div>
 
                 <!-- Complaints Popup Modal (Hospital EMR Standard) -->
-                <div class="modal-overlay complaints-modal-overlay" id="complaintsModal" style="display: none;">
-                    <div class="modal-card complaints-modal-card">
-                        <!-- Modal Top Header -->
-                        <div class="complaints-modal-header">
-                            <div class="complaints-header-left">
-                                <h2 class="complaints-modal-title">Complaints</h2>
-                                <button type="button" class="btn-complaint-reworkup" onclick="orderComplaintsReworkup()" title="Order Optometry / Clinical Re-workup">
-                                    <i class="fa-solid fa-rotate-left"></i>
-                                    <span>Order Re-workup</span>
-                                </button>
-                            </div>
-                            <button type="button" class="complaints-modal-close" onclick="closeComplaintsModal()" aria-label="Close modal">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
+                {% include 'users_naimul/complaints_modal.html' %}
 
-                        <!-- Modal Body -->
-                        <div class="complaints-modal-body">
-                            <!-- Upper Section: Main Entry Form + Sidebar Metadata -->
-                            <div class="complaints-upper-grid">
-                                <!-- Left Main Section -->
-                                <div class="complaints-main-col">
-                                    <!-- Top Complaints Quick Selection -->
-                                    <div class="complaints-quick-section">
-                                        <div class="complaints-section-label">Top complaints</div>
-                                        <div class="complaints-pill-group">
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Dimness of vision')">Dimness of vision</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Blurring of vision')">Blurring of vision</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Double Vision')">Double Vision</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Eye pain')">Eye pain</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Redness of eye')">Redness of eye</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Watering of eye')">Watering of eye</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Headache')">Headache</button>
-                                            <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
-                                        </div>
-                                    </div>
+                <!-- Procedure Advice / Advice / Plan Popup Modals -->
+                {% include 'users_naimul/advice_popups_modal.html' %}
 
-                                    <!-- Input Controls Row -->
-                                    <div class="complaints-input-row">
-                                        <!-- Search Complaint Input -->
-                                        <div class="complaint-search-wrap">
-                                            <input type="text" id="complaintSearchInput" class="complaint-search-input"
-                                                   placeholder="Search complaint" list="complaintsDatalist"
-                                                   autocomplete="off" oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
-                                            <datalist id="complaintsDatalist">
-                                                <option value="Fever">
-                                                <option value="Chest Pain">
-                                                <option value="Double Vision">
-                                                <option value="Headache">
-                                                <option value="Blurring of vision">
-                                                <option value="Dimness of vision">
-                                                <option value="Eye pain">
-                                                <option value="Redness of eye">
-                                                <option value="Watering of eye">
-                                                <option value="Foreign body sensation">
-                                                <option value="Itching of eyes">
-                                                <option value="Discharge from eyes">
-                                                <option value="Floaters">
-                                                <option value="Photophobia">
-                                                <option value="Swelling of eyelid">
-                                                <option value="Dry eyes">
-                                                <option value="Eye strain / Asthenopia">
-                                            </datalist>
-                                        </div>
+                <!-- Remarks Popup Modal -->
+                {% include 'users_naimul/remarks_modal.html' %}
 
-                                        <!-- Which Eye Segmented Toggle -->
-                                        <div class="complaint-field-group which-eye-group">
-                                            <label class="complaint-field-label">Which Eye</label>
-                                            <div class="complaint-eye-segment" id="complaintEyeSegment">
-                                                <button type="button" class="eye-seg-btn" data-eye="RE" onclick="setComplaintEye('RE')">RE</button>
-                                                <button type="button" class="eye-seg-btn" data-eye="LE" onclick="setComplaintEye('LE')">LE</button>
-                                                <button type="button" class="eye-seg-btn active" data-eye="BE" onclick="setComplaintEye('BE')">BE</button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Duration Input Group -->
-                                        <div class="complaint-field-group duration-group">
-                                            <label class="complaint-field-label">Duration</label>
-                                            <div class="complaint-duration-input-box">
-                                                <input type="number" id="complaintDurationNum" class="duration-num-input"
-                                                       placeholder="Duration" min="1" max="365"
-                                                       oninput="onComplaintInputChange()" onkeydown="handleComplaintInputKey(event)">
-                                                <select id="complaintDurationUnit" class="duration-unit-select" onchange="onComplaintInputChange()">
-                                                    <option value="Days" selected>Days</option>
-                                                    <option value="Weeks">Weeks</option>
-                                                    <option value="Months">Months</option>
-                                                    <option value="Years">Years</option>
-                                                </select>
-                                                <span class="duration-calendar-icon"><i class="fa-regular fa-calendar"></i></span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Add Button -->
-                                        <div class="complaint-add-wrap">
-                                            <button type="button" id="btnAddComplaint" class="btn-complaint-add" onclick="addCurrentComplaint()" disabled>
-                                                + Add
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Right Sidebar Panel -->
-                                <aside class="complaints-sidebar-panel">
-                                    <!-- Purpose of visit -->
-                                    <div class="complaint-sidebar-control-wrap">
-                                        <select id="complaintPurposeOfVisit" class="complaint-sidebar-select">
-                                            <option value="" disabled selected>Purpose of visit</option>
-                                            <option value="Consultation">Consultation</option>
-                                            <option value="Routine Checkup">Routine Checkup</option>
-                                            <option value="New Consultation">New Consultation</option>
-                                            <option value="Follow-up">Follow-up</option>
-                                            <option value="Refraction / Spectacles">Refraction / Spectacles</option>
-                                            <option value="Pre-operative Evaluation">Pre-operative Evaluation</option>
-                                            <option value="Post-operative Review">Post-operative Review</option>
-                                            <option value="Emergency">Emergency</option>
-                                            <option value="Second Opinion">Second Opinion</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Remarks -->
-                                    <div class="complaint-sidebar-control-wrap">
-                                        <input type="text" id="complaintRemarks" class="complaint-sidebar-input" placeholder="Remarks">
-                                    </div>
-
-                                    <!-- Informant Floating Field -->
-                                    <div class="complaint-sidebar-control-wrap floating-field-wrap">
-                                        <label class="complaint-floating-label">Informant</label>
-                                        <select id="complaintInformant" class="complaint-sidebar-select informant-select" onchange="onInformantChange()">
-                                            <option value="Patient" selected>Patient</option>
-                                            <option value="Attendant">Attendant</option>
-                                            <option value="Parent / Mother">Parent / Mother</option>
-                                            <option value="Parent / Father">Parent / Father</option>
-                                            <option value="Spouse">Spouse</option>
-                                            <option value="Son / Daughter">Son / Daughter</option>
-                                            <option value="Guardian">Guardian</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Specify Informant -->
-                                    <div class="complaint-sidebar-control-wrap">
-                                        <input type="text" id="complaintSpecifyInformant" class="complaint-sidebar-input" placeholder="Specify Informant">
-                                    </div>
-                                </aside>
-                            </div>
-
-                            <!-- Lower Section: Complaints Summary Box -->
-                            <div class="complaints-summary-container">
-                                <div class="complaints-summary-header-label">Complaints summary</div>
-                                <div id="complaintsSummaryBody" class="complaints-summary-content">
-                                    <div class="complaints-empty-msg">No complaints added yet.</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal Bottom Actions -->
-                        <div class="complaints-modal-footer">
-                            <button type="button" class="btn-complaints-cancel" onclick="closeComplaintsModal()">Cancel</button>
-                            <button type="button" class="btn-complaints-save" onclick="saveComplaintsModal()">Save Complaints</button>
-                        </div>
-                    </div>
-                </div>
+                <!-- Investigation Popup Modal -->
+                {% include 'users_naimul/investigation_modal.html' %}
 
                 <!-- =========================================================== -->
                 <!-- VISION POPUP MODAL                                            -->
@@ -3406,10 +3297,10 @@
                                     <i class="fa-solid fa-rotate-left"></i>
                                     <span>Order Re-workup</span>
                                 </button>
-                                <span class="as-header-meta">
+                                {% comment %} <span class="as-header-meta">
                                     <span id="asHeaderUser">{{ profile.get_surgeon_display_name|default:"Beauty Akter" }}</span>,
                                     <span id="asHeaderTime">Nov 18, 2026 10:33:56 AM</span>
-                                </span>
+                                </span> {% endcomment %}
                             </div>
                             <button type="button" class="as-modal-close" onclick="closeAntSegModal()" aria-label="Close modal">
                                 <i class="fa-solid fa-xmark"></i>
@@ -3709,10 +3600,10 @@
                         <div class="fundus-modal-header">
                             <div class="fundus-header-left">
                                 <h2 class="fundus-modal-title" id="fundusModalTitle">Fundus</h2>
-                                <span class="fundus-header-meta">
+                                {% comment %} <span class="fundus-header-meta">
                                     <span id="fundusHeaderUser">{{ profile.get_surgeon_display_name|default:"Beauty Akter" }}</span>
                                     <span id="fundusHeaderTime">Nov 18, 2026 11:52:35 AM</span>
-                                </span>
+                                </span> {% endcomment %}
                             </div>
                             <button type="button" class="fundus-modal-close" onclick="closeFundusModal()" aria-label="Close modal">
                                 <i class="fa-solid fa-xmark"></i>
@@ -3886,13 +3777,13 @@
                                     <i class="fa-solid fa-compass"></i>
                                     <span>Speciality Workup &bull; Gonioscopy (Angle Exam)</span>
                                 </h2>
-                                <span class="gonio-header-meta">
+                                {% comment %} <span class="gonio-header-meta">
                                     <span id="gonioHeaderUser">{{ profile.get_surgeon_display_name|default:"Attending Specialist" }}</span>
                                     <span style="opacity: 0.5;">&bull;</span>
                                     <span id="gonioHeaderTime">Nov 22, 2026 02:47:00 PM</span>
-                                </span>
+                                </span> {% endcomment %}
                             </div>
-                            <div class="gonio-header-presets">
+                            {% comment %} <div class="gonio-header-presets">
                                 <button type="button" class="gonio-preset-btn preset-normal" onclick="setGonioscopyPreset('normal_be')" title="Set Shaffer Grade IV Open Angle in both eyes">
                                     <i class="fa-solid fa-circle-check"></i> Normal BE (Gr IV)
                                 </button>
@@ -3908,7 +3799,7 @@
                                 <button type="button" class="gonio-modal-close" onclick="closeGonioscopyModal()" aria-label="Close Gonioscopy Modal">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
-                            </div>
+                            </div> {% endcomment %}
                         </div>
 
                         <!-- Modal Body -->
@@ -3964,7 +3855,7 @@
                                     <div class="gonio-quadrants-wrap">
                                         <div class="gonio-quad-title">
                                             <span><i class="fa-solid fa-crosshairs" style="color:#0284c7;"></i> Shaffer Angle Grading (4 Quadrants)</span>
-                                            <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">IV=Open, 0=Closed</span>
+                                            {% comment %} <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">IV=Open, 0=Closed</span> {% endcomment %}
                                         </div>
                                         <div class="gonio-cross-diagram">
                                             <!-- Superior -->
@@ -4417,7 +4308,7 @@
                                             <div class="diag-eye-pill-group" id="diagApplyEyeGroup">
                                                 <button type="button" class="diag-eye-pill-btn" data-eye="RE" onclick="setApplyAllEye('RE')">RE</button>
                                                 <button type="button" class="diag-eye-pill-btn" data-eye="LE" onclick="setApplyAllEye('LE')">LE</button>
-                                                <button type="button" class="diag-eye-pill-btn active" data-eye="BE" onclick="setApplyAllEye('BE')">BE</button>
+                                                <button type="button" class="diag-eye-pill-btn" data-eye="BE" onclick="setApplyAllEye('BE')">BE</button>
                                             </div>
                                         </div>
                                     </div>
@@ -6400,6 +6291,10 @@
                 <script src="{% static 'users_naimul/js/gonioscopy_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/glass_prescription_modal.js' %}"></script>
                 <script src="{% static 'users_naimul/js/opinion_refer_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/complaints_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/advice_popups_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/remarks_modal.js' %}"></script>
+                <script src="{% static 'users_naimul/js/investigation_modal.js' %}"></script>
 
             </div> <!-- /.clinical-main-content -->
         </div> <!-- /.profile-grid -->
