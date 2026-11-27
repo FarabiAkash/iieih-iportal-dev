@@ -1,0 +1,358 @@
+<!-- =============================================================================
+     PROCEDURE ADVICE / ADVICE / PLAN POPUP MODALS
+     Separate Template: advice_popups_modal.html
+     Features:
+     - Three independent popup modals: Procedure Advice, Advice, Plan
+     - Search bar at the top of each popup
+     - Fixed set of favorite quick-pick options
+     - Summary side panel showing selected/added items
+     - Clean, minimal, responsive design consistent with hospital EMR standard
+     ============================================================================= -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL 1 — PROCEDURE ADVICE
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="adv-modal-overlay" id="procedureAdviceModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="procedureAdviceModalTitle">
+    <div class="adv-modal-card">
+
+        <!-- Header -->
+        <div class="adv-modal-header">
+            <div class="adv-header-left">
+                <div class="adv-title-badge" style="background:#f0fdf4; color:#15803d;">
+                    <i class="fa-solid fa-syringe"></i>
+                </div>
+                <h2 class="adv-modal-title" id="procedureAdviceModalTitle">Procedure Advice</h2>
+            </div>
+            <button type="button" class="adv-modal-close" onclick="closeProcedureAdviceModal()" aria-label="Close" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body: 2-column split -->
+        <div class="adv-modal-body">
+
+            <!-- Left: Search + Favorites + Custom Entry -->
+            <div class="adv-main-panel">
+
+                <!-- Search Bar -->
+                <div class="adv-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass adv-search-icon"></i>
+                    <input type="text" id="procAdvSearchInput" class="adv-search-input"
+                           placeholder="Search procedure advice…" autocomplete="off"
+                           oninput="onAdvSearchInput('procedure')"
+                           onkeydown="onAdvSearchKeydown(event,'procedure')"
+                           onfocus="openAdvDropdown('procedure')"
+                           aria-autocomplete="list" aria-controls="procAdvDropdown">
+                    <button type="button" class="adv-search-clear" onclick="clearAdvSearch('procedure')" id="procAdvSearchClear" style="display:none;" title="Clear">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <!-- Autocomplete Dropdown -->
+                    <div id="procAdvDropdown" class="adv-dropdown" style="display:none;" role="listbox"></div>
+                </div>
+
+                <!-- Favorites -->
+                <div class="adv-favorites-section">
+                    <div class="adv-fav-header">
+                        <span class="adv-fav-label"><i class="fa-solid fa-star"></i> Favorites</span>
+                    </div>
+                    <div class="adv-pill-group" id="procAdvFavPills">
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','YAG Capsulotomy')">YAG Capsulotomy</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','YAG Iridotomy')">YAG Iridotomy</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','SLT (Selective Laser Trabeculoplasty)')">SLT</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Laser Peripheral Iridoplasty')">Laser Iridoplasty</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Fundus Fluorescein Angiography (FFA)')">FFA</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','OCT Macula')">OCT Macula</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','OCT Optic Disc')">OCT Optic Disc</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Corneal Topography (Pentacam)')">Corneal Topography</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Intravitreal Anti-VEGF Injection')">Anti-VEGF Injection</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Suture Removal')">Suture Removal</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Lid Hygiene Procedure')">Lid Hygiene</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('procedure','Punctal Plug Insertion')">Punctal Plug</button>
+                    </div>
+                </div>
+
+                <!-- Custom entry -->
+                <div class="adv-custom-entry">
+                    <label class="adv-custom-label">Or type a custom procedure advice:</label>
+                    <div class="adv-custom-input-row">
+                        <input type="text" id="procAdvCustomInput" class="adv-custom-input"
+                               placeholder="Enter custom procedure advice…"
+                               onkeydown="if(event.key==='Enter'){addAdvCustomItem('procedure');}">
+                        <button type="button" class="adv-custom-add-btn" onclick="addAdvCustomItem('procedure')">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /.adv-main-panel -->
+
+            <!-- Right: Summary Panel -->
+            <aside class="adv-side-panel">
+                <div class="adv-summary-header">
+                    <div class="adv-summary-title-wrap">
+                        <h3 class="adv-summary-title">Summary</h3>
+                        <span id="procAdvCountBadge" class="adv-count-badge">0</span>
+                    </div>
+                    <button type="button" id="procAdvClearAll" class="adv-clear-all-btn"
+                            onclick="clearAllAdvItems('procedure')" style="display:none;" title="Remove all">
+                        Clear all
+                    </button>
+                </div>
+                <div id="procAdvSummaryBody" class="adv-summary-body" role="region" aria-live="polite">
+                    <div class="adv-empty-state">
+                        <div class="adv-empty-icon"><i class="fa-regular fa-clipboard"></i></div>
+                        <p class="adv-empty-title">No items added</p>
+                        <p class="adv-empty-desc">Select a favorite or search above to add procedure advice.</p>
+                    </div>
+                </div>
+            </aside>
+
+        </div><!-- /.adv-modal-body -->
+
+        <!-- Footer -->
+        <div class="adv-modal-footer">
+            <div class="adv-footer-info">
+                <span id="procAdvFooterCount" class="adv-footer-count">0 items recorded</span>
+            </div>
+            <div class="adv-footer-actions">
+                <button type="button" class="adv-btn-cancel" onclick="closeProcedureAdviceModal()">Cancel</button>
+                <button type="button" class="adv-btn-save" onclick="saveProcedureAdviceModal()">
+                    <i class="fa-solid fa-check"></i> <span>Save Procedure Advice</span>
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /.adv-modal-card -->
+</div><!-- /#procedureAdviceModal -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL 2 — ADVICE (পরামর্শ)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="adv-modal-overlay" id="adviceModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="adviceModalTitle">
+    <div class="adv-modal-card">
+
+        <!-- Header -->
+        <div class="adv-modal-header">
+            <div class="adv-header-left">
+                <div class="adv-title-badge" style="background:#eff6ff; color:#2563eb;">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <h2 class="adv-modal-title" id="adviceModalTitle">Advice</h2>
+            </div>
+            <button type="button" class="adv-modal-close" onclick="closeAdviceModal()" aria-label="Close" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="adv-modal-body">
+
+            <!-- Left -->
+            <div class="adv-main-panel">
+
+                <!-- Search Bar -->
+                <div class="adv-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass adv-search-icon"></i>
+                    <input type="text" id="adviceSearchInput" class="adv-search-input"
+                           placeholder="Search advice…" autocomplete="off"
+                           oninput="onAdvSearchInput('advice')"
+                           onkeydown="onAdvSearchKeydown(event,'advice')"
+                           onfocus="openAdvDropdown('advice')"
+                           aria-autocomplete="list" aria-controls="adviceDropdown">
+                    <button type="button" class="adv-search-clear" onclick="clearAdvSearch('advice')" id="adviceSearchClear" style="display:none;" title="Clear">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div id="adviceDropdown" class="adv-dropdown" style="display:none;" role="listbox"></div>
+                </div>
+
+                <!-- Favorites -->
+                <div class="adv-favorites-section">
+                    <div class="adv-fav-header">
+                        <span class="adv-fav-label"><i class="fa-solid fa-star"></i> Favorites</span>
+                    </div>
+                    <div class="adv-pill-group" id="adviceFavPills">
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Avoid rubbing the eye')">Avoid rubbing eye</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Wear protective glasses outdoors')">Protective glasses</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','No swimming for 4 weeks')">No swimming (4 wks)</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Maintain good hand hygiene before instilling eye drops')">Hand hygiene</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Avoid dusty or smoky environments')">Avoid dust/smoke</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Control blood sugar and blood pressure')">Control DM/HTN</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Use artificial tears for dry eye relief')">Artificial tears</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Take medications as prescribed')">Take medicines as prescribed</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Avoid heavy lifting for 2 weeks post-surgery')">No heavy lifting (2 wks)</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Sleep with head slightly elevated')">Head elevated sleep</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Avoid driving until vision stabilizes')">No driving yet</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('advice','Return immediately if sudden vision loss or severe pain')">Return for pain/vision loss</button>
+                    </div>
+                </div>
+
+                <!-- Custom entry -->
+                <div class="adv-custom-entry">
+                    <label class="adv-custom-label">Or type custom advice:</label>
+                    <div class="adv-custom-input-row">
+                        <input type="text" id="adviceCustomInput" class="adv-custom-input"
+                               placeholder="Enter custom advice…"
+                               onkeydown="if(event.key==='Enter'){addAdvCustomItem('advice');}">
+                        <button type="button" class="adv-custom-add-btn" onclick="addAdvCustomItem('advice')">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Summary -->
+            <aside class="adv-side-panel">
+                <div class="adv-summary-header">
+                    <div class="adv-summary-title-wrap">
+                        <h3 class="adv-summary-title">Summary</h3>
+                        <span id="adviceCountBadge" class="adv-count-badge">0</span>
+                    </div>
+                    <button type="button" id="adviceClearAll" class="adv-clear-all-btn"
+                            onclick="clearAllAdvItems('advice')" style="display:none;" title="Remove all">
+                        Clear all
+                    </button>
+                </div>
+                <div id="adviceSummaryBody" class="adv-summary-body" role="region" aria-live="polite">
+                    <div class="adv-empty-state">
+                        <div class="adv-empty-icon"><i class="fa-regular fa-clipboard"></i></div>
+                        <p class="adv-empty-title">No items added</p>
+                        <p class="adv-empty-desc">Select a favorite or search above to add advice.</p>
+                    </div>
+                </div>
+            </aside>
+
+        </div><!-- /.adv-modal-body -->
+
+        <!-- Footer -->
+        <div class="adv-modal-footer">
+            <div class="adv-footer-info">
+                <span id="adviceFooterCount" class="adv-footer-count">0 items recorded</span>
+            </div>
+            <div class="adv-footer-actions">
+                <button type="button" class="adv-btn-cancel" onclick="closeAdviceModal()">Cancel</button>
+                <button type="button" class="adv-btn-save" onclick="saveAdviceModal()">
+                    <i class="fa-solid fa-check"></i> <span>Save Advice</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div><!-- /#adviceModal -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL 3 — PLAN
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="adv-modal-overlay" id="planModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
+    <div class="adv-modal-card">
+
+        <!-- Header -->
+        <div class="adv-modal-header">
+            <div class="adv-header-left">
+                <div class="adv-title-badge" style="background:#fefce8; color:#a16207;">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <h2 class="adv-modal-title" id="planModalTitle">Plan</h2>
+            </div>
+            <button type="button" class="adv-modal-close" onclick="closePlanModal()" aria-label="Close" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="adv-modal-body">
+
+            <!-- Left -->
+            <div class="adv-main-panel">
+
+                <!-- Search Bar -->
+                <div class="adv-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass adv-search-icon"></i>
+                    <input type="text" id="planSearchInput" class="adv-search-input"
+                           placeholder="Search plan items…" autocomplete="off"
+                           oninput="onAdvSearchInput('plan')"
+                           onkeydown="onAdvSearchKeydown(event,'plan')"
+                           onfocus="openAdvDropdown('plan')"
+                           aria-autocomplete="list" aria-controls="planDropdown">
+                    <button type="button" class="adv-search-clear" onclick="clearAdvSearch('plan')" id="planSearchClear" style="display:none;" title="Clear">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div id="planDropdown" class="adv-dropdown" style="display:none;" role="listbox"></div>
+                </div>
+
+                <!-- Favorites -->
+                <div class="adv-favorites-section">
+                    <div class="adv-fav-header">
+                        <span class="adv-fav-label"><i class="fa-solid fa-star"></i> Favorites</span>
+                    </div>
+                    <div class="adv-pill-group" id="planFavPills">
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Continue current medications')">Continue medications</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Scheduled for cataract surgery')">Cataract surgery scheduled</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Admit for surgical work-up')">Admit for work-up</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Pre-operative evaluation')">Pre-op evaluation</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Repeat visual field test in 3 months')">Visual field (3 mo)</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','IOP monitoring – 1 month')">IOP monitoring (1 mo)</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Refer to glaucoma clinic')">Refer glaucoma clinic</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Refer to retina specialist')">Refer retina specialist</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','HbA1c & BP check before surgery')">HbA1c & BP check</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Biometry (IOL Master) pending')">Biometry pending</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Corneal topography planned')">Corneal topography</button>
+                        <button type="button" class="adv-fav-pill" onclick="selectAdvFav('plan','Routine follow-up only')">Routine follow-up</button>
+                    </div>
+                </div>
+
+                <!-- Custom entry -->
+                <div class="adv-custom-entry">
+                    <label class="adv-custom-label">Or type a custom plan:</label>
+                    <div class="adv-custom-input-row">
+                        <input type="text" id="planCustomInput" class="adv-custom-input"
+                               placeholder="Enter custom plan…"
+                               onkeydown="if(event.key==='Enter'){addAdvCustomItem('plan');}">
+                        <button type="button" class="adv-custom-add-btn" onclick="addAdvCustomItem('plan')">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Summary -->
+            <aside class="adv-side-panel">
+                <div class="adv-summary-header">
+                    <div class="adv-summary-title-wrap">
+                        <h3 class="adv-summary-title">Summary</h3>
+                        <span id="planCountBadge" class="adv-count-badge">0</span>
+                    </div>
+                    <button type="button" id="planClearAll" class="adv-clear-all-btn"
+                            onclick="clearAllAdvItems('plan')" style="display:none;" title="Remove all">
+                        Clear all
+                    </button>
+                </div>
+                <div id="planSummaryBody" class="adv-summary-body" role="region" aria-live="polite">
+                    <div class="adv-empty-state">
+                        <div class="adv-empty-icon"><i class="fa-regular fa-clipboard"></i></div>
+                        <p class="adv-empty-title">No items added</p>
+                        <p class="adv-empty-desc">Select a favorite or search above to add a plan item.</p>
+                    </div>
+                </div>
+            </aside>
+
+        </div><!-- /.adv-modal-body -->
+
+        <!-- Footer -->
+        <div class="adv-modal-footer">
+            <div class="adv-footer-info">
+                <span id="planFooterCount" class="adv-footer-count">0 items recorded</span>
+            </div>
+            <div class="adv-footer-actions">
+                <button type="button" class="adv-btn-cancel" onclick="closePlanModal()">Cancel</button>
+                <button type="button" class="adv-btn-save" onclick="savePlanModal()">
+                    <i class="fa-solid fa-check"></i> <span>Save Plan</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div><!-- /#planModal -->

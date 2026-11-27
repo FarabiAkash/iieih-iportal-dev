@@ -1,0 +1,165 @@
+<!-- =============================================================================
+     REMARKS POPUP MODAL (Hospital EMR Standard)
+     Separate Template: remarks_modal.html
+     Features:
+     - Minimal, modern, clinical design matching project-wide EMR aesthetic
+     - Categorized remarks with quick-select tags
+     - Character counter, timestamp display
+     - Full dark mode support & responsive layout
+     ============================================================================= -->
+<div class="modal-overlay remarks-modal-overlay" id="remarksModal" style="display: none;">
+    <div class="modal-card remarks-modal-card" role="dialog" aria-modal="true" aria-labelledby="remarksModalTitle">
+
+        <!-- Modal Header -->
+        <div class="remarks-modal-header">
+            <div class="remarks-header-left">
+                <div class="remarks-title-badge">
+                    <i class="fa-solid fa-comment-medical"></i>
+                </div>
+                <div class="remarks-header-titles">
+                    <h2 class="remarks-modal-title" id="remarksModalTitle">Remarks</h2>
+                </div>
+            </div>
+            <button type="button" class="remarks-modal-close" onclick="closeRemarksModal()" aria-label="Close modal" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="remarks-modal-body">
+
+            <!-- ── Left Column: Input & Quick Tags ── -->
+            <div class="remarks-main-panel">
+
+                <!-- Quick Tag Section -->
+                <div class="remarks-quick-section">
+                    <div class="remarks-quick-header">
+                        <span class="remarks-quick-label">
+                            <i class="fa-solid fa-bolt"></i> Quick Remarks
+                        </span>
+                    </div>
+                    <div class="remarks-pill-group" id="remarksQuickPills">
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Reviewed')">Reviewed</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Follow-up required')">Follow-up required</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Patient counselled')">Patient counselled</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Referred for investigation')">Referred for investigation</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Improving')">Improving</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Stable')">Stable</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Requires urgent attention')">Requires urgent attention</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Post-operative review')">Post-operative review</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Non-compliant with medication')">Non-compliant with medication</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Advised lifestyle changes')">Advised lifestyle changes</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Second opinion sought')">Second opinion sought</button>
+                        <button type="button" class="remarks-quick-pill" onclick="appendRemarkTag('Informed consent obtained')">Informed consent obtained</button>
+                    </div>
+                </div>
+
+                <!-- Remarks Textarea -->
+                <div class="remarks-textarea-wrap">
+                    <div class="remarks-textarea-header">
+                        <label for="remarksTextarea" class="remarks-textarea-label">
+                            <i class="fa-regular fa-pen-to-square"></i> Clinical Remarks
+                        </label>
+                        <div class="remarks-char-counter">
+                            <span id="remarksCharCount">0</span> / <span>1000</span>
+                        </div>
+                    </div>
+                    <textarea
+                        id="remarksTextarea"
+                        class="remarks-textarea"
+                        placeholder="Enter clinical remarks, observations, or notes here..."
+                        maxlength="1000"
+                        rows="6"
+                        oninput="onRemarksInput()"
+                        aria-label="Clinical Remarks"
+                        aria-describedby="remarksCharCount"></textarea>
+                    <div class="remarks-textarea-footer">
+                        <button type="button" class="btn-remarks-clear-text" id="btnRemarksClearText"
+                            onclick="clearRemarksText()" style="display:none;" title="Clear remarks">
+                            <i class="fa-solid fa-eraser"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Selector -->
+                {% comment %} <div class="remarks-category-row">
+                    <div class="remarks-category-field">
+                        <label class="remarks-field-label">Category</label>
+                        <select id="remarksCategorySelect" class="remarks-select">
+                            <option value="">General</option>
+                            <option value="Clinical">Clinical</option>
+                            <option value="Surgical">Surgical</option>
+                            <option value="Administrative">Administrative</option>
+                            <option value="Nursing">Nursing</option>
+                            <option value="Pharmacy">Pharmacy</option>
+                            <option value="Investigation">Investigation</option>
+                            <option value="Follow-up">Follow-up</option>
+                        </select>
+                    </div>
+                    <div class="remarks-category-field">
+                        <label class="remarks-field-label">Priority</label>
+                        <select id="remarksPrioritySelect" class="remarks-select">
+                            <option value="Normal">Normal</option>
+                            <option value="Important">Important</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="remarks-category-field">
+                        <label class="remarks-field-label">Visibility</label>
+                        <select id="remarksVisibilitySelect" class="remarks-select">
+                            <option value="All Staff">All Staff</option>
+                            <option value="Doctor Only">Doctor Only</option>
+                            <option value="Nurse Only">Nurse Only</option>
+                        </select>
+                    </div>
+                </div> {% endcomment %}
+
+                {% comment %} <div class="remarks-add-action-row" style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <button type="button" class="btn-remarks-add-record" onclick="addRemarkRecord()" title="Add to saved remarks list">
+                        <i class="fa-solid fa-plus"></i> Add to List
+                    </button>
+                </div> {% endcomment %}
+
+            </div> <!-- /.remarks-main-panel -->
+
+            <!-- ── Right Column: Remarks History / Summary ── -->
+            <aside class="remarks-side-panel">
+                <div class="remarks-side-panel-header">
+                    <div class="remarks-side-title-wrap">
+                        <h3 class="remarks-side-title">Saved Remarks</h3>
+                        <span id="remarksCountBadge" class="remarks-count-badge">0</span>
+                    </div>
+                    <button type="button" id="btnRemarksClearAll" class="btn-remarks-clear-all"
+                        onclick="clearAllRemarks()" style="display:none;" title="Remove all remarks">
+                        Clear all
+                    </button>
+                </div>
+
+                <!-- Remarks History Body -->
+                <div id="remarksSavedBody" class="remarks-saved-body" role="region" aria-live="polite">
+                    <div class="remarks-empty-state" id="remarksEmptyState">
+                        <div class="remarks-empty-icon"><i class="fa-regular fa-comment-dots"></i></div>
+                        <p class="remarks-empty-title">No remarks yet</p>
+                        <p class="remarks-empty-desc">Write a remark on the left and click Add to List or Save Remarks to record it here.</p>
+                    </div>
+                </div>
+            </aside> <!-- /.remarks-side-panel -->
+
+        </div> <!-- /.remarks-modal-body -->
+
+        <!-- Modal Footer -->
+        <div class="remarks-modal-footer">
+            <div class="remarks-footer-info">
+                <span id="remarksFooterStatus" class="remarks-footer-status-text"></span>
+            </div>
+            <div class="remarks-footer-actions">
+                <button type="button" class="btn-remarks-cancel" onclick="closeRemarksModal()">Cancel</button>
+                <button type="button" class="btn-remarks-save" id="btnRemarksSave" onclick="saveRemarksModal()">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Save Remarks</span>
+                </button>
+            </div>
+        </div>
+
+    </div> <!-- /.remarks-modal-card -->
+</div> <!-- /.remarks-modal-overlay -->
