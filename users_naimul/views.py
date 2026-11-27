@@ -21,6 +21,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from datetime import date
+from django.utils import timezone
 from django.views.decorators.http import require_GET
 from .models import (
     NaimulProfile,
@@ -47,6 +48,239 @@ def is_authorized_admin(user, profile=None):
     if profile is None:
         profile = getattr(user, 'naimul_profile', None)
     return profile is not None and profile.role == 'Admin'
+
+
+_INVESTIGATION_AUDIT_KEYS = {
+    'saved_date',
+    'saved_time',
+    'saved_datetime',
+    'saved_at',
+    'entered_by',
+    'entered_by_username',
+    'entered_by_user_id',
+}
+
+
+def get_logged_in_entered_by_display(user, profile=None):
+    """
+    Returns the authoritative display name (or username fallback) for the
+    currently authenticated user. Never trusts client-supplied values.
+    """
+    if not user or not user.is_authenticated:
+        return ''
+    if profile is None:
+        profile = getattr(user, 'naimul_profile', None)
+    if profile is not None:
+        if profile.surgeon_display_name and profile.surgeon_display_name.strip():
+            return profile.get_surgeon_display_name()
+        if user.get_full_name().strip():
+            return profile.get_surgeon_display_name()
+    full_name = user.get_full_name().strip()
+    if full_name:
+        return full_name
+    return user.username
+
+
+def _canonical_investigation_key(item):
+    raw_key = str(item.get('key') or item.get('name') or '').strip().lower()
+    return re.sub(r'[^a-z0-9]+', '_', raw_key).strip('_')
+
+
+def _clean_investigation_data(raw_data):
+    if not isinstance(raw_data, dict):
+        return {}
+    cleaned = {}
+    for k, v in raw_data.items():
+        ks = str(k).strip()
+        if not ks or ks in _INVESTIGATION_AUDIT_KEYS:
+            continue
+        cleaned[ks] = '' if v is None else str(v).strip()
+    return cleaned
+
+
+def _investigation_clinical_signature(item):
+    name = str(item.get('name') or '').strip()
+    key = _canonical_investigation_key(item)
+    is_non_ocular = bool(item.get('is_non_ocular', False))
+    eye = str(item.get('eye') or ('NA' if is_non_ocular else 'BE')).strip().upper()
+    hospital_type = str(item.get('hospital_type') or 'IIEIH').strip()
+    if hospital_type not in ('IIEIH', 'Others'):
+        hospital_type = 'IIEIH'
+    hospital_name = (
+        str(item.get('hospital_name') or '').strip()
+        if hospital_type == 'Others'
+        else 'IIEIH'
+    )
+    data = _clean_investigation_data(item.get('data'))
+    return json.dumps(
+        {
+            'key': key,
+            'name': name.lower(),
+            'is_non_ocular': is_non_ocular,
+            'eye': eye,
+            'hospital_type': hospital_type,
+            'hospital_name': hospital_name,
+            'data': {k: data[k] for k in sorted(data.keys())},
+        },
+        sort_keys=True,
+    )
+
+
+def _format_server_investigation_stamp(now_dt=None):
+    if now_dt is None:
+        now_dt = timezone.localtime(timezone.now())
+    saved_date = f"{now_dt.day} {now_dt.strftime('%b %Y')}"
+    saved_time = f"{int(now_dt.strftime('%I'))}:{now_dt.strftime('%M %p')}"
+    return {
+        'saved_date': saved_date,
+        'saved_time': saved_time,
+        'saved_datetime': f"{saved_date} {saved_time}",
+        'saved_at': now_dt.isoformat(),
+    }
+
+
+def normalize_and_stamp_investigations(raw_items, user, profile=None, existing_items=None):
+    """
+    Validates submitted investigation entries, strips any client-supplied
+    Date/Time/Entered By values, preserves authoritative DB audit fields for
+    unchanged existing records, and generates server-side Date, Time, and
+    Entered By metadata for new or modified records.
+    """
+    if isinstance(raw_items, str):
+        try:
+            raw_items = json.loads(raw_items)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+    if not isinstance(raw_items, list):
+        return []
+
+    existing_by_key = {}
+    for prev in (existing_items or []):
+        if isinstance(prev, dict):
+            prev_key = _canonical_investigation_key(prev)
+            if prev_key:
+                existing_by_key[prev_key] = prev
+
+    now_stamp = _format_server_investigation_stamp()
+    entered_by_display = get_logged_in_entered_by_display(user, profile)
+    entered_by_username = user.username if user and user.is_authenticated else ''
+    entered_by_user_id = user.id if user and user.is_authenticated else None
+
+    stamped = []
+    for raw in raw_items:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get('name') or '').strip()
+        if not name:
+            continue
+        key = _canonical_investigation_key(raw)
+        is_fixed = bool(raw.get('is_fixed', False))
+        is_non_ocular = bool(raw.get('is_non_ocular', False))
+        eye = str(raw.get('eye') or ('NA' if is_non_ocular else 'BE')).strip().upper()
+        hospital_type = str(raw.get('hospital_type') or 'IIEIH').strip()
+        if hospital_type not in ('IIEIH', 'Others'):
+            hospital_type = 'IIEIH'
+        hospital_name = (
+            str(raw.get('hospital_name') or '').strip()
+            if hospital_type == 'Others'
+            else 'IIEIH'
+        )
+        data = _clean_investigation_data(raw.get('data'))
+        summary = str(raw.get('summary') or '').strip()
+
+        has_clinical_value = bool(summary) or any(bool(v) for v in data.values())
+        if not has_clinical_value:
+            continue
+
+        clean_item = {
+            'key': key,
+            'name': name,
+            'is_fixed': is_fixed,
+            'is_non_ocular': is_non_ocular,
+            'eye': eye,
+            'hospital_type': hospital_type,
+            'hospital_name': hospital_name,
+            'data': data,
+            'summary': summary,
+        }
+
+        prev = existing_by_key.get(key)
+        if (
+            prev
+            and _investigation_clinical_signature(prev) == _investigation_clinical_signature(clean_item)
+            and prev.get('saved_date')
+            and prev.get('saved_time')
+            and prev.get('entered_by')
+        ):
+            clean_item['saved_date'] = prev['saved_date']
+            clean_item['saved_time'] = prev['saved_time']
+            clean_item['saved_datetime'] = prev.get('saved_datetime') or f"{prev['saved_date']} {prev['saved_time']}"
+            clean_item['saved_at'] = prev.get('saved_at', '')
+            clean_item['entered_by'] = prev['entered_by']
+            clean_item['entered_by_username'] = prev.get('entered_by_username', '')
+            clean_item['entered_by_user_id'] = prev.get('entered_by_user_id')
+        else:
+            clean_item['saved_date'] = now_stamp['saved_date']
+            clean_item['saved_time'] = now_stamp['saved_time']
+            clean_item['saved_datetime'] = now_stamp['saved_datetime']
+            clean_item['saved_at'] = now_stamp['saved_at']
+            clean_item['entered_by'] = entered_by_display
+            clean_item['entered_by_username'] = entered_by_username
+            clean_item['entered_by_user_id'] = entered_by_user_id
+
+        stamped.append(clean_item)
+
+    return stamped
+
+
+def _merge_stamped_investigations(existing_items, incoming_stamped):
+    """
+    Merges newly saved/updated single-row investigations into existing
+    prescription investigations while preserving existing row order.
+    """
+    merged = []
+    incoming_by_key = {}
+    for item in incoming_stamped:
+        k = _canonical_investigation_key(item)
+        if k:
+            incoming_by_key[k] = item
+
+    seen_keys = set()
+    for prev in (existing_items or []):
+        if not isinstance(prev, dict):
+            continue
+        k = _canonical_investigation_key(prev)
+        if k in incoming_by_key:
+            merged.append(incoming_by_key[k])
+            seen_keys.add(k)
+        else:
+            merged.append(prev)
+            if k:
+                seen_keys.add(k)
+
+    for item in incoming_stamped:
+        k = _canonical_investigation_key(item)
+        if k and k not in seen_keys:
+            merged.append(item)
+            seen_keys.add(k)
+
+    return merged
+
+
+def _upsert_investigation_notes(existing_notes, summary_text):
+    new_lines = []
+    replaced = False
+    clean_summary = ' | '.join([ln.strip() for ln in (summary_text or '').splitlines() if ln.strip()])
+    for line in (existing_notes or '').splitlines():
+        if line.strip().startswith('Investigation:'):
+            if clean_summary:
+                new_lines.append(f"Investigation: {clean_summary}")
+            replaced = True
+        else:
+            new_lines.append(line)
+    if not replaced and clean_summary:
+        new_lines.append(f"Investigation: {clean_summary}")
+    return '\n'.join(new_lines).strip()
 
 
 def handle_doctor_registration(request, current_profile=None):
@@ -625,6 +859,7 @@ def profile_view(request):
         medications_json_raw = request.POST.get('medications_json', '[]').strip()
         complaints_json_raw = request.POST.get('complaints_json', '[]').strip()
         complaint_meta_json_raw = request.POST.get('complaint_meta_json', '{}').strip()
+        investigations_json_raw = request.POST.get('investigations_json', '').strip()
 
         # All fields are optional — just ensure medications_json is valid JSON
         try:
@@ -662,10 +897,29 @@ def profile_view(request):
                 rx.complaints_json = complaints_json_raw
             if complaint_meta_json_raw and complaint_meta_json_raw != '{}':
                 rx.complaint_meta_json = complaint_meta_json_raw
+            if investigations_json_raw:
+                stamped_inv = normalize_and_stamp_investigations(
+                    investigations_json_raw,
+                    request.user,
+                    profile=profile,
+                    existing_items=rx.investigations,
+                )
+                rx.investigations_json = json.dumps(stamped_inv)
             rx.save()
-            return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} updated successfully.', 'prescription_id': rx.id})
+            return JsonResponse({
+                'success': True,
+                'message': f'Prescription for {patient_name} updated successfully.',
+                'prescription_id': rx.id,
+                'investigations': rx.investigations,
+            })
         else:
             # Create new
+            stamped_inv = normalize_and_stamp_investigations(
+                investigations_json_raw or '[]',
+                request.user,
+                profile=profile,
+                existing_items=None,
+            )
             rx = Prescription.objects.create(
                 patient_mrn=patient_mrn,
                 patient_name=patient_name,
@@ -678,8 +932,14 @@ def profile_view(request):
                 medications_json=medications_json_raw,
                 complaints_json=complaints_json_raw or '[]',
                 complaint_meta_json=complaint_meta_json_raw or '{}',
+                investigations_json=json.dumps(stamped_inv),
             )
-            return JsonResponse({'success': True, 'message': f'Prescription for {patient_name} saved successfully.', 'prescription_id': rx.id})
+            return JsonResponse({
+                'success': True,
+                'message': f'Prescription for {patient_name} saved successfully.',
+                'prescription_id': rx.id,
+                'investigations': rx.investigations,
+            })
 
     # ── POST: Save Complaints (Quick Action from Modal) ──────────────────────
     elif request.method == 'POST' and 'save_complaints' in request.POST:
@@ -833,6 +1093,108 @@ def profile_view(request):
                 })
 
         return JsonResponse({'success': True, 'message': 'Diagnosis recorded.'})
+
+    # ── POST: Save Investigations (Server-Generated Date, Time & Entered By) ──
+    elif request.method == 'POST' and 'save_investigations' in request.POST:
+        prescription_id = request.POST.get('prescription_id', '').strip()
+        patient_mrn = request.POST.get('patient_mrn', '').strip()
+        patient_name = request.POST.get('patient_name', '').strip()
+        patient_age = request.POST.get('patient_age', 0)
+        patient_gender = request.POST.get('patient_gender', 'Male')
+        eye = request.POST.get('eye', 'BE').strip()
+        investigations_json_raw = request.POST.get('investigations_json', '[]').strip()
+        investigations_summary = request.POST.get('investigations_summary', '').strip()
+        save_mode = request.POST.get('save_mode', 'replace').strip().lower()
+
+        doctor_name = profile.get_surgeon_display_name()
+        entered_by_display = get_logged_in_entered_by_display(request.user, profile)
+
+        rx = None
+        if prescription_id and prescription_id.isdigit():
+            # Any authenticated clinical staff may record investigations against a known
+            # prescription ID — investigations do not require doctor-level ownership.
+            rx = Prescription.objects.filter(id=int(prescription_id)).first()
+
+        if not rx and patient_mrn:
+            # Fallback: find today's prescription for this MRN owned by the current user.
+            today = date.today()
+            rx = Prescription.objects.filter(
+                patient_mrn=patient_mrn,
+                date_created__date=today
+            ).filter(
+                Q(prescribing_doctor__icontains=doctor_name) |
+                Q(prescribing_doctor__icontains=request.user.username) |
+                Q(prescribing_doctor__icontains=entered_by_display)
+            ).order_by('-date_created').first()
+
+        if rx:
+            existing_list = rx.investigations
+            stamped = normalize_and_stamp_investigations(
+                investigations_json_raw,
+                request.user,
+                profile=profile,
+                existing_items=existing_list,
+            )
+            final_list = (
+                _merge_stamped_investigations(existing_list, stamped)
+                if save_mode == 'merge'
+                else stamped
+            )
+            rx.investigations_json = json.dumps(final_list)
+            summary_line = ' | '.join(
+                [item['summary'] for item in final_list if item.get('summary')]
+            ) or investigations_summary
+            rx.notes = _upsert_investigation_notes(rx.notes, summary_line)
+            rx.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Investigations saved to prescription.',
+                'prescription_id': rx.id,
+                'investigations': rx.investigations,
+                'entered_by': entered_by_display,
+                'entered_by_username': request.user.username,
+            })
+
+        stamped = normalize_and_stamp_investigations(
+            investigations_json_raw,
+            request.user,
+            profile=profile,
+            existing_items=None,
+        )
+
+        if patient_mrn or patient_name:
+            summary_line = ' | '.join(
+                [item['summary'] for item in stamped if item.get('summary')]
+            ) or investigations_summary
+            initial_notes = _upsert_investigation_notes('', summary_line)
+            rx = Prescription.objects.create(
+                patient_mrn=patient_mrn,
+                patient_name=patient_name or f"Patient {patient_mrn}",
+                patient_age=int(patient_age) if str(patient_age).isdigit() else 0,
+                patient_gender=patient_gender,
+                eye=eye,
+                diagnosis="Clinical Evaluation (OPD)",
+                notes=initial_notes,
+                investigations_json=json.dumps(stamped),
+                prescribing_doctor=doctor_name or entered_by_display,
+                medications_json="[]",
+            )
+            return JsonResponse({
+                'success': True,
+                'message': 'Investigations saved successfully.',
+                'prescription_id': rx.id,
+                'investigations': rx.investigations,
+                'entered_by': entered_by_display,
+                'entered_by_username': request.user.username,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Investigations recorded.',
+            'investigations': stamped,
+            'entered_by': entered_by_display,
+            'entered_by_username': request.user.username,
+        })
 
     # ── POST: Apply for Surgery ──────────────────────────────────────────────
     elif request.method == 'POST' and 'apply_surgery' in request.POST:
@@ -1421,6 +1783,8 @@ def profile_view(request):
         'doctor_kw': doctor_kw,
         'doctor_kw_lower': doctor_kw.lower(),
         'doctor_display_name': doctor_display_name,
+        'current_entered_by_name': get_logged_in_entered_by_display(request.user, profile),
+        'current_username': request.user.username,
         # Admin & Doctor Registration context
         'is_admin': is_admin,
         'all_registered_profiles': NaimulProfile.objects.select_related('user').all().order_by('-id') if is_admin else NaimulProfile.objects.none(),
@@ -1476,6 +1840,7 @@ def prescription_api(request):
             'notes': rx.notes,
             'complaints': rx.complaints,
             'complaint_meta': rx.complaint_meta,
+            'investigations': rx.investigations,
             'prescribing_doctor': rx.prescribing_doctor,
             'date_created': rx.date_created.strftime('%Y-%m-%d %H:%M:%S'),
             'date_updated': rx.date_updated.strftime('%Y-%m-%d %H:%M:%S'),
