@@ -1,0 +1,236 @@
+<!-- =============================================================================
+     COMPLAINTS POPUP MODAL (Hospital EMR Standard)
+     Separate Template: complaints_modal.html
+     Features:
+     - Minimal, modern design with restrained, purposeful color usage
+     - Two-column desktop layout with dedicated Summary side panel
+     - Top complaints positioned directly below the search bar
+     - Custom autocomplete dropdown with clear spacing, distinct selection highlight, and subtle hover
+     - Responsive design for desktop, tablet, and mobile
+     ============================================================================= -->
+<div class="modal-overlay complaints-modal-overlay" id="complaintsModal" style="display: none;">
+    <div class="modal-card complaints-modal-card" role="dialog" aria-modal="true" aria-labelledby="complaintsModalTitle">
+
+        <!-- Modal Header -->
+        <div class="complaints-modal-header">
+            <div class="complaints-header-left">
+                <div class="complaints-title-badge">
+                    <i class="fa-solid fa-notes-medical"></i>
+                </div>
+                <div class="complaints-header-titles">
+                    <h2 class="complaints-modal-title" id="complaintsModalTitle">Complaints</h2>
+                    {% comment %} <span class="complaints-modal-subtitle">Record and manage patient chief symptoms</span> {% endcomment %}
+                </div>
+                <button type="button" class="btn-complaint-reworkup" onclick="orderComplaintsReworkup()" title="Order Optometry / Clinical Re-workup">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Order Re-workup</span>
+                </button>
+            </div>
+            <button type="button" class="complaints-modal-close" onclick="closeComplaintsModal()" aria-label="Close modal" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body: 2-Column Split (Main Form + Side Summary) -->
+        <div class="complaints-modal-body">
+
+            <!-- ── Left Column: Search, Top Complaints & Controls ── -->
+            <div class="complaints-main-panel">
+
+                <!-- 1. Search Box with Eye and Duration Parameters Side-by-Side -->
+                <div class="complaint-controls-bar">
+                    <!-- Search Box with Custom Autocomplete Dropdown -->
+                    <div class="complaint-control-item complaint-search-box-wrap">
+                        <label for="complaintSearchInput" class="complaint-control-label">Search Complaint</label>
+                        <div class="complaint-search-input-field">
+                            <i class="fa-solid fa-magnifying-glass complaint-search-icon"></i>
+                            <input type="text" id="complaintSearchInput" class="complaint-search-input"
+                                   placeholder="Type to search"
+                                   autocomplete="off"
+                                   oninput="onComplaintInputChange()"
+                                   onkeydown="handleComplaintInputKey(event)"
+                                   onfocus="openComplaintDropdown()"
+                                   aria-autocomplete="list"
+                                   aria-controls="complaintSearchDropdown">
+                            <button type="button" id="btnComplaintSearchClear" class="complaint-search-clear-btn"
+                                    onclick="clearComplaintSearch()" title="Clear search" style="display: none;">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Custom Styled Autocomplete Dropdown -->
+                        <div id="complaintSearchDropdown" class="complaint-search-dropdown" style="display: none;" role="listbox" aria-label="Complaint suggestions">
+                            <!-- Populated dynamically by complaints_modal.js -->
+                        </div>
+                    </div>
+
+                    <!-- Which Eye Segmented Selector -->
+                    <div class="complaint-control-item which-eye-control">
+                        <label class="complaint-control-label">Eye</label>
+                        <div class="complaint-eye-segment" id="complaintEyeSegment" role="group" aria-label="Eye selection">
+                            <button type="button" class="eye-seg-btn" data-eye="RE" onclick="setComplaintEye('RE')" title="Right Eye (OD)">RE</button>
+                            <button type="button" class="eye-seg-btn" data-eye="LE" onclick="setComplaintEye('LE')" title="Left Eye (OS)">LE</button>
+                            <button type="button" class="eye-seg-btn active" data-eye="BE" onclick="setComplaintEye('BE')" title="Both Eyes (OU)">BE</button>
+                        </div>
+                    </div>
+
+                    <!-- Duration Input Group -->
+                    <div class="complaint-control-item duration-control">
+                        <label class="complaint-control-label">Duration</label>
+                        <div class="complaint-duration-input-box">
+                            <input type="number" id="complaintDurationNum" class="duration-num-input"
+                                   placeholder="Qty" min="1" max="365"
+                                   oninput="onComplaintInputChange()"
+                                   onkeydown="handleComplaintInputKey(event)"
+                                   aria-label="Duration number">
+                            <select id="complaintDurationUnit" class="duration-unit-select" onchange="onComplaintInputChange()" aria-label="Duration unit">
+                                <option value="Days" selected>Days</option>
+                                <option value="Weeks">Weeks</option>
+                                <option value="Months">Months</option>
+                                <option value="Years">Years</option>
+                            </select>
+                            <span class="duration-calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                        </div>
+                    </div>
+
+                    <!-- Add Button -->
+                    <div class="complaint-control-item add-btn-control">
+                        <label class="complaint-control-label">&nbsp;</label>
+                        <button type="button" id="btnAddComplaint" class="btn-complaint-add disabled" onclick="addCurrentComplaint()" disabled>
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Top Complaints directly below search bar -->
+                <div class="complaints-quick-section">
+                    <div class="complaints-quick-header">
+                        <span class="complaints-quick-label">
+                            <i class="fa-solid fa-bolt"></i> Top Complaints
+                        </span>
+                        {% comment %} <span class="complaints-quick-hint">Click to quick-select</span> {% endcomment %}
+                    </div>
+                    <div class="complaints-pill-group" id="complaintTopPills">
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Dimness of vision')">Dimness of vision</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Blurring of vision')">Blurring of vision</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Double Vision')">Double Vision</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Eye pain')">Eye pain</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Redness of eye')">Redness of eye</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Watering of eye')">Watering of eye</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Foreign body sensation')">Foreign body sensation</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Itching of eyes')">Itching of eyes</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Floaters')">Floaters</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Headache')">Headache</button>
+                        <button type="button" class="complaint-quick-pill" onclick="selectTopComplaint('Fever')">Fever</button>
+                    </div>
+                </div>
+
+                <!-- 4. Optional Metadata (Collapsible for Clean, Minimal Look) -->
+                <details class="complaint-meta-collapsible" id="complaintMetaCollapsible">
+                    <summary class="complaint-meta-summary">
+                        <span class="meta-summary-left">
+                            <i class="fa-solid fa-sliders"></i>
+                            {% comment %} <span>Visit Context & Informant (Optional)</span> {% endcomment %}
+                            <span> Purpose of visit </span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down meta-chevron"></i>
+                    </summary>
+                    <div class="complaint-meta-fields-grid">
+                        <!-- Purpose of visit -->
+                        <div class="complaint-meta-field">
+                            <label for="complaintPurposeOfVisit" class="complaint-meta-label">Purpose of visit</label>
+                            <select id="complaintPurposeOfVisit" class="complaint-meta-select">
+                                <option value="" selected>General Consultation</option>
+                                <option value="Consultation">Consultation</option>
+                                <option value="Routine Checkup">Routine Checkup</option>
+                                <option value="New Consultation">New Consultation</option>
+                                <option value="Follow-up">Follow-up</option>
+                                <option value="Refraction / Spectacles">Refraction / Spectacles</option>
+                                <option value="Pre-operative Evaluation">Pre-operative Evaluation</option>
+                                <option value="Post-operative Review">Post-operative Review</option>
+                                <option value="Emergency">Emergency</option>
+                                <option value="Second Opinion">Second Opinion</option>
+                            </select>
+                        </div>
+
+                        <!-- Informant -->
+                        {% comment %} <div class="complaint-meta-field">
+                            <label for="complaintInformant" class="complaint-meta-label">Informant</label>
+                            <select id="complaintInformant" class="complaint-meta-select" onchange="onInformantChange()">
+                                <option value="Patient" selected>Patient</option>
+                                <option value="Attendant">Attendant</option>
+                                <option value="Parent / Mother">Parent / Mother</option>
+                                <option value="Parent / Father">Parent / Father</option>
+                                <option value="Spouse">Spouse</option>
+                                <option value="Son / Daughter">Son / Daughter</option>
+                                <option value="Guardian">Guardian</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div> {% endcomment %}
+
+                        <!-- Specify Informant -->
+                        {% comment %} <div class="complaint-meta-field">
+                            <label for="complaintSpecifyInformant" class="complaint-meta-label">Specify Informant</label>
+                            <input type="text" id="complaintSpecifyInformant" class="complaint-meta-input" placeholder="Specify informant (Optional)">
+                        </div> {% endcomment %}
+
+                        <!-- Remarks -->
+                        {% comment %} <div class="complaint-meta-field full-width">
+                            <label for="complaintRemarks" class="complaint-meta-label">Remarks</label>
+                            <input type="text" id="complaintRemarks" class="complaint-meta-input" placeholder="Additional notes or symptom onset details...">
+                        </div> {% endcomment %}
+                    </div>
+                </details>
+
+            </div> <!-- /.complaints-main-panel -->
+
+            <!-- ── Right Column: Summary Side Panel ── -->
+            <aside class="complaints-side-panel">
+                <div class="complaints-summary-panel-header">
+                    <div class="summary-panel-title-wrap">
+                        <h3 class="summary-panel-title">Summary</h3>
+                        <span id="complaintsCountBadge" class="complaints-count-badge">0</span>
+                    </div>
+                    <button type="button" id="btnComplaintsClearAll" class="btn-complaints-clear-all" 
+                        onclick="clearAllComplaints()" style="display: none;" title="Remove all added complaints">
+                        Clear all
+                    </button>
+                </div>
+
+                <!-- Complaints Summary Items Container -->
+                <div id="complaintsSummaryBody" class="complaints-summary-body" role="region" aria-live="polite">
+                    <div class="complaints-empty-state">
+                        <div class="empty-state-icon"><i class="fa-regular fa-clipboard"></i></div>
+                        <p class="empty-state-title">No complaints added</p>
+                        <p class="empty-state-desc">Select a top complaint or search on the left to record symptoms.</p>
+                    </div>
+                </div>
+
+                <!-- Live Summary Prescription Preview -->
+                {% comment %} <div class="complaints-side-panel-footer">
+                    <div class="summary-preview-header">
+                        <span class="summary-preview-label">Prescription Preview</span>
+                    </div>
+                    <div id="complaintsLivePreview" class="summary-preview-text">No complaints recorded.</div>
+                </div> {% endcomment %}
+            </aside> <!-- /.complaints-side-panel -->
+
+        </div> <!-- /.complaints-modal-body -->
+
+        <!-- Modal Bottom Actions -->
+        <div class="complaints-modal-footer">
+            <div class="complaints-footer-info">
+                <span id="complaintsFooterCount" class="footer-count-text">0 complaints recorded</span>
+            </div>
+            <div class="complaints-footer-actions">
+                <button type="button" class="btn-complaints-cancel" onclick="closeComplaintsModal()">Cancel</button>
+                <button type="button" class="btn-complaints-save" onclick="saveComplaintsModal()">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Save Complaints</span>
+                </button>
+            </div>
+        </div>
+
+    </div> <!-- /.complaints-modal-card -->
+</div> <!-- /.complaints-modal-overlay -->
