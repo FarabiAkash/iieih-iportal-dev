@@ -1,0 +1,1883 @@
+/* =============================================================================
+   INVESTIGATION POPUP MODAL STYLES (investigation_modal.css)
+   Hospital EMR Standard — Ispahani Islamia Eye Institute & Hospital (IIEIH)
+   
+   Design Architecture:
+   - Modern, high-trust clinical aesthetics with crisp visual hierarchy
+   - Fluid responsive layout (Desktop, Tablet, Mobile)
+   - Micro-interactions, spring-based animations, and smooth transitions
+   - Clinical status indicators (IOP warnings, BP stages, Keratometry badges)
+   - Embedded input affix labels (mmHg, Diopters, Degrees, mg%)
+   - Full dark mode support matching portal theme standard
+   ============================================================================= */
+
+/* ── Modal Overlay ────────────────────────────────────────────────────────── */
+.investigation-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: invOverlayFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes invOverlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ── Modal Card ───────────────────────────────────────────────────────────── */
+.investigation-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    width: 1450px;
+    max-width: 98vw;
+    height: auto;
+    min-height: 0;
+    max-height: 96vh;
+    box-shadow:
+        0 25px 70px -15px rgba(15, 23, 42, 0.28),
+        0 0 0 1px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: invModalCardScaleIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes invModalCardScaleIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.96) translateY(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ── Modal Header ─────────────────────────────────────────────────────────── */
+.investigation-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.inv-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.inv-title-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28);
+    flex-shrink: 0;
+}
+
+.inv-header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inv-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inv-modal-title {
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+}
+
+.inv-count-pill {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+}
+
+.inv-modal-subtitle {
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.1;
+}
+
+.inv-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.inv-current-timestamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.inv-current-timestamp i {
+    color: #0284c7;
+}
+
+.inv-modal-close {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.inv-modal-close:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+    transform: rotate(90deg);
+}
+
+/* ── Modal Body ──────────────────────────────────────────────────────────── */
+.investigation-modal-body {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #fbfcfe;
+}
+
+/* ── 1. Quick Select Section ─────────────────────────────────────────────── */
+.inv-quick-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    flex-wrap: wrap;
+}
+
+.inv-quick-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #0369a1;
+    flex-shrink: 0;
+}
+
+.inv-quick-label i {
+    color: #0284c7;
+}
+
+.inv-quick-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+/* Quick Pills (Matching template & enhanced) */
+.inv-quick-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #0284c7;
+    background: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.15);
+}
+
+.inv-quick-pill:hover {
+    background: #0369a1;
+    border-color: #0369a1;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(2, 132, 199, 0.25);
+}
+
+.inv-quick-pill.active .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 6px #38bdf8;
+}
+
+.inv-quick-pill.secondary {
+    background: #ffffff;
+    color: #0369a1;
+    border-color: #cbd5e1;
+    box-shadow: none;
+}
+
+.inv-quick-pill.secondary:hover {
+    background: #f0f9ff;
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+.inv-quick-pill.secondary .pill-plus {
+    font-size: 0.7rem;
+    color: #0284c7;
+}
+
+.inv-quick-divider {
+    width: 1px;
+    height: 20px;
+    background: #e2e8f0;
+    margin: 0 4px;
+}
+
+/* ── 2. Controls Panel (Select + Eye + Add + Remarks) ─────────────────────── */
+.inv-controls-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.inv-controls-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.inv-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inv-select-group {
+    flex: 1;
+    min-width: 260px;
+}
+
+.inv-btn-group {
+    flex-shrink: 0;
+}
+
+.inv-control-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+
+.inv-input-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inv-input-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.inv-select-investigation {
+    padding-left: 34px !important;
+}
+
+.btn-inv-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 18px;
+    background: #0f52ba;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 6px rgba(15, 82, 186, 0.25);
+}
+
+.btn-inv-add:hover {
+    background: #0d449b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(15, 82, 186, 0.35);
+}
+
+.btn-inv-add:active {
+    transform: translateY(0);
+}
+
+/* Remarks Input Row */
+.inv-remarks-row {
+    width: 100%;
+}
+
+.inv-remarks-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.inv-remarks-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.inv-remarks-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 0 12px 0 34px;
+    font-size: 0.82rem;
+    color: #0f172a;
+    background: #f8fafc;
+    transition: all 0.16s ease;
+}
+
+.inv-remarks-input:focus {
+    background: #ffffff;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    outline: none;
+}
+
+/* ── 3. Investigation Clinical Table ─────────────────────────────────────── */
+.inv-table-section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.inv-table-container {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow:
+        0 4px 12px -2px rgba(15, 23, 42, 0.06),
+        0 1px 3px rgba(15, 23, 42, 0.04);
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.inv-grid-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.84rem;
+}
+
+/* Table Head */
+.inv-grid-table thead tr {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+}
+
+.inv-grid-table th {
+    padding: 9px 12px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid #94a3b8;
+    border-right: 1px solid #cbd5e1;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.inv-grid-table th:last-child {
+    border-right: none;
+}
+
+.inv-grid-table th.col-name {
+    width: 225px;
+    min-width: 205px;
+}
+
+.inv-grid-table th.col-re {
+    width: 280px;
+    min-width: 255px;
+}
+
+.inv-grid-table th.col-le {
+    width: 280px;
+    min-width: 255px;
+}
+
+/* col-date width is set in the Date, Time, By & Hospital section below */
+
+.inv-grid-table th.col-action {
+    width: 74px;
+    text-align: center;
+}
+
+/* Eye column labels in table header */
+.th-eye-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+}
+
+.th-eye-label.re-label {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.th-eye-label.le-label {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #ddd6fe;
+}
+
+/* Table Rows */
+.inv-row {
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.inv-row:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.inv-row:not(:last-child) td {
+    border-bottom: 1px solid #b8c4d4;
+}
+
+.inv-row:hover {
+    background-color: #f0f9ff;
+}
+
+.inv-row.inv-row-highlight {
+    animation: invRowPulse 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes invRowPulse {
+    0% {
+        background-color: rgba(2, 132, 199, 0.18);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.inv-grid-table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+    border-right: 1px solid #cbd5e1;
+}
+
+.inv-grid-table td:last-child {
+    border-right: none;
+}
+
+/* Cell Column Layouts */
+.inv-name-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inv-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 8px;
+    flex-wrap: wrap;
+}
+
+.inv-primary-name {
+    font-weight: 700;
+    color: #000000;
+    font-size: 0.94rem;
+}
+
+/* Inline Eye Toggle Pill (RE / LE / BE) beside Ocular Investigation Name */
+.inv-eye-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.inv-eye-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.1;
+    transition: all 0.15s ease;
+}
+
+.inv-eye-btn:hover:not(.active) {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.inv-eye-btn:focus-visible {
+    outline: 2px solid #0284c7;
+    outline-offset: 1px;
+}
+
+.inv-eye-btn.active[data-eye="re"] {
+    background: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.25);
+}
+
+.inv-eye-btn.active[data-eye="le"] {
+    background: #7c3aed;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25);
+}
+
+.inv-eye-btn.active[data-eye="be"] {
+    background: #0f766e;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 118, 110, 0.25);
+}
+
+/* Hidden / Disabled Eye Cell State */
+.inv-grid-table td.inv-eye-cell-hidden {
+    background: #f8fafc;
+    position: relative;
+}
+
+.inv-grid-table td.inv-eye-cell-hidden>* {
+    opacity: 0.22;
+    pointer-events: none;
+    filter: grayscale(1);
+    transition: opacity 0.15s ease;
+}
+
+.inv-grid-table td.inv-eye-cell-hidden .inv-status-chip {
+    animation: none;
+}
+
+.inv-type-tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.inv-cell-flex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.inv-row-blood-sugar td[colspan="2"] .inv-cell-flex {
+    justify-content: center;
+}
+
+/* Stacked Selects for DUCT */
+.inv-stacked-selects {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+/* ── Standard Form Inputs & Dropdowns ────────────────────────────────────── */
+.inv-input,
+.inv-select {
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #000000;
+    padding: 0 9px;
+    transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+}
+
+.inv-input:focus,
+.inv-select:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    outline: none;
+}
+
+.inv-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
+}
+
+.inv-select-sm {
+    height: 30px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #000000;
+    min-width: 108px;
+}
+
+.inv-select-block {
+    width: 100%;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.inv-select-grow {
+    flex: 1;
+    min-width: 140px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.inv-input-sm {
+    height: 30px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #000000;
+    padding: 0 8px;
+}
+
+.inv-input-num {
+    width: 105px;
+    text-align: right;
+    padding-right: 40px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+/* Affix Group (Inputs with units like mmHg, D, °, mg%) */
+.inv-input-affix-group {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.inv-affix {
+    position: absolute;
+    right: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    pointer-events: none;
+    text-transform: uppercase;
+}
+
+/* Status Chips (IOP normal/high, BP classification) */
+.inv-status-chip {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inv-status-chip.normal {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.inv-status-chip.warning {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.inv-status-chip.danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    animation: invBlink 1.8s infinite ease-in-out;
+}
+
+@keyframes invBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.75;
+    }
+}
+
+/* ── Blood Pressure Cell Specifics ────────────────────────────────────────── */
+.inv-bp-cell-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.inv-bp-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.inv-bp-input-wrap {
+    width: 80px;
+}
+
+.inv-input-bp {
+    width: 100%;
+    height: 28px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #000000;
+    padding-right: 28px;
+}
+
+.inv-bp-slash {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #94a3b8;
+    user-select: none;
+}
+
+.inv-bp-unit-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-left: 2px;
+}
+
+/* ── Keratometry (K Reading) Cell Specifics ───────────────────────────────── */
+.inv-k-values-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+}
+
+.inv-k-axis-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.inv-k-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.k-d-wrap {
+    width: 92px;
+}
+
+.k-deg-wrap {
+    width: 80px;
+}
+
+.inv-input-k,
+.inv-input-deg {
+    width: 100%;
+    height: 30px;
+    text-align: right;
+    padding-right: 22px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.inv-k-at {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    user-select: none;
+}
+
+.inv-k-calc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #0369a1;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    padding: 1px 7px;
+    border-radius: 6px;
+    margin-top: 1px;
+    align-self: flex-start;
+}
+
+/* ── Colour Vision Plates Score Box ──────────────────────────────────────── */
+.inv-input-plates {
+    width: 58px;
+    height: 30px;
+    text-align: center;
+    font-weight: 600;
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    flex-shrink: 0;
+}
+
+/* ── Which Hospital Selector inside Date, Time & By Column ─────────────── */
+.inv-hospital-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 145px;
+}
+
+.inv-row[data-saved="true"] .inv-hospital-wrap {
+    display: none;
+}
+
+.inv-hospital-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    line-height: 1.1;
+}
+
+.inv-hospital-field-label i {
+    color: #0284c7;
+    font-size: 0.68rem;
+}
+
+.inv-hospital-select {
+    width: 100%;
+    height: 30px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.inv-hospital-other {
+    width: 100%;
+    height: 28px;
+    font-size: 0.76rem;
+    padding: 0 8px;
+    animation: invHospitalOtherReveal 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes invHospitalOtherReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Date Cell Content (2-row CSS Grid: Date|Time, Done By|Hospital) ───── */
+.inv-date-cell-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 205px;
+}
+
+.inv-date-cell-content:empty {
+    display: none;
+}
+
+.inv-audit-readonly {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    user-select: text;
+    cursor: default;
+}
+
+.inv-audit-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+/* Meta row (Done by + In:) stacks vertically so the full name is never clipped */
+.inv-audit-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* ── Date column header with icon ───────────────────────────────────────── */
+.th-date-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+/* ── Read-Only Audit Cells (Date, Time, Done By & Hospital) ─────────────── */
+.inv-audit-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    width: 100%;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    cursor: default;
+    box-sizing: border-box;
+}
+
+.inv-entered-by-readonly {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.inv-hospital-readonly {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.inv-audit-icon,
+.inv-entered-icon,
+.inv-hospital-icon {
+    font-size: 0.66rem;
+    color: #0284c7;
+    flex-shrink: 0;
+}
+
+.inv-audit-date,
+.inv-audit-time,
+.inv-hospital-value {
+    min-width: 0;
+    flex: 1;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #000000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Allow the "Done by" name to wrap so the full name is always visible */
+.inv-entered-name {
+    min-width: 0;
+    flex: 1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #000000;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.inv-hospital-value {
+    color: #0369a1;
+    font-weight: 700;
+}
+
+/* ── EMR Sidebar Saved Investigation Cards ───────────────────────────────── */
+.inv-emr-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.inv-emr-item-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 6px 9px;
+    font-size: 0.76rem;
+    line-height: 1.35;
+    cursor: pointer;
+    transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.inv-emr-item-card:hover {
+    border-color: #93c5fd;
+    background: #f0f9ff;
+}
+
+.inv-emr-item-title {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.inv-emr-item-summary {
+    color: #334155;
+    margin-top: 2px;
+}
+
+.inv-emr-item-audit {
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.68rem;
+    color: #475569;
+}
+
+.inv-emr-audit-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.inv-emr-audit-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.inv-emr-audit-cell+.inv-emr-audit-cell {
+    border-left: 1px solid #cbd5e1;
+    padding-left: 6px;
+}
+
+.inv-emr-audit-cell i {
+    font-size: 0.66rem;
+    color: #0284c7;
+    flex-shrink: 0;
+}
+
+.inv-emr-audit-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.inv-emr-audit-hospital .inv-emr-audit-text {
+    color: #0369a1;
+}
+
+/* ── Non-ocular type tag variant ─────────────────────────────────────────── */
+.inv-type-tag-systemic {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+/* ── col-date width to fit Which Hospital + 2-row Date|Time / By|Hospital ── */
+.inv-grid-table th.col-date {
+    width: 240px;
+    min-width: 225px;
+}
+
+.inv-date-picker-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.inv-date-input {
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.inv-date-display {
+    display: none;
+}
+
+/* ── Row Action Buttons (Delete & Save Individual) ────────────────────────── */
+.inv-action-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-inv-delete,
+.btn-inv-save-row,
+.btn-inv-edit {
+    border: none;
+    background: transparent;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: all 0.14s ease;
+}
+
+.btn-inv-edit {
+    color: #0284c7;
+}
+
+.btn-inv-edit:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+    transform: scale(1.1);
+}
+
+.btn-inv-delete {
+    color: #ef4444;
+}
+
+.btn-inv-delete:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    transform: scale(1.1);
+}
+
+.btn-inv-save-row {
+    color: #64748b;
+}
+
+.btn-inv-save-row:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+    transform: scale(1.1);
+}
+
+/* ── Saved / Locked Row & Field State ─────────────────────────────────────── */
+.inv-row.inv-row-locked {
+    background-color: #f8fafc;
+}
+
+.inv-input.inv-field-locked,
+.inv-select.inv-field-locked,
+textarea.inv-field-locked,
+.inv-input-plates.inv-field-locked {
+    background: #f1f5f9;
+    color: #000000;
+    -webkit-text-fill-color: #000000;
+    font-weight: 700;
+    border-color: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.inv-row-locked .inv-bp-group {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.inv-row-locked .inv-eye-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+/* ── Collapsible Detail Drawer ────────────────────────────────────────────── */
+.inv-detail-drawer td {
+    padding: 0 14px 12px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.inv-drawer-content {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    animation: invDrawerExpand 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes invDrawerExpand {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.drawer-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.drawer-field.grow {
+    flex: 1;
+    min-width: 260px;
+}
+
+.drawer-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Modal Footer ────────────────────────────────────────────────────────── */
+.investigation-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-top: 1px solid #f1f5f9;
+    background: #ffffff;
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.inv-footer-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.inv-status-icon {
+    color: #10b981;
+    font-size: 0.95rem;
+}
+
+.inv-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-inv-secondary,
+.btn-inv-clear,
+.btn-inv-cancel {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.14s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-inv-secondary {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.btn-inv-secondary:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.btn-inv-clear {
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    color: #dc2626;
+}
+
+.btn-inv-clear:hover {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn-inv-cancel {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #64748b;
+}
+
+.btn-inv-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.btn-inv-save-all {
+    height: 36px;
+    padding: 0 20px;
+    border-radius: 8px;
+    border: none;
+    background: #0f52ba;
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(15, 82, 186, 0.28);
+}
+
+.btn-inv-save-all:hover {
+    background: #0d449b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 82, 186, 0.35);
+}
+
+.btn-inv-save-all:active {
+    transform: translateY(0);
+}
+
+/* ── Dynamic Toast Notifications ─────────────────────────────────────────── */
+.inv-toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.inv-toast {
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 9px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    animation: invToastSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.inv-toast.success {
+    background: #065f46;
+    border: 1px solid #059669;
+}
+
+.inv-toast.warning {
+    background: #78350f;
+    border: 1px solid #b45309;
+}
+
+.inv-toast.info {
+    background: #0f2c59;
+    border: 1px solid #0284c7;
+}
+
+@keyframes invToastSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Row Slide Out Animation (on Delete) ──────────────────────────────────── */
+.inv-row-leaving {
+    opacity: 0 !important;
+    transform: scale(0.96) !important;
+    transition: all 0.2s ease-out !important;
+}
+
+/* =============================================================================
+   DARK MODE OVERRIDES (Matching IIEIH Portal Standard)
+   ============================================================================= */
+[data-theme="dark"] .investigation-modal-card {
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .investigation-modal-header,
+[data-theme="dark"] .investigation-modal-footer {
+    background: #0f172a;
+    border-color: #1e293b;
+}
+
+[data-theme="dark"] .investigation-modal-body {
+    background: #0b1120;
+}
+
+[data-theme="dark"] .inv-modal-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-modal-subtitle,
+[data-theme="dark"] .inv-control-label,
+[data-theme="dark"] .drawer-label,
+[data-theme="dark"] .inv-footer-status {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-quick-section,
+[data-theme="dark"] .inv-controls-panel,
+[data-theme="dark"] .inv-table-container {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-quick-pill.secondary {
+    background: #0f172a;
+    color: #38bdf8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-grid-table thead tr {
+    background: #172554;
+}
+
+[data-theme="dark"] .inv-grid-table th {
+    color: #e2e8f0;
+    border-bottom-color: #475569;
+    border-right-color: #475569;
+}
+
+[data-theme="dark"] .inv-grid-table td {
+    border-right-color: #475569;
+}
+
+[data-theme="dark"] .inv-row:nth-child(even) {
+    background-color: rgba(15, 23, 42, 0.35);
+}
+
+[data-theme="dark"] .inv-row:not(:last-child) td {
+    border-bottom-color: #475569;
+}
+
+[data-theme="dark"] .inv-row:hover {
+    background-color: rgba(56, 189, 248, 0.08);
+}
+
+[data-theme="dark"] .inv-primary-name {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-type-tag {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-input,
+[data-theme="dark"] .inv-select,
+[data-theme="dark"] .inv-remarks-input,
+[data-theme="dark"] .inv-date-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .inv-input:focus,
+[data-theme="dark"] .inv-select:focus,
+[data-theme="dark"] .inv-remarks-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+[data-theme="dark"] .inv-input-plates {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-bp-group {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-detail-drawer td {
+    background: #0f172a;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .inv-drawer-content {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.inv-empty-state-cell {
+    padding: 36px 20px !important;
+    text-align: center;
+    color: #64748b;
+    background: #f8fafc;
+}
+
+.inv-empty-state-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.inv-empty-state-content i {
+    font-size: 1.05rem;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-empty-state-cell {
+    background: rgba(15, 23, 42, 0.35);
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-empty-state-content i {
+    color: #64748b;
+}
+
+[data-theme="dark"] .inv-modal-close,
+[data-theme="dark"] .btn-inv-secondary,
+[data-theme="dark"] .btn-inv-cancel {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .inv-modal-close:hover {
+    background: #450a0a;
+    color: #f87171;
+    border-color: #7f1d1d;
+}
+
+[data-theme="dark"] .inv-current-timestamp {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+/* ── Dark Mode: Hospital column ──────────────────────────────────────────── */
+[data-theme="dark"] .inv-hospital-field-label {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-hospital-field-label i {
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .inv-hospital-select,
+[data-theme="dark"] .inv-hospital-other {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-hospital-select:focus,
+[data-theme="dark"] .inv-hospital-other:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+[data-theme="dark"] .inv-input.inv-field-locked,
+[data-theme="dark"] .inv-select.inv-field-locked,
+[data-theme="dark"] textarea.inv-field-locked,
+[data-theme="dark"] .inv-input-plates.inv-field-locked {
+    background: #1e293b;
+    color: #f8fafc;
+    -webkit-text-fill-color: #f8fafc;
+    border-color: #334155;
+}
+
+/* ── Dark Mode: Audit cell text ──────────────────────────────────────────── */
+[data-theme="dark"] .inv-audit-date,
+[data-theme="dark"] .inv-audit-time,
+[data-theme="dark"] .inv-entered-name {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .inv-audit-cell {
+    color: #cbd5e1;
+}
+
+
+[data-theme="dark"] .inv-row.inv-row-locked .inv-hospital-select,
+[data-theme="dark"] .inv-row.inv-row-locked .inv-hospital-other {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN (Tablets & Mobile Viewports)
+   ============================================================================= */
+@media (max-width: 1024px) {
+    .investigation-modal-card {
+        width: 98vw;
+        height: auto;
+        max-height: 96vh;
+    }
+
+    .inv-controls-row {
+        flex-wrap: wrap;
+    }
+
+    .inv-select-group {
+        width: 100%;
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .investigation-modal-header {
+        padding: 12px 16px;
+    }
+
+    .investigation-modal-body {
+        padding: 12px 14px;
+    }
+
+    .inv-current-timestamp {
+        display: none;
+    }
+
+    .inv-quick-section {
+        overflow-x: auto;
+    }
+
+    .inv-audit-row,
+    .inv-emr-audit-row {
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .inv-emr-item-audit {
+        font-size: 0.64rem;
+    }
+
+    .inv-emr-audit-cell+.inv-emr-audit-cell {
+        padding-left: 5px;
+    }
+}
+
+/* ── Dark Mode: Read-Only Audit, Date, Time, Entered By & Hospital ──────── */
+[data-theme="dark"] .inv-audit-cell,
+[data-theme="dark"] .inv-entered-by-readonly {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .inv-hospital-readonly {
+    background: #0c223a;
+    border-color: #1e3a5f;
+}
+
+[data-theme="dark"] .inv-audit-icon,
+[data-theme="dark"] .inv-entered-icon,
+[data-theme="dark"] .inv-hospital-icon {
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .inv-audit-date,
+[data-theme="dark"] .inv-audit-time,
+[data-theme="dark"] .inv-entered-name {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .inv-hospital-value {
+    color: #7dd3fc;
+}
+
+[data-theme="dark"] .inv-emr-item-card {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-emr-item-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-emr-item-summary {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .inv-emr-item-audit {
+    border-top-color: #334155;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-emr-audit-cell+.inv-emr-audit-cell {
+    border-left-color: #334155;
+}
+
+[data-theme="dark"] .inv-emr-audit-cell i {
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .inv-emr-audit-hospital .inv-emr-audit-text {
+    color: #7dd3fc;
+}
+
+[data-theme="dark"] .inv-eye-toggle {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-eye-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .inv-eye-btn:hover:not(.active) {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .inv-grid-table td.inv-eye-cell-hidden {
+    background: #0b1120;
+}
+
+[data-theme="dark"] .inv-type-tag-systemic {
+    background: #451a03;
+    color: #fbbf24;
+    border-color: #78350f;
+}
+
+[data-theme="dark"] .btn-inv-edit {
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .btn-inv-edit:hover {
+    background: #0c4a6e;
+    color: #bae6fd;
+}
+
+[data-theme="dark"] .inv-row.inv-row-locked {
+    background-color: #0f172a;
+}
+
+[data-theme="dark"] .inv-input.inv-field-locked,
+[data-theme="dark"] .inv-select.inv-field-locked,
+[data-theme="dark"] textarea.inv-field-locked,
+[data-theme="dark"] .inv-input-plates.inv-field-locked {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .inv-row-locked .inv-bp-group {
+    background: #1e293b;
+    border-color: #334155;
+}
