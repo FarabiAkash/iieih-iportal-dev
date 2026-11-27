@@ -546,6 +546,11 @@ class Prescription(models.Model):
         default='{}',
         help_text="JSON metadata for complaints (purpose, informant, remarks)"
     )
+    investigations_json = models.TextField(
+        blank=True,
+        default='[]',
+        help_text="JSON array of structured investigation objects with system-generated audit metadata"
+    )
     notes = models.TextField(blank=True)
     prescribing_doctor = models.CharField(max_length=100, blank=True, default='')
     date_created = models.DateTimeField(auto_now_add=True)
@@ -583,6 +588,22 @@ class Prescription(models.Model):
             except Exception:
                 pass
         return self._parse_meta_from_notes()
+
+    @property
+    def investigations(self):
+        import json
+        if self.investigations_json:
+            try:
+                parsed = json.loads(self.investigations_json)
+                if isinstance(parsed, list):
+                    return parsed
+            except Exception:
+                pass
+        return []
+
+    def save_investigations(self, investigations_list):
+        import json
+        self.investigations_json = json.dumps(investigations_list if isinstance(investigations_list, list) else [])
 
     def _parse_complaints_from_notes(self):
         import re
